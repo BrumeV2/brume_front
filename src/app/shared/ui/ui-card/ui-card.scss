@@ -1,0 +1,27 @@
+.carte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  padding: var(--espace-6);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-carte);
+  background-color: var(--couleur-papier);
+}
+
+.carte__entete {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-1);
+}
+
+.carte__titre {
+  font-size: var(--titre-s-taille);
+  line-height: var(--titre-s-interligne);
+  letter-spacing: var(--titre-s-interlettre);
+}
+
+.carte__description {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}

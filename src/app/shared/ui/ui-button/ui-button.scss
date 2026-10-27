@@ -1,0 +1,60 @@
+:host {
+  display: inline-flex;
+}
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--espace-3);
+  min-width: 200px;
+  height: var(--hauteur-bouton);
+  padding-inline: 1.75rem;
+  border: 1px solid transparent;
+  border-radius: var(--rayon-pilule);
+  background: none;
+  font-family: var(--police-texte);
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.bouton:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+:host(.variante-plein) .bouton {
+  background-color: var(--couleur-encre);
+  border-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+}
+
+:host(.variante-plein) .bouton:not(:disabled):hover {
+  background-color: #000000;
+}
+
+:host(.variante-contour) .bouton {
+  border-color: var(--couleur-filet);
+  color: var(--couleur-encre);
+}
+
+:host(.variante-contour) .bouton:not(:disabled):hover {
+  border-color: var(--couleur-encre);
+}
+
+:host(.variante-clair) .bouton {
+  border-color: var(--couleur-blanc);
+  color: var(--couleur-blanc);
+}
+
+:host(.variante-clair) .bouton:not(:disabled):hover {
+  background-color: var(--couleur-blanc);
+  color: var(--couleur-encre);
+}

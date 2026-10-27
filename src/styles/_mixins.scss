@@ -1,0 +1,39 @@
+/** Points de rupture, en « mobile d'abord » : on écrit le mobile, puis on monte. */
+$rupture-tablette: 768px;
+$rupture-ordinateur: 1024px;
+
+@mixin a-partir-de-tablette {
+  @media (min-width: $rupture-tablette) {
+    @content;
+  }
+}
+
+@mixin a-partir-de-ordinateur {
+  @media (min-width: $rupture-ordinateur) {
+    @content;
+  }
+}
+
+/** Libellé en petites capitales espacées, le « Surtitre » de la maquette. */
+@mixin surtitre {
+  font-family: var(--police-texte);
+  font-size: var(--surtitre-taille);
+  font-weight: 500;
+  line-height: var(--surtitre-interligne);
+  letter-spacing: var(--surtitre-interlettre);
+  text-transform: uppercase;
+  color: var(--couleur-texte-doux);
+}
+
+/** Visible pour les lecteurs d'écran, invisible à l'œil. */
+@mixin hors-ecran {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}

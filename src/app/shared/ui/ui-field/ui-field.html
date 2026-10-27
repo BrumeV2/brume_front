@@ -1,0 +1,27 @@
+<div class="champ" [class.champ--en-erreur]="erreur() !== null">
+  <label class="champ__libelle" [for]="idSaisie()">
+    {{ libelle() }}
+    @if (obligatoire()) {
+      <span class="champ__obligatoire" aria-hidden="true">*</span>
+    }
+  </label>
+
+  <input
+    class="champ__saisie"
+    [id]="idSaisie()"
+    [type]="type()"
+    [formControl]="control()"
+    [attr.required]="obligatoire() ? '' : null"
+    [attr.autocomplete]="autocomplete() ?? null"
+    [attr.aria-invalid]="erreur() !== null ? 'true' : null"
+    [attr.aria-describedby]="decritPar()"
+  />
+
+  @if (erreur(); as message) {
+    <p class="champ__erreur" [id]="idErreur()" role="alert">{{ message }}</p>
+  }
+
+  @if (aide(); as texte) {
+    <p class="champ__aide" [id]="idAide()">{{ texte }}</p>
+  }
+</div>

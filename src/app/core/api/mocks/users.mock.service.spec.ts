@@ -69,6 +69,18 @@ describe('UsersMockService', () => {
     expect(updated.phone).toBeNull();
   });
 
+  it('vide la date de naissance quand le champ est effacé', async () => {
+    const updated = await firstValueFrom(service.updateMe({ birthDate: '' }));
+
+    expect(updated.birthDate).toBeNull();
+  });
+
+  it('enregistre une date de naissance valide', async () => {
+    const updated = await firstValueFrom(service.updateMe({ birthDate: '1990-01-31' }));
+
+    expect(updated.birthDate).toBe('1990-01-31');
+  });
+
   it('ne modifie pas les champs absents du corps', async () => {
     const before = await firstValueFrom(service.getMe());
     const updated = await firstValueFrom(service.updateMe({ phone: '0611223344' }));
@@ -105,6 +117,23 @@ describe('UsersMockService', () => {
       );
 
       expect(error.fieldErrors['lastName']).toBeDefined();
+    });
+
+    it('refuse une date de naissance dans le futur', async () => {
+      const error = await expectFailure(
+        firstValueFrom(service.updateMe({ birthDate: '2099-01-01' })),
+      );
+
+      expect(error.code).toBe('VALIDATION_ERROR');
+      expect(error.fieldErrors['birthDate']).toBeDefined();
+    });
+
+    it('refuse une date de naissance mal formée', async () => {
+      const error = await expectFailure(
+        firstValueFrom(service.updateMe({ birthDate: '14/05/1996' })),
+      );
+
+      expect(error.fieldErrors['birthDate']).toBeDefined();
     });
 
     it('refuse un corps vide (minProperties du contrat)', async () => {

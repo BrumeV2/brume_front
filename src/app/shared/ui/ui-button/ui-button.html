@@ -1,0 +1,12 @@
+<button
+  class="bouton"
+  [type]="type()"
+  [disabled]="disabled() || occupe()"
+  [attr.aria-busy]="occupe() ? 'true' : null"
+  (click)="presse.emit()"
+>
+  <span class="bouton__libelle">{{ occupe() ? 'Enregistrement…' : libelle() }}</span>
+  @if (fleche() && !occupe()) {
+    <span class="bouton__fleche" aria-hidden="true">→</span>
+  }
+</button>

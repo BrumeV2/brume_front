@@ -1,0 +1,23 @@
+:host {
+  display: inline-flex;
+}
+
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--hauteur-pastille);
+  padding-inline: 1.125rem;
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-encre);
+  white-space: nowrap;
+}
+
+:host(.est-actif) .pastille {
+  border-color: var(--couleur-encre);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+}

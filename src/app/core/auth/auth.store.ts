@@ -1,7 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 
 import { toApiError, type ApiError } from '../api/api-error';
-import type { User } from '../api/api.types';
+import type { UserProfile } from '../api/api.types';
 import { UsersService } from '../api/users.service';
 
 /** État du chargement du profil courant. */
@@ -19,7 +19,7 @@ export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error';
 export class AuthStore {
   private readonly usersService = inject(UsersService);
 
-  private readonly userSignal = signal<User | null>(null);
+  private readonly userSignal = signal<UserProfile | null>(null);
   private readonly statusSignal = signal<AuthStatus>('idle');
   private readonly errorSignal = signal<ApiError | null>(null);
 
@@ -53,7 +53,7 @@ export class AuthStore {
   }
 
   /** Enregistre le profil renvoyé par l'API après une modification réussie. */
-  setUser(user: User): void {
+  setUser(user: UserProfile): void {
     this.userSignal.set(user);
     this.statusSignal.set('ready');
     this.errorSignal.set(null);

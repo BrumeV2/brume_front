@@ -4,7 +4,7 @@ import { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 
-import type { UpdateProfileRequest, User } from './api.types';
+import type { UpdateProfileDraft, UserProfile } from './api.types';
 
 /**
  * Contrat d'accès aux routes `/users/me`.
@@ -16,16 +16,19 @@ import type { UpdateProfileRequest, User } from './api.types';
 @Injectable()
 export abstract class UsersService {
   /** `GET /users/me` — profil du client connecté (US-047). */
-  abstract getMe(): Observable<User>;
+  abstract getMe(): Observable<UserProfile>;
 
   /**
    * `PATCH /users/me` — modification du profil (US-047).
    *
-   * Seuls `firstName`, `lastName` et `phone` sont modifiables : l'email et le rôle
-   * n'existent pas dans `UpdateProfileRequest`. Le corps doit porter au moins un
-   * champ (`minProperties: 1` dans le contrat).
+   * L'email et le rôle ne sont jamais modifiables : ils n'existent pas dans
+   * `UpdateProfileRequest`. Le corps doit porter au moins un champ
+   * (`minProperties: 1` dans le contrat).
+   *
+   * `birthDate` n'est pas encore au contrat : voir la note « HORS CONTRAT »
+   * dans `api.types.ts`.
    */
-  abstract updateMe(payload: UpdateProfileRequest): Observable<User>;
+  abstract updateMe(payload: UpdateProfileDraft): Observable<UserProfile>;
 }
 
 /** Implémentation réelle, utilisée dès que le back est disponible. */
@@ -34,11 +37,11 @@ export class UsersHttpService extends UsersService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiBaseUrl}/users/me`;
 
-  override getMe(): Observable<User> {
-    return this.http.get<User>(this.baseUrl);
+  override getMe(): Observable<UserProfile> {
+    return this.http.get<UserProfile>(this.baseUrl);
   }
 
-  override updateMe(payload: UpdateProfileRequest): Observable<User> {
-    return this.http.patch<User>(this.baseUrl, payload);
+  override updateMe(payload: UpdateProfileDraft): Observable<UserProfile> {
+    return this.http.patch<UserProfile>(this.baseUrl, payload);
   }
 }

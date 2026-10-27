@@ -2,7 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
 import { BROWSER_STORAGE } from '../../storage/browser-storage';
-import type { UpdateProfileRequest, User } from '../api.types';
+import type { UpdateProfileDraft, UserProfile } from '../api.types';
 import { EDITABLE_PROFILE_FIELDS, PROFILE_RULES } from '../profile-rules';
 import { UsersService } from '../users.service';
 
@@ -40,7 +40,7 @@ interface ValidationDetail {
 export class UsersMockService extends UsersService {
   private readonly storage = inject(BROWSER_STORAGE);
 
-  override getMe(): Observable<User> {
+  override getMe(): Observable<UserProfile> {
     const user = this.readUsers().find((candidate) => candidate.id === CURRENT_USER_ID);
 
     if (user === undefined) {
@@ -56,7 +56,7 @@ export class UsersMockService extends UsersService {
     return mockOk(user);
   }
 
-  override updateMe(payload: UpdateProfileRequest): Observable<User> {
+  override updateMe(payload: UpdateProfileDraft): Observable<UserProfile> {
     const users = this.readUsers();
     const index = users.findIndex((candidate) => candidate.id === CURRENT_USER_ID);
 
@@ -77,11 +77,14 @@ export class UsersMockService extends UsersService {
     }
 
     const current = users[index];
-    const updated: User = {
+    const updated: UserProfile = {
       ...current,
       ...(payload.firstName === undefined ? {} : { firstName: payload.firstName.trim() }),
       ...(payload.lastName === undefined ? {} : { lastName: payload.lastName.trim() }),
-      ...(payload.phone === undefined ? {} : { phone: normalizePhone(payload.phone) }),
+      ...(payload.phone === undefined ? {} : { phone: normalizeOptional(payload.phone) }),
+      ...(payload.birthDate === undefined
+        ? {}
+        : { birthDate: normalizeOptional(payload.birthDate) }),
     };
 
     const next = [...users];
@@ -91,13 +94,13 @@ export class UsersMockService extends UsersService {
     return mockOk(updated);
   }
 
-  private readUsers(): User[] {
+  private readUsers(): UserProfile[] {
     try {
       const raw = this.storage.getItem(STORAGE_KEY);
       if (raw !== null) {
         const parsed: unknown = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          return parsed as User[];
+          return parsed as UserProfile[];
         }
       }
     } catch {
@@ -106,7 +109,7 @@ export class UsersMockService extends UsersService {
     return mockUsers.map((user) => ({ ...user }));
   }
 
-  private writeUsers(users: readonly User[]): void {
+  private writeUsers(users: readonly UserProfile[]): void {
     try {
       this.storage.setItem(STORAGE_KEY, JSON.stringify(users));
     } catch {
@@ -115,13 +118,14 @@ export class UsersMockService extends UsersService {
   }
 }
 
-function normalizePhone(phone: string | null): string | null {
-  const trimmed = phone?.trim() ?? '';
-  return trimmed === '' ? null : trimmed;
+/** Un champ facultatif effacé par l'utilisateur vaut `null`, pas une chaîne vide. */
+function normalizeOptional(valeur: string | null): string | null {
+  const nettoye = valeur?.trim() ?? '';
+  return nettoye === '' ? null : nettoye;
 }
 
 /** Reproduit la validation du `ValidationPipe` du back, dans le format `details` du contrat. */
-function validate(payload: UpdateProfileRequest): ValidationDetail[] {
+function validate(payload: UpdateProfileDraft): ValidationDetail[] {
   const details: ValidationDetail[] = [];
   const received = payload as Record<string, unknown>;
   const keys = Object.keys(received);
@@ -170,6 +174,23 @@ function validate(payload: UpdateProfileRequest): ValidationDetail[] {
         field: 'phone',
         constraints: ['phone must match /^0[1-9]\\d{8}$/ regular expression'],
       });
+    }
+  }
+
+  const birthDate = received['birthDate'];
+  if (birthDate !== undefined && birthDate !== null && birthDate !== '') {
+    if (typeof birthDate !== 'string' || !PROFILE_RULES.birthDate.pattern.test(birthDate)) {
+      details.push({
+        field: 'birthDate',
+        constraints: ['birthDate must be a valid ISO 8601 date'],
+      });
+    } else {
+      const date = new Date(`${birthDate}T00:00:00.000Z`);
+      if (Number.isNaN(date.getTime())) {
+        details.push({ field: 'birthDate', constraints: ['birthDate must be a valid date'] });
+      } else if (date.getTime() > Date.now()) {
+        details.push({ field: 'birthDate', constraints: ['birthDate must not be in the future'] });
+      }
     }
   }
 

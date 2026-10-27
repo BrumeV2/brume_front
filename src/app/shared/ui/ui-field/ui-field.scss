@@ -1,0 +1,54 @@
+@use '../../../../styles/mixins' as m;
+
+.champ {
+  display: flex;
+  flex: 1 0 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.champ__libelle {
+  @include m.surtitre;
+}
+
+.champ__obligatoire {
+  margin-left: 0.125rem;
+  color: var(--couleur-accent);
+}
+
+.champ__saisie {
+  height: var(--hauteur-saisie);
+  padding-inline: 0.875rem;
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-saisie);
+  background-color: var(--couleur-blanc);
+  color: var(--couleur-encre);
+  font-size: var(--texte-taille);
+  line-height: var(--texte-interligne);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.champ__saisie:hover {
+  border-color: var(--couleur-texte-doux-sombre);
+}
+
+.champ--en-erreur .champ__saisie {
+  border-color: var(--couleur-erreur);
+}
+
+.champ__aide,
+.champ__erreur {
+  font-size: var(--texte-aide-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.champ__aide {
+  color: var(--couleur-texte-doux);
+}
+
+.champ__erreur {
+  color: var(--couleur-erreur);
+}
