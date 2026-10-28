@@ -225,13 +225,13 @@ Le back n'est pas prêt : on développe sur des mocks. L'objectif est que **le p
 
 ### Le mécanisme
 
-Chaque ressource a une **interface**, une implémentation HTTP et une implémentation simulée. Le choix se fait une seule fois, dans `app.config.ts`.
+Chaque ressource a une **classe abstraite** qui tient lieu de contrat, une implémentation HTTP et une implémentation simulée. Le choix se fait une seule fois, dans `app.config.ts`.
 
 ```
 core/api/
-├── products.service.ts            # interface + implémentation HTTP réelle
+├── products.service.ts            # classe abstraite (le contrat) + ProductsHttpService
 └── mocks/
-    ├── products.mock.service.ts   # même interface, données en mémoire
+    ├── products.mock.service.ts   # ProductsMockService, mêmes signatures, données en mémoire
     ├── fixtures/
     │   ├── products.fixture.ts    # dérivé de seed.json du back
     │   └── categories.fixture.ts
@@ -239,14 +239,32 @@ core/api/
 ```
 
 ```ts
+// products.service.ts
+@Injectable()
+export abstract class ProductsService {
+  abstract list(query: ProductQuery): Observable<Page<Product>>;
+}
+
+@Injectable()
+export class ProductsHttpService extends ProductsService {
+  /* appels HTTP réels */
+}
+```
+
+```ts
 // app.config.ts
 providers: [
   provideHttpClient(withFetch(), withInterceptors([authInterceptor, errorInterceptor])),
-  environment.useMocks
-    ? { provide: ProductsService, useClass: ProductsMockService }
-    : ProductsService,
+  // Le jeton d'injection est la classe abstraite : aucun composant ne sait
+  // laquelle des deux implémentations il reçoit.
+  {
+    provide: ProductsService,
+    useClass: environment.useMocks ? ProductsMockService : ProductsHttpService,
+  },
 ],
 ```
+
+La classe abstraite n'est pas qu'une convention : le compilateur refuse une implémentation simulée qui s'écarterait des signatures réelles.
 
 ### Les règles qui rendent le remplacement indolore
 
