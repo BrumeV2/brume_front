@@ -15,6 +15,22 @@ npm start
 
 Application accessible sur http://localhost:4200/.
 
+## Connexion Google (OAuth)
+
+Le parcours OAuth est entièrement géré par l'API (`brume_back`, `docs/AUTH.md`) : le bouton
+Google navigue vers `/api/auth/google`, l'API pose un cookie HttpOnly `brume_session` puis
+redirige vers `/compte`. Le front ne manipule aucun jeton.
+
+L'URL de l'API est dans `src/environments/` (`localhost:3000` en développement). Dans le `.env`
+de l'API, en local :
+
+```
+CORS_ORIGIN=http://localhost:4200
+AUTH_SUCCESS_URL=http://localhost:4200/compte
+```
+
+Pages : `/connexion`, `/inscription` (réservées aux visiteurs), `/compte` (réservée aux clients).
+
 ## Vérifications
 
 ```bash

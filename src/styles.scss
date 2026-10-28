@@ -1,1 +1,123 @@
-/* You can add global styles to this file, and also import other style files */
+// Fondations Brume — tokens et styles de texte repris de la maquette Figma
+// (page « Fondations »). Les noms suivent ceux des variables Figma.
+
+:root {
+  --encre: #151515;
+  --fond: #f4f1eb;
+  --filet: #e0dbd2;
+  --blanc: #ffffff;
+  --texte-doux: #77716a;
+  --texte-doux-sombre: #a9a39a;
+  --accent: #6e7a55;
+  --accent-clair: #b9bfa6;
+
+  --police-texte: 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --police-titre: 'Bricolage Grotesque', var(--police-texte);
+
+  --rayon-pilule: 999px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+}
+
+body {
+  background: var(--fond);
+  color: var(--encre);
+  font-family: var(--police-texte);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+p,
+h1,
+h2 {
+  margin: 0;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.visuellement-masque {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+// ── Styles de texte ──────────────────────────────────────────────
+
+.surtitre {
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+// Titre/L (ordinateur, 96 px) et Mobile/Titre L (44 px).
+.titre-l {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  font-size: 44px;
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+
+  @media (min-width: 1024px) {
+    font-size: clamp(64px, 6.67vw, 96px);
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+  }
+
+  span {
+    display: block;
+  }
+}
+
+.texte-chapo {
+  font-size: 16px;
+  font-weight: 300;
+  line-height: 1.7;
+}
+
+.texte-courant {
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.texte-petit {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.texte-mention {
+  font-size: 11.5px;
+  line-height: 1.55;
+}
