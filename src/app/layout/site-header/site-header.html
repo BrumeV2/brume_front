@@ -1,0 +1,76 @@
+<a class="evitement" href="#contenu">Aller au contenu</a>
+
+<header class="menu">
+  <nav class="menu__univers" aria-label="Univers de la boutique">
+    @for (entree of univers; track entree.libelle) {
+      <a
+        class="menu__lien"
+        [routerLink]="entree.lien"
+        [queryParams]="entree.params"
+        routerLinkActive="est-actif"
+        [routerLinkActiveOptions]="correspondanceUnivers"
+        ariaCurrentWhenActive="page"
+        >{{ entree.libelle }}</a
+      >
+    }
+  </nav>
+
+  <a class="menu__logo" routerLink="/" aria-label="Brume, accueil">BRUME</a>
+
+  <div class="menu__actions">
+    <ng-content select="[menu-actions]" />
+    <a
+      class="menu__lien menu__compte"
+      [routerLink]="compte.lien"
+      routerLinkActive="est-actif"
+      ariaCurrentWhenActive="page"
+      >{{ compte.libelle }}</a
+    >
+    <button
+      class="menu__ouvrir"
+      type="button"
+      aria-haspopup="dialog"
+      aria-controls="menu-mobile"
+      (click)="ouvrirMenu()"
+    >
+      Menu
+    </button>
+  </div>
+</header>
+
+<dialog #panneau id="menu-mobile" class="panneau" aria-label="Menu">
+  <div class="panneau__haut">
+    <a class="menu__logo" routerLink="/" aria-label="Brume, accueil">BRUME</a>
+    <button class="panneau__fermer" type="button" (click)="fermerMenu()">Fermer</button>
+  </div>
+  <nav aria-label="Navigation principale">
+    <ul class="panneau__liens">
+      <li>
+        <a
+          routerLink="/"
+          routerLinkActive="est-actif"
+          [routerLinkActiveOptions]="{ exact: true }"
+          ariaCurrentWhenActive="page"
+          >Accueil</a
+        >
+      </li>
+      @for (entree of univers; track entree.libelle) {
+        <li>
+          <a
+            [routerLink]="entree.lien"
+            [queryParams]="entree.params"
+            routerLinkActive="est-actif"
+            [routerLinkActiveOptions]="correspondanceUnivers"
+            ariaCurrentWhenActive="page"
+            >{{ entree.libelle }}</a
+          >
+        </li>
+      }
+      <li>
+        <a [routerLink]="compte.lien" routerLinkActive="est-actif" ariaCurrentWhenActive="page">{{
+          compte.libelle
+        }}</a>
+      </li>
+    </ul>
+  </nav>
+</dialog>

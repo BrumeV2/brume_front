@@ -169,6 +169,8 @@ export const routes: Routes = [
 
 - **Les chemins d'URL sont en français** (`/boutique`, `/panier`, `/commande/:id`), les noms de fichiers et de symboles en anglais.
 - Chaque route porte un `title`, repris par Angular dans l'onglet du navigateur.
+- Le cadre commun (`App` : `layout/site-header`, contenu, `layout/site-footer`) lit les `data` de la route : `menu: 'transparent'` quand la page commence par une photo ou un bandeau sombre (le menu fixe se pose dessus et devient plein au défilement), `piedDePage: false` pour les écrans pleins (connexion, inscription). Sans `menu: 'transparent'`, le contenu est décalé de `--hauteur-menu`.
+- Les entrées du menu et du pied de page sont déclarées dans `layout/navigation.ts`. Une entrée sans `lien` est une fonction pas encore livrée : jamais rendue en lien.
 - Les paramètres d'URL se lisent par **signal d'entrée** (`withComponentInputBinding()`), pas par un abonnement à `ActivatedRoute`.
 - Les filtres du catalogue (`q`, `category`, `sort`, `page`) vivent dans les **paramètres de requête**, pour qu'une recherche soit partageable et que le retour arrière fonctionne.
 

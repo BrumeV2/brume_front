@@ -1,6 +1,6 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
-import { provideRouter, withComponentInputBinding } from '@angular/router';
+import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
 import { SessionHttpService, SessionService } from './core/api/session.service';
 import { SessionMockService } from './core/api/mocks/session.mock.service';
@@ -13,7 +13,12 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
-    provideRouter(routes, withComponentInputBinding()),
+    provideRouter(
+      routes,
+      withComponentInputBinding(),
+      // Chaque nouvelle page s'ouvre en haut ; le retour arrière retrouve la position.
+      withInMemoryScrolling({ scrollPositionRestoration: 'enabled', anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withFetch(), withInterceptors([credentialsInterceptor])),
     // Le choix entre données simulées et vraie API se fait ici, une seule fois.
     // Aucun composant ne sait laquelle des deux il reçoit.

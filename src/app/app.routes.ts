@@ -9,22 +9,27 @@ export const routes: Routes = [
     path: 'connexion',
     title: 'Connexion — Brume',
     canActivate: [guestGuard],
+    data: { menu: 'transparent', piedDePage: false },
     loadComponent: () => import('./features/auth/connexion/connexion').then((m) => m.Connexion),
   },
   {
     path: 'inscription',
     title: 'Inscription — Brume',
     canActivate: [guestGuard],
+    data: { piedDePage: false },
     loadComponent: () =>
       import('./features/auth/inscription/inscription').then((m) => m.Inscription),
   },
   {
     path: 'compte',
+    // Bandeau sombre en haut de chaque page du compte : le menu se pose dessus.
+    data: { menu: 'transparent' },
     loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
   },
   // Toujours en dernier : une route placée après ce joker serait inatteignable.
-  // Cible `connexion` et non `''` : Angular n'enchaîne pas la redirection du
-  // joker avec celle de la route vide, et l'URL inconnue resterait sur une page
-  // blanche (vérifié dans le navigateur).
-  { path: '**', redirectTo: 'connexion' },
+  {
+    path: '**',
+    title: 'Page introuvable — Brume',
+    loadComponent: () => import('./features/not-found/not-found').then((m) => m.NotFound),
+  },
 ];

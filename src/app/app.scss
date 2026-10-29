@@ -1,0 +1,9 @@
+/* Le focus y est posé après chaque navigation : pas de cadre visible pour autant. */
+.contenu:focus {
+  outline: none;
+}
+
+/* Le menu est fixe : sans photo en haut de page, le contenu se décale de sa hauteur. */
+.sous-le-menu {
+  padding-top: var(--hauteur-menu);
+}

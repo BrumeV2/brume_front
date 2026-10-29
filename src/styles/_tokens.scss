@@ -111,6 +111,8 @@
   --hauteur-saisie: 48px;
   --hauteur-bouton: 52px;
   --hauteur-pastille: 40px;
+  /* Menu fixe en haut : les pages sans photo en haut se décalent d'autant. */
+  --hauteur-menu: 64px;
 
   /* ── Mise en page ─────────────────────────────────────────── */
   --largeur-contenu: 1296px;

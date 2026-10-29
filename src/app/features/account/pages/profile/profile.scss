@@ -16,10 +16,11 @@
 .bandeau__contenu {
   max-width: var(--largeur-contenu);
   margin-inline: auto;
-  padding: var(--espace-8) var(--espace-5) var(--espace-10);
+  // Le menu transparent se pose sur le bandeau : on garde sa hauteur libre.
+  padding: calc(var(--hauteur-menu) + var(--espace-8)) var(--espace-5) var(--espace-10);
 
   @include m.a-partir-de-ordinateur {
-    padding: var(--espace-10) 0;
+    padding: calc(var(--hauteur-menu) + var(--espace-10)) 0 var(--espace-10);
     padding-inline: var(--espace-18);
     max-width: calc(var(--largeur-contenu) + 2 * var(--espace-18));
   }
