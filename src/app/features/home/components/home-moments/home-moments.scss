@@ -1,0 +1,120 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.moments {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--couleur-filet);
+  list-style: none;
+
+  @include m.a-partir-de-ordinateur {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.moment {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-right: 1px solid var(--couleur-filet);
+  border-bottom: 1px solid var(--couleur-filet);
+  transition: color 0.6s var(--courbe-brume);
+
+  &:nth-child(2n) {
+    border-right: 0;
+  }
+
+  @include m.a-partir-de-ordinateur {
+    border-bottom: 0;
+
+    &:nth-child(2n) {
+      border-right: 1px solid var(--couleur-filet);
+    }
+
+    &:last-child {
+      border-right: 0;
+    }
+  }
+
+  /* L'encre monte depuis le bas au survol. */
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--couleur-encre);
+    transform: scaleY(0);
+    transform-origin: bottom;
+    transition: transform 0.7s var(--courbe-brume);
+  }
+
+  &:hover {
+    color: var(--couleur-fond);
+
+    &::before {
+      transform: none;
+    }
+
+    .moment__legende {
+      color: var(--couleur-texte-doux-sombre);
+    }
+  }
+}
+
+.moment__lien {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-3);
+  height: 100%;
+  min-height: 15rem;
+  padding: var(--espace-6) var(--espace-4) var(--espace-8);
+
+  @include m.a-partir-de-ordinateur {
+    min-height: 21rem;
+    padding: 2.25rem 1.75rem 2.5rem;
+  }
+
+  &:focus-visible {
+    outline-offset: -4px;
+  }
+}
+
+.moment:focus-within {
+  color: var(--couleur-fond);
+
+  &::before {
+    transform: none;
+  }
+}
+
+.moment__heure,
+.moment__produit {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+}
+
+.moment__heure {
+  margin-bottom: auto;
+  font-size: clamp(3.5rem, 7vw, var(--titre-l-taille));
+  line-height: 0.8;
+  letter-spacing: var(--titre-l-interlettre);
+}
+
+.moment__produit {
+  font-size: var(--titre-carte-taille);
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: var(--titre-carte-interlettre);
+}
+
+.moment__legende {
+  font-size: var(--texte-petit-taille);
+  color: var(--couleur-texte-doux);
+}

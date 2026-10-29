@@ -1,0 +1,10 @@
+@if (photo(); as src) {
+  <div class="etape__photo">
+    <img [src]="src" alt="" loading="lazy" />
+  </div>
+}
+<p class="etape__numero" aria-hidden="true">{{ numero() }}</p>
+<h3 class="etape__titre">
+  <span class="visuellement-masque">Étape {{ numero() }} : </span>{{ titre() }}
+</h3>
+<p class="etape__texte">{{ texte() }}</p>

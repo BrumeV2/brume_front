@@ -1,0 +1,23 @@
+<span
+  class="masque-volet"
+  [style.transform]="transformVolet()"
+  (pointerenter)="entrer($event)"
+  (pointerleave)="sortir($event)"
+>
+  <span class="contenu" [style.transform]="transformContenu()">
+    <span class="photo"></span>
+    <span class="voile"></span>
+    <span class="assombri"></span>
+    <span class="texte">
+      @if (side() === 'the') {
+        <span class="surtitre">25 thés · Japon, Chine, Inde</span>
+        <span class="mot">Thé</span>
+        <span class="action">Entrer côté thé <span aria-hidden="true">→</span></span>
+      } @else {
+        <span class="surtitre">8 cafés · torréfiés à Paris</span>
+        <span class="mot">Café</span>
+        <span class="action">Entrer côté café <span aria-hidden="true">→</span></span>
+      }
+    </span>
+  </span>
+</span>

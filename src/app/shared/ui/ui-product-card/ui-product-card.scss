@@ -1,0 +1,90 @@
+:host {
+  display: block;
+}
+
+.carte {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  color: var(--couleur-encre);
+}
+
+.carte__photo {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background-color: var(--couleur-photo);
+
+  /* Animation de la maquette HTML : photo un peu éteinte et légèrement agrandie,
+     qui se rapproche et reprend ses couleurs au survol de la carte. */
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: saturate(0.75);
+    transform: scale(1.02);
+    transition:
+      transform 1.4s var(--courbe-brume),
+      filter 0.9s var(--courbe-brume);
+  }
+}
+
+.carte:hover .carte__photo img {
+  filter: saturate(1);
+  transform: scale(1.08);
+}
+
+.carte--lien:focus-visible {
+  outline-offset: 6px;
+}
+
+.carte__badge {
+  position: absolute;
+  top: 0.875rem;
+  left: 0.875rem;
+  padding: 0.375rem 0.625rem;
+  background-color: var(--couleur-papier);
+  font-size: 0.625rem; /* 10px */
+  font-weight: 500;
+  line-height: var(--surtitre-interligne);
+  letter-spacing: var(--surtitre-interlettre);
+  text-transform: uppercase;
+}
+
+.carte__entete,
+.carte__notes {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espace-3);
+}
+
+.carte__nom {
+  font-size: var(--titre-carte-taille);
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: var(--titre-carte-interlettre);
+}
+
+.carte__prix {
+  flex-shrink: 0;
+  font-size: var(--texte-taille);
+  line-height: var(--texte-interligne);
+}
+
+.carte__origine {
+  font-size: var(--surtitre-taille);
+  font-weight: 500;
+  line-height: var(--surtitre-interligne);
+  letter-spacing: var(--surtitre-interlettre);
+  text-transform: uppercase;
+  color: var(--couleur-texte-doux);
+}
+
+.carte__notes {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}
+
+.carte__moment {
+  flex-shrink: 0;
+}

@@ -1,0 +1,10 @@
+<div class="interrupteur" role="group" aria-label="Je préfère">
+  <button type="button" [attr.aria-pressed]="side() === 'the'" (click)="basculer('the')">
+    Thé
+  </button>
+  <button type="button" [attr.aria-pressed]="side() === 'cafe'" (click)="basculer('cafe')">
+    Café
+  </button>
+</div>
+
+<p class="message" [class.est-visible]="message() !== ''" role="status">{{ message() }}</p>

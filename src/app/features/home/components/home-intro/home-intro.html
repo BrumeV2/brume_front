@@ -1,0 +1,39 @@
+<dialog
+  #dialog
+  class="intro"
+  [class.a-choisi]="choisi() !== null"
+  [class.en-balayage]="balayage()"
+  [style.--duree]="duree()"
+  [style.--courbe]="courbe()"
+  aria-label="Bienvenue chez Brume : plutôt thé ou plutôt café ?"
+  (cancel)="passer($event)"
+>
+  <div class="intro__marque" aria-hidden="true"><span class="intro__grand">BRUME</span></div>
+
+  <div class="intro__volets">
+    @for (side of cotes; track side) {
+      <button
+        app-intro-panel
+        [side]="side"
+        [transformVolet]="volets()[side].volet"
+        [transformContenu]="volets()[side].contenu"
+        [devant]="choisi() === side"
+        [chaud]="survol() === side"
+        [froid]="survol() !== null && survol() !== side"
+        [choixFait]="choisi() !== null"
+        [balayage]="balayage()"
+        (survol)="survoler($event)"
+        (click)="choisir(side)"
+        (focus)="survoler(side)"
+        (blur)="survoler(null)"
+      ></button>
+    }
+  </div>
+
+  <div class="intro__haut" aria-hidden="true"><span class="intro__logo">BRUME</span></div>
+  <div class="intro__bas">
+    <span>Thé · Café · Thés au CBD</span>
+    <button type="button" class="intro__passer" (click)="passer()">Passer l'intro</button>
+    <span>Paris 16<sup>e</sup></span>
+  </div>
+</dialog>
