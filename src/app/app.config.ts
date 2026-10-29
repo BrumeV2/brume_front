@@ -2,6 +2,8 @@ import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter, withComponentInputBinding, withInMemoryScrolling } from '@angular/router';
 
+import { HomeService } from './core/api/home.service';
+import { HomeMockService } from './core/api/mocks/home.mock.service';
 import { SessionHttpService, SessionService } from './core/api/session.service';
 import { SessionMockService } from './core/api/mocks/session.mock.service';
 import { UsersHttpService, UsersService } from './core/api/users.service';
@@ -26,6 +28,8 @@ export const appConfig: ApplicationConfig = {
       provide: UsersService,
       useClass: environment.useMocks ? UsersMockService : UsersHttpService,
     },
+    // Pas encore de route au contrat pour la vitrine de l'accueil : simulée dans tous les cas.
+    { provide: HomeService, useClass: HomeMockService },
     {
       provide: SessionService,
       useClass: environment.useMocks ? SessionMockService : SessionHttpService,

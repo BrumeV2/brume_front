@@ -1,0 +1,74 @@
+<section
+  class="haut"
+  aria-labelledby="titre-accueil"
+  (mousemove)="suivreCurseur($event)"
+  (mouseleave)="curseur.set(null)"
+  (click)="cliquer($event)"
+>
+  <div class="haut__fond" [style.transform]="'translate3d(0,' + decalage() + 'px,0)'">
+    <img
+      class="haut__photo"
+      [src]="variante().photo ?? 'images/accueil/haut-de-page.jpg'"
+      alt=""
+      fetchpriority="high"
+    />
+    @if (avecVideo()) {
+      <video
+        #video
+        class="haut__video"
+        [class.est-prete]="videoPrete()"
+        muted
+        loop
+        playsinline
+        preload="metadata"
+        aria-hidden="true"
+        poster="images/accueil/haut-de-page.jpg"
+        (canplay)="videoPrete.set(true)"
+      >
+        <source src="images/accueil/haut-de-page.mp4" type="video/mp4" />
+      </video>
+    }
+  </div>
+  <div class="haut__voile"></div>
+
+  @if (avecVideo()) {
+    <button
+      class="haut__pause"
+      type="button"
+      [attr.aria-label]="enPause() ? 'Lire la vidéo' : 'Mettre la vidéo en pause'"
+      [attr.aria-pressed]="enPause()"
+      (click)="basculerVideo()"
+    >
+      <span aria-hidden="true">{{ enPause() ? '▶' : '❚❚' }}</span>
+    </button>
+  }
+
+  <div class="haut__contenu">
+    <div class="haut__titres">
+      <p class="surtitre haut__apparition">{{ variante().surtitre }}</p>
+      <h1 id="titre-accueil" class="titre-xl haut__titre">
+        <span class="ligne"><span>Infuser,</span></span>
+        <span class="ligne"><span>lentement.</span></span>
+      </h1>
+    </div>
+    <div class="haut__apparition">
+      <app-ui-button
+        variante="clair"
+        [fleche]="true"
+        [libelle]="variante().boutique.libelle"
+        lien="/boutique"
+        [params]="variante().boutique.params"
+      />
+    </div>
+  </div>
+
+  @if (curseur(); as position) {
+    <span
+      class="haut__curseur"
+      aria-hidden="true"
+      [style.left.px]="position.x"
+      [style.top.px]="position.y"
+      >Découvrir</span
+    >
+  }
+</section>

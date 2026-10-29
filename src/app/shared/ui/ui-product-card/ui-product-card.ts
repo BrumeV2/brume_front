@@ -1,6 +1,6 @@
 import { NgTemplateOutlet } from '@angular/common';
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 
 import { PricePipe } from '../../pipes/price-pipe';
 
@@ -31,4 +31,6 @@ export class UiProductCard {
   /** Pastille en haut à gauche de la photo, ex. « Préféré ». */
   readonly badge = input<string | null>(null);
   readonly lien = input<string | null>(null);
+  /** Paramètres d'URL du lien, ex. `{ q: 'Matcha cérémonie' }`. */
+  readonly params = input<Params | null>(null);
 }

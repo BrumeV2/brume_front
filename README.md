@@ -57,7 +57,7 @@ Ce dépôt ne contient **que le front**. L'API est dans [`brume_back`](https://g
 | [`docs/DECISIONS.md`](https://github.com/BrumeV2/brume_back/blob/develop/docs/DECISIONS.md)                   | Décisions produit (TVA, livraison, statuts…)                           |
 | [`docs/contract/seed.json`](https://github.com/BrumeV2/brume_back/blob/develop/docs/contract/seed.json)       | Jeu de données de référence, utilisé pour nos fixtures et nos mocks    |
 
-L'architecture détaillée du front est dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+L'architecture détaillée du front est dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Les tokens et les composants communs sont décrits dans [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
 
 ---
 

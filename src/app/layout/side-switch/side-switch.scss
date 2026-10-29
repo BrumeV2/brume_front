@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+/* Couleurs héritées du menu : blanc sur photo, encre sur fond clair. */
+.interrupteur {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid currentColor;
+  border-radius: var(--rayon-pilule);
+
+  button {
+    padding: 0.3125rem 0.75rem;
+    border: 0;
+    border-radius: var(--rayon-pilule);
+    background: none;
+    font-size: 0.75rem;
+    line-height: var(--texte-petit-interligne);
+    cursor: pointer;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
+  }
+
+  /* Fond = couleur du texte du menu (variable du menu, pas `currentColor`, qui
+     vaudrait la couleur du bouton lui-même) ; texte = couleur derrière le menu. */
+  [aria-pressed='true'] {
+    background-color: var(--menu-texte, var(--couleur-encre));
+    color: var(--couleur-encre);
+  }
+}
+
+:host-context(.est-plein) .interrupteur [aria-pressed='true'] {
+  color: var(--couleur-fond);
+}
+
+/* Toast de confirmation, en bas de l'écran. */
+.message {
+  position: fixed;
+  left: 50%;
+  bottom: var(--espace-6);
+  z-index: 30;
+  padding: var(--espace-3) var(--espace-5);
+  border-radius: var(--rayon-pilule);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+  font-size: var(--texte-petit-taille);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 12px);
+  transition:
+    opacity 0.4s var(--courbe-brume),
+    transform 0.4s var(--courbe-brume);
+
+  &.est-visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}

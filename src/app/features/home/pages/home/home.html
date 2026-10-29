@@ -1,0 +1,212 @@
+@if (introVisible()) {
+  <app-home-intro />
+}
+
+<app-home-hero [side]="side()" [actif]="!introVisible()" (decouvrir)="descendre()" />
+<app-home-ticker />
+
+<section class="section section--univers" aria-label="Nos univers">
+  <app-home-universes [side]="side()" />
+</section>
+
+<!-- Côté café, la section café remonte juste sous les univers. -->
+@if (side() === 'cafe') {
+  <ng-container *ngTemplateOutlet="cafe" />
+}
+
+<section class="section" aria-labelledby="titre-maniere">
+  <app-home-feature>
+    <p class="surtitre doux" appReveal>Notre manière</p>
+    <h2 id="titre-maniere" class="titre-l" appReveal data-delai="1">
+      <span>Peu de choses.</span>
+      <span class="accent">Les bonnes.</span>
+    </h2>
+    <p class="texte-intro colonne" appReveal data-delai="2">
+      Vingt-cinq thés, huit cafés torréfiés à Paris et quelques thés au chanvre. Chaque référence
+      est choisie à la dégustation, chez des producteurs que l'on connaît par leur prénom :
+      Shizuoka, Darjeeling, Huila, Yirgacheffe. Le reste du temps, on infuse.
+    </p>
+    <a class="lien-fleche" routerLink="/boutique" appReveal data-delai="3"
+      >Voir toute la boutique →</a
+    >
+    <div media class="collage">
+      <figure class="masque" appReveal>
+        <img
+          src="images/accueil/maniere-1.jpg"
+          alt="Fouet en bambou et matcha sur une pierre"
+          loading="lazy"
+        />
+      </figure>
+      <figure class="masque" appReveal>
+        <img src="images/accueil/maniere-2.jpg" alt="Café filtre préparé au V60" loading="lazy" />
+      </figure>
+    </div>
+  </app-home-feature>
+</section>
+
+<section #moments id="moments" class="section" aria-labelledby="titre-moments">
+  <div class="entete">
+    <h2 id="titre-moments" class="titre-l" appReveal>
+      <span>Une tasse pour</span>
+      <span>chaque heure.</span>
+    </h2>
+    <p class="doux colonne" appReveal data-delai="1">
+      Thé, café ou chanvre : on range tout par moment de la journée, pas par rayon.
+    </p>
+  </div>
+  @if (showcase(); as s) {
+    <app-home-moments [moments]="s.moments" />
+  } @else if (enErreur()) {
+    <p class="etat" role="alert">
+      Cette sélection n'a pas pu être chargée. Recharge la page pour réessayer.
+    </p>
+  } @else {
+    <p class="etat" role="status">Chargement de la sélection…</p>
+  }
+</section>
+
+<section class="section" aria-labelledby="titre-preferes">
+  <div class="entete entete--ligne">
+    <h2 id="titre-preferes" class="titre-m" appReveal>Les préférés de la maison</h2>
+    <a class="lien-fleche" routerLink="/boutique" appReveal>Toute la boutique →</a>
+  </div>
+  @if (showcase(); as s) {
+    <app-home-favorites [produits]="s.favorites" />
+  } @else if (enErreur()) {
+    <p class="etat" role="alert">
+      Les préférés n'ont pas pu être chargés. Recharge la page pour réessayer.
+    </p>
+  } @else {
+    <p class="etat" role="status">Chargement des préférés…</p>
+  }
+</section>
+
+@if (side() !== 'cafe') {
+  <ng-container *ngTemplateOutlet="cafe" />
+}
+
+<section class="section" aria-labelledby="titre-teaomatic">
+  <app-home-feature>
+    <p class="surtitre doux" appReveal>Nouveau · TeaOMatic</p>
+    <h2 id="titre-teaomatic" class="titre-l" appReveal data-delai="1">
+      <span>Ton mélange,</span>
+      <span class="accent">ta recette.</span>
+    </h2>
+    <p class="texte-intro colonne" appReveal data-delai="2">
+      Thé ou café : choisis une base, ajoute ce qui te plaît, règle les proportions. On pèse, on
+      mélange à la main et on t'envoie ton mélange, avec ton nom sur la boîte.
+    </p>
+    <app-home-blend-preview media appReveal [side]="side()" />
+  </app-home-feature>
+</section>
+
+<app-home-manifesto />
+
+<section class="section" aria-labelledby="titre-teabox">
+  <app-home-feature [mediaAGauche]="true">
+    <p class="surtitre doux" appReveal>Abonnements · sans engagement</p>
+    <h2 id="titre-teabox" class="titre-l" appReveal data-delai="1">Les TEA-BOX.</h2>
+    <p class="texte-intro colonne" appReveal data-delai="2">
+      Trois thés ou cafés au choix, une carte de préparation et un petit mot de nos voisins
+      artisans. Pause ou résiliation en un clic.
+    </p>
+    <ul class="lignes lignes--box" appReveal data-delai="3">
+      <li>
+        <span class="lignes__nom">Sélection</span><span class="doux">Notre choix, chaque mois</span
+        ><span>29 € / mois</span>
+      </li>
+      <li>
+        <span class="lignes__nom">Custom</span><span class="doux">Tu composes, on t'envoie</span
+        ><span>32 € / mois</span>
+      </li>
+      <li>
+        <span class="lignes__nom">Découverte</span><span class="doux">Une seule fois, à offrir</span
+        ><span>25 €</span>
+      </li>
+      <li>
+        <span class="lignes__nom">Tournoi</span
+        ><span class="doux">Pour la Bataille des Mélanges</span><span>35 €</span>
+      </li>
+    </ul>
+    <span class="mention-bientot">Les TEA-BOX arrivent bientôt</span>
+    <figure media class="masque carre" appReveal>
+      <img
+        src="images/accueil/theiere-et-tasses.jpg"
+        alt="Théière et tasses posées sur une nappe en lin"
+        loading="lazy"
+      />
+    </figure>
+  </app-home-feature>
+</section>
+
+<app-home-battle />
+
+<section class="section" aria-labelledby="titre-avent">
+  <app-home-feature>
+    <p class="surtitre doux" appReveal>Édition limitée · précommande</p>
+    <h2 id="titre-avent" class="titre-l" appReveal data-delai="1">
+      <span>24 thés,</span>
+      <span class="accent">24 matins.</span>
+    </h2>
+    <p class="texte-intro colonne" appReveal data-delai="2">
+      Du 1<sup>er</sup> au 24 décembre, une case par jour et un thé différent derrière chacune.
+      Chaque sachet porte un code qui ouvre en ligne l'histoire du thé.
+    </p>
+    <span class="mention-bientot">Précommande · 49 € · bientôt</span>
+    <app-home-advent media appReveal data-delai="2" />
+  </app-home-feature>
+</section>
+
+<section class="section" aria-labelledby="titre-journal">
+  <div class="entete entete--ligne">
+    <h2 id="titre-journal" class="titre-m" appReveal>Le journal</h2>
+    <span class="mention-bientot">Les articles arrivent bientôt</span>
+  </div>
+  <app-home-journal />
+</section>
+
+<section class="section section--cadeau" aria-labelledby="titre-cadeau">
+  <div class="cadeau" appReveal>
+    <h2 id="titre-cadeau" class="titre-m">
+      Offrir du temps. <span class="cadeau__suite">La carte cadeau, de 20 à 150 €.</span>
+    </h2>
+    <span class="mention-bientot">Bientôt</span>
+  </div>
+</section>
+
+<ng-template #cafe>
+  <section class="section section--papier" aria-labelledby="titre-cafe">
+    <app-home-feature [mediaAGauche]="true">
+      <p class="surtitre doux" appReveal>Le café · torréfié à Paris</p>
+      <h2 id="titre-cafe" class="titre-l" appReveal data-delai="1">
+        <span>Torréfié</span>
+        <span class="accent">le mardi.</span>
+      </h2>
+      <p class="texte-intro colonne" appReveal data-delai="2">
+        Des cafés de spécialité achetés en direct, torréfiés par petits lots chaque mardi et
+        expédiés dans la semaine. En grains ou moulus pour ta méthode.
+      </p>
+      <ul class="lignes lignes--methodes" appReveal data-delai="3">
+        <li><span class="lignes__nom">Espresso</span><span class="doux">Corps, crème</span></li>
+        <li><span class="lignes__nom">Filtre</span><span class="doux">Léger, fruité</span></li>
+        <li><span class="lignes__nom">Moka</span><span class="doux">Corsé</span></li>
+      </ul>
+      <app-ui-button
+        appReveal
+        data-delai="3"
+        variante="contour"
+        libelle="Voir les cafés"
+        [fleche]="true"
+        lien="/boutique"
+        [params]="{ category: 'cafes' }"
+      />
+      <figure media class="masque paysage" appReveal>
+        <img
+          src="images/accueil/torrefacteur.jpg"
+          alt="Grains de café dans le tambour du torréfacteur"
+          loading="lazy"
+        />
+      </figure>
+    </app-home-feature>
+  </section>
+</ng-template>

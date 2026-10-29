@@ -1,0 +1,166 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.section {
+  max-width: calc(var(--largeur-contenu) + 2 * var(--espace-18));
+  margin-inline: auto;
+  padding: var(--espace-18) var(--espace-5);
+
+  @include m.a-partir-de-ordinateur {
+    padding: 8.75rem var(--espace-18);
+  }
+}
+
+.section--univers {
+  padding-bottom: 0;
+
+  @include m.a-partir-de-ordinateur {
+    padding-top: 6.25rem;
+  }
+}
+
+/* Bande papier pleine largeur : le contenu reste centré à l'intérieur. */
+.section--papier {
+  max-width: none;
+  border-block: 1px solid var(--couleur-filet);
+  background-color: var(--couleur-papier);
+
+  app-home-feature {
+    max-width: var(--largeur-contenu);
+    margin-inline: auto;
+  }
+}
+
+.doux {
+  color: var(--couleur-texte-doux);
+}
+
+.accent {
+  color: var(--couleur-accent);
+}
+
+.colonne {
+  max-width: 28rem;
+}
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--espace-6);
+  margin-bottom: 3.5rem;
+}
+
+.entete--ligne {
+  align-items: baseline;
+  margin-bottom: var(--espace-10);
+}
+
+.etat {
+  padding: var(--espace-10) 0;
+  color: var(--couleur-texte-doux);
+}
+
+/* Deux photos décalées de « Notre manière ». */
+.collage {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: end;
+  gap: var(--espace-5);
+
+  figure {
+    margin: 0;
+    aspect-ratio: 3 / 4;
+  }
+
+  figure + figure {
+    aspect-ratio: 3 / 5;
+    margin-bottom: -5rem;
+  }
+}
+
+.masque {
+  margin: 0;
+}
+
+.carre {
+  aspect-ratio: 1;
+}
+
+.paysage {
+  aspect-ratio: 5 / 4;
+}
+
+/* Lignes séparées par un filet : méthodes du café, formules TEA-BOX. */
+.lignes {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--couleur-filet);
+  list-style: none;
+
+  li {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: var(--espace-1) var(--espace-4);
+    align-items: baseline;
+    padding-block: var(--espace-4);
+    border-bottom: 1px solid var(--couleur-filet);
+    font-size: var(--texte-petit-taille);
+  }
+
+  .doux {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+}
+
+.lignes__nom {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-size: 1.375rem;
+  letter-spacing: -0.02em;
+}
+
+@include m.a-partir-de-tablette {
+  .lignes--box li {
+    grid-template-columns: 8rem minmax(0, 1fr) auto;
+
+    .doux {
+      grid-column: auto;
+      grid-row: auto;
+    }
+  }
+
+  .lignes--methodes {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+
+    li {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+}
+
+.cadeau {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-6);
+  padding-block: var(--espace-10);
+  border-block: 1px solid var(--couleur-encre);
+}
+
+.cadeau__suite {
+  color: var(--couleur-texte-doux);
+}
+
+.section--cadeau {
+  padding-top: 0;
+}

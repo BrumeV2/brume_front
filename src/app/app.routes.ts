@@ -3,8 +3,14 @@ import { Routes } from '@angular/router';
 import { guestGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
-  // Pas encore de page d'accueil : la connexion sert d'entrée.
-  { path: '', pathMatch: 'full', redirectTo: 'connexion' },
+  {
+    path: '',
+    pathMatch: 'full',
+    title: 'Brume, thé, café & CBD à Paris',
+    // La vidéo du haut de page passe sous le menu.
+    data: { menu: 'transparent' },
+    loadComponent: () => import('./features/home/pages/home/home').then((m) => m.Home),
+  },
   {
     path: 'connexion',
     title: 'Connexion — Brume',

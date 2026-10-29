@@ -15,6 +15,12 @@ export const BROWSER_STORAGE = new InjectionToken<Storage>('BROWSER_STORAGE', {
   factory: () => localStorage,
 });
 
+/** Même principe pour le stockage de session : oublié à la fermeture de l'onglet. */
+export const SESSION_STORAGE = new InjectionToken<Storage>('SESSION_STORAGE', {
+  providedIn: 'root',
+  factory: () => sessionStorage,
+});
+
 /** Stockage en mémoire, utilisé dans les tests et comme repli. */
 export class InMemoryStorage implements Storage {
   private readonly entries = new Map<string, string>();

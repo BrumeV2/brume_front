@@ -1,0 +1,15 @@
+<ul class="univers" [class.avec-choix]="side() !== null" aria-label="Nos trois univers">
+  @for (u of univers(); track u.id; let i = $index) {
+    <li [class.est-choisi]="u.id === side()" appReveal [attr.data-delai]="i">
+      <a class="univers__carte" routerLink="/boutique" [queryParams]="{ category: u.categorie }">
+        <span class="univers__photo">
+          <img [src]="u.photo" alt="" loading="lazy" />
+        </span>
+        <span class="surtitre univers__chiffre">{{ u.chiffre }}</span>
+        <span class="univers__nom">{{ u.nom }}</span>
+        <span class="univers__texte">{{ u.texte }}</span>
+        <span class="lien-fleche">{{ u.lien }} →</span>
+      </a>
+    </li>
+  }
+</ul>
