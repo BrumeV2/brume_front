@@ -22,15 +22,19 @@
   }
 }
 
-/* Bande papier pleine largeur : le contenu reste centré à l'intérieur. */
-.section--papier {
+/* Bande blanche pleine largeur (« Torréfié le mardi ») : le contenu reste centré à l'intérieur. */
+.section--blanche {
   max-width: none;
-  border-block: 1px solid var(--couleur-filet);
-  background-color: var(--couleur-papier);
+  background-color: var(--couleur-blanc);
 
   app-home-feature {
     max-width: var(--largeur-contenu);
     margin-inline: auto;
+  }
+
+  /* Le rideau qui dévoile la photo prend la couleur du fond de la section. */
+  .masque::after {
+    background-color: var(--couleur-blanc);
   }
 }
 

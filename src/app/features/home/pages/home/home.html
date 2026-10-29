@@ -9,11 +9,6 @@
   <app-home-universes [side]="side()" />
 </section>
 
-<!-- Côté café, la section café remonte juste sous les univers. -->
-@if (side() === 'cafe') {
-  <ng-container *ngTemplateOutlet="cafe" />
-}
-
 <section class="section" aria-labelledby="titre-maniere">
   <app-home-feature>
     <p class="surtitre doux" appReveal>Notre manière</p>
@@ -81,9 +76,40 @@
   }
 </section>
 
-@if (side() !== 'cafe') {
-  <ng-container *ngTemplateOutlet="cafe" />
-}
+<section class="section section--blanche" aria-labelledby="titre-cafe">
+  <app-home-feature [mediaAGauche]="true">
+    <p class="surtitre doux" appReveal>Le café · torréfié à Paris</p>
+    <h2 id="titre-cafe" class="titre-l" appReveal data-delai="1">
+      <span>Torréfié</span>
+      <span class="accent">le mardi.</span>
+    </h2>
+    <p class="texte-intro colonne" appReveal data-delai="2">
+      Des cafés de spécialité achetés en direct, torréfiés par petits lots chaque mardi et expédiés
+      dans la semaine. En grains ou moulus pour ta méthode.
+    </p>
+    <ul class="lignes lignes--methodes" appReveal data-delai="3">
+      <li><span class="lignes__nom">Espresso</span><span class="doux">Corps, crème</span></li>
+      <li><span class="lignes__nom">Filtre</span><span class="doux">Léger, fruité</span></li>
+      <li><span class="lignes__nom">Moka</span><span class="doux">Corsé</span></li>
+    </ul>
+    <app-ui-button
+      appReveal
+      data-delai="3"
+      variante="contour"
+      libelle="Voir les cafés"
+      [fleche]="true"
+      lien="/boutique"
+      [params]="{ category: 'cafes' }"
+    />
+    <figure media class="masque paysage" appReveal>
+      <img
+        src="images/accueil/torrefacteur.jpg"
+        alt="Grains de café dans le tambour du torréfacteur"
+        loading="lazy"
+      />
+    </figure>
+  </app-home-feature>
+</section>
 
 <section class="section" aria-labelledby="titre-teaomatic">
   <app-home-feature>
@@ -173,40 +199,3 @@
     <span class="mention-bientot">Bientôt</span>
   </div>
 </section>
-
-<ng-template #cafe>
-  <section class="section section--papier" aria-labelledby="titre-cafe">
-    <app-home-feature [mediaAGauche]="true">
-      <p class="surtitre doux" appReveal>Le café · torréfié à Paris</p>
-      <h2 id="titre-cafe" class="titre-l" appReveal data-delai="1">
-        <span>Torréfié</span>
-        <span class="accent">le mardi.</span>
-      </h2>
-      <p class="texte-intro colonne" appReveal data-delai="2">
-        Des cafés de spécialité achetés en direct, torréfiés par petits lots chaque mardi et
-        expédiés dans la semaine. En grains ou moulus pour ta méthode.
-      </p>
-      <ul class="lignes lignes--methodes" appReveal data-delai="3">
-        <li><span class="lignes__nom">Espresso</span><span class="doux">Corps, crème</span></li>
-        <li><span class="lignes__nom">Filtre</span><span class="doux">Léger, fruité</span></li>
-        <li><span class="lignes__nom">Moka</span><span class="doux">Corsé</span></li>
-      </ul>
-      <app-ui-button
-        appReveal
-        data-delai="3"
-        variante="contour"
-        libelle="Voir les cafés"
-        [fleche]="true"
-        lien="/boutique"
-        [params]="{ category: 'cafes' }"
-      />
-      <figure media class="masque paysage" appReveal>
-        <img
-          src="images/accueil/torrefacteur.jpg"
-          alt="Grains de café dans le tambour du torréfacteur"
-          loading="lazy"
-        />
-      </figure>
-    </app-home-feature>
-  </section>
-</ng-template>
