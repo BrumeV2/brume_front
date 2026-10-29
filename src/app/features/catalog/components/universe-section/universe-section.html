@@ -1,8 +1,5 @@
 <header class="entete">
-  <h2 class="entete__titre titre-s">
-    {{ section().categorie.name }}
-    <span class="entete__compte">{{ section().total }}</span>
-  </h2>
+  <h2 class="entete__titre titre-s">{{ section().categorie.name }}</h2>
 
   @if (section().categorie.description; as phrase) {
     <p class="entete__phrase">{{ phrase }}</p>

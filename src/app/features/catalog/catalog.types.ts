@@ -33,8 +33,6 @@ export interface CritereActif {
 export interface SectionUnivers {
   readonly categorie: Category;
   readonly produits: readonly CatalogProduct[];
-  /** Nombre total de produits de l'univers, au-delà de ceux montrés. */
-  readonly total: number;
 }
 
 /** Filtres portés par l'URL. `page` et `sort` en font partie. */

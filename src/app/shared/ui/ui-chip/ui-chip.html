@@ -1,1 +1,16 @@
-<span class="pastille">{{ libelle() }}</span>
+<span class="pastille">
+  {{ libelle() }}
+
+  @if (chevron()) {
+    <svg class="chevron" viewBox="0 0 10 6" aria-hidden="true" focusable="false">
+      <path
+        d="M1 1.25 5 5l4-3.75"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.25"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      />
+    </svg>
+  }
+</span>

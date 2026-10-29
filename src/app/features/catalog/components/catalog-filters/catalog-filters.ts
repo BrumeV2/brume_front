@@ -18,8 +18,8 @@ import { FilterMenu } from '../filter-menu/filter-menu';
 
 /**
  * « Barre de filtres (collante sous le menu) » de la maquette : les onglets
- * d'univers avec leurs compteurs, le tri, les pastilles de filtre, et
- * l'indicateur des critères posés.
+ * d'univers, le tri, les pastilles de filtre, et l'indicateur des critères
+ * posés.
  *
  * Présentationnelle : elle reçoit l'état des filtres et annonce les
  * changements. C'est la page qui décide ce qu'elle en fait — ici, les écrire
@@ -36,9 +36,6 @@ export class CatalogFilters {
   readonly filtres = input.required<EtatFiltres>();
   /** Univers à proposer. La page n'envoie que ceux qui ont des produits. */
   readonly categories = input.required<readonly Category[]>();
-  /** Nombre de produits par univers, pour les compteurs des onglets. */
-  readonly comptes = input.required<Readonly<Record<string, number>>>();
-  readonly totalCatalogue = input.required<number>();
 
   /** Un filtre change. `null` retire le critère. */
   readonly filtre = output<{ champ: ChampFiltre; valeur: string | null }>();
@@ -130,9 +127,5 @@ export class CatalogFilters {
 
   protected changer(champ: ChampFiltre, valeur: string | null): void {
     this.filtre.emit({ champ, valeur });
-  }
-
-  protected compte(slug: string | null): number {
-    return slug === null ? this.totalCatalogue() : (this.comptes()[slug] ?? 0);
   }
 }

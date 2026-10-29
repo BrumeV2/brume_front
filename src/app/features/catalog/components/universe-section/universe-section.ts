@@ -7,8 +7,8 @@ import { badgeDe, momentDe } from '../../catalog-presentation';
 
 /**
  * Un univers et ses premiers produits, tel que la maquette range le catalogue
- * quand aucun filtre n'est posé : titre, compteur, phrase de présentation,
- * « Voir tout → » et une grille de quatre cartes.
+ * quand aucun filtre n'est posé : titre, phrase de présentation et
+ * « Voir tout → » sur une ligne, puis une grille de quatre cartes.
  */
 @Component({
   selector: 'app-universe-section',

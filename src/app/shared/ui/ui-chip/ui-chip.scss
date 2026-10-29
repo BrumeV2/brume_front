@@ -6,6 +6,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: var(--espace-2);
   height: var(--hauteur-pastille);
   padding-inline: 1.125rem;
   border: 1px solid var(--couleur-filet);
@@ -14,6 +15,19 @@
   line-height: var(--texte-petit-interligne);
   color: var(--couleur-encre);
   white-space: nowrap;
+}
+
+/* Dessiné plutôt qu'écrit : le « ⌄ » de la maquette est un caractère, dont le
+ * rendu et la position dépendent de la police. Un tracé se centre, lui. */
+.chevron {
+  flex: none;
+  width: 10px;
+  height: 6px;
+  transition: transform 0.2s var(--courbe-brume);
+}
+
+:host(.est-ouvert) .chevron {
+  transform: rotate(180deg);
 }
 
 :host(.est-actif) .pastille {

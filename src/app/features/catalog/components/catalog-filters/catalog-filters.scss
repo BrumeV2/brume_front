@@ -33,14 +33,19 @@
 }
 
 .onglet {
-  display: flex;
-  align-items: start;
-  gap: 3px;
   padding: 0 0 var(--espace-1);
   border: 0;
   border-bottom: 1.5px solid transparent;
   background: none;
   color: var(--couleur-texte-doux);
+  font-family: var(--police-titre);
+  font-size: var(--titre-bloc-taille);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  line-height: var(--titre-bloc-interligne);
+  letter-spacing: var(--titre-bloc-interlettre);
   cursor: pointer;
   transition: color 0.2s var(--courbe-brume);
 }
@@ -52,22 +57,6 @@
 .onglet.est-actif {
   border-bottom-color: var(--couleur-encre);
   color: var(--couleur-encre);
-}
-
-.onglet__titre {
-  font-family: var(--police-titre);
-  font-size: var(--titre-bloc-taille);
-  font-weight: 800;
-  font-variation-settings:
-    'opsz' 14,
-    'wdth' 100;
-  line-height: var(--titre-bloc-interligne);
-  letter-spacing: var(--titre-bloc-interlettre);
-}
-
-.onglet__compte {
-  font-size: 0.625rem; /* 10 px, le chiffre en exposant de la maquette */
-  line-height: var(--texte-petit-interligne);
 }
 
 .tri {

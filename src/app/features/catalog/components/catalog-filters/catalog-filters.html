@@ -7,8 +7,7 @@
       [attr.aria-current]="univers() === null ? 'true' : null"
       (click)="changer('category', null)"
     >
-      <span class="onglet__titre">Tout</span>
-      <span class="onglet__compte">{{ compte(null) }}</span>
+      Tout
     </button>
 
     @for (categorie of categories(); track categorie.id) {
@@ -19,8 +18,7 @@
         [attr.aria-current]="univers() === categorie.slug ? 'true' : null"
         (click)="changer('category', categorie.slug)"
       >
-        <span class="onglet__titre">{{ categorie.name }}</span>
-        <span class="onglet__compte">{{ compte(categorie.slug) }}</span>
+        {{ categorie.name }}
       </button>
     }
   </nav>

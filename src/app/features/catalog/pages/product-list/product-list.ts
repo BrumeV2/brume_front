@@ -128,14 +128,12 @@ export class ProductList {
 
   /** Vue sans filtre : chaque univers et ses premiers produits. */
   protected readonly sections = computed<readonly SectionUnivers[]>(() =>
-    this.universPeuples().map((categorie) => {
-      const produits = this.catalogue().filter((p) => p.category.slug === categorie.slug);
-      return {
-        categorie,
-        produits: produits.slice(0, APERCU_PAR_UNIVERS),
-        total: produits.length,
-      };
-    }),
+    this.universPeuples().map((categorie) => ({
+      categorie,
+      produits: this.catalogue()
+        .filter((p) => p.category.slug === categorie.slug)
+        .slice(0, APERCU_PAR_UNIVERS),
+    })),
   );
 
   protected readonly libelleMoment = momentDe;

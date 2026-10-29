@@ -4,15 +4,21 @@
   display: block;
 }
 
+/*
+ * Une seule ligne sur ordinateur : le titre, sa phrase et le « Voir tout → »
+ * posés sur la même ligne de base, comme dans la maquette. Les colonnes du
+ * titre et du lien sont en `max-content` pour qu'aucun des deux ne se casse en
+ * deux lignes quand la phrase est longue : c'est la phrase qui cède.
+ */
 .entete {
   display: grid;
   gap: var(--espace-2);
   padding-bottom: var(--espace-6);
   border-bottom: 1px solid var(--couleur-filet);
-  margin-bottom: var(--espace-6);
+  margin-bottom: var(--espace-8);
 
   @include m.a-partir-de-ordinateur {
-    grid-template-columns: auto 1fr auto;
+    grid-template-columns: max-content minmax(0, 1fr) max-content;
     align-items: baseline;
     gap: var(--espace-6);
   }
@@ -22,12 +28,10 @@
   margin: 0;
 }
 
-.entete__compte {
-  font-family: var(--police-texte);
-  font-size: var(--texte-petit-taille);
-  font-weight: 400;
-  letter-spacing: 0;
-  vertical-align: super;
+/* `.lien-fleche` se cale en haut de son conteneur : ici, il doit suivre la
+ * même ligne de base que le titre et la phrase. */
+.entete .lien-fleche {
+  align-self: baseline;
 }
 
 .entete__phrase {

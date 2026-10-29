@@ -6,7 +6,12 @@
   aria-haspopup="listbox"
   (click)="basculer()"
 >
-  <app-ui-chip [libelle]="libelle() + ' ⌄'" [actif]="valeur() !== null" />
+  <app-ui-chip
+    [libelle]="libelle()"
+    [actif]="valeur() !== null"
+    [ouvert]="ouvert()"
+    [chevron]="true"
+  />
 </button>
 
 @if (ouvert()) {
