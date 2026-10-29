@@ -1,0 +1,28 @@
+<section class="bataille" aria-labelledby="titre-bataille">
+  <p class="surtitre bataille__doux" appReveal>Le tournoi du mois</p>
+  <h2 id="titre-bataille" class="titre-l" appReveal data-delai="1">
+    <span>La Bataille</span>
+    <span class="bataille__accent">des Mélanges.</span>
+  </h2>
+  <p class="bataille__texte" appReveal data-delai="2">
+    Huit mélanges, une TEA-BOX Tournoi, un calendrier de dégustation. Le gagnant entre au catalogue.
+  </p>
+
+  <div class="bataille__tableau" appReveal>
+    @for (tour of tours; track tour.titre) {
+      <div>
+        <p class="surtitre bataille__doux">{{ tour.titre }}</p>
+        <ul>
+          @for (duel of tour.duels; track $index) {
+            <li>
+              <span>{{ duel.melange }}</span>
+              <span class="bataille__doux">{{ duel.score }}</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+  </div>
+
+  <span class="mention-bientot">Recevoir la TEA-BOX Tournoi · bientôt</span>
+</section>

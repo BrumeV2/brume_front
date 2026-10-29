@@ -1,1 +1,9 @@
-<router-outlet />
+<app-site-header [transparent]="menuTransparent()" />
+
+<div #contenu id="contenu" class="contenu" tabindex="-1" [class.sous-le-menu]="!menuTransparent()">
+  <router-outlet />
+</div>
+
+@if (piedDePage()) {
+  <app-site-footer />
+}

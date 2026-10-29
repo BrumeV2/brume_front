@@ -1,0 +1,36 @@
+<div class="apercu" role="group" aria-label="Aperçu du configurateur TeaOMatic">
+  <div class="apercu__entete">
+    <p class="surtitre apercu__doux" id="apercu-base">Base</p>
+    <p class="apercu__note">Essaie, c'est un aperçu</p>
+  </div>
+  <div class="apercu__choix" role="radiogroup" aria-labelledby="apercu-base">
+    @for (b of catalogue().bases; track b.nom) {
+      <button type="button" role="radio" [attr.aria-checked]="b === base()" (click)="base.set(b)">
+        <app-ui-chip [libelle]="b.nom" [actif]="b === base()" />
+      </button>
+    }
+  </div>
+
+  <p class="surtitre apercu__doux" id="apercu-ingredients">Ingrédients · jusqu'à 3</p>
+  <div class="apercu__choix" role="group" aria-labelledby="apercu-ingredients">
+    @for (i of catalogue().ingredients; track i.nom) {
+      <button type="button" [attr.aria-pressed]="estChoisi(i)" (click)="basculer(i)">
+        <app-ui-chip [libelle]="(estChoisi(i) ? '✓ ' : '+ ') + i.nom" [actif]="estChoisi(i)" />
+      </button>
+    }
+  </div>
+
+  <div class="apercu__barre" aria-hidden="true">
+    @for (p of parts(); track p.nom) {
+      <span [style.flex-grow]="p.part" [style.background-color]="p.couleur">{{ p.part }} %</span>
+    }
+  </div>
+
+  <div class="apercu__pied">
+    <div>
+      <p class="surtitre apercu__doux">Ton mélange</p>
+      <p class="apercu__nom" aria-live="polite">{{ nomDuMelange() }}</p>
+    </div>
+    <span class="mention-bientot">Créer mon mélange · bientôt</span>
+  </div>
+</div>

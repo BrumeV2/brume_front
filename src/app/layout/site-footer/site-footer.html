@@ -1,0 +1,40 @@
+<footer class="pied">
+  <div class="pied__haut">
+    <section class="pied__lettre" aria-labelledby="pied-lettre">
+      <h2 id="pied-lettre" class="pied__lettre-titre">
+        <span>La lettre de Brume.</span>
+        <span class="pied__lettre-sous-titre">Une fois par mois, pas plus.</span>
+      </h2>
+      <p class="pied__bientot">Inscription à la lettre bientôt disponible.</p>
+    </section>
+
+    <div class="pied__colonnes">
+      @for (colonne of colonnes; track colonne.titre) {
+        <nav class="pied__colonne" [attr.aria-label]="colonne.titre">
+          <p class="pied__titre-colonne">{{ colonne.titre }}</p>
+          <ul>
+            @for (entree of colonne.entrees; track entree.libelle) {
+              <li>
+                @if (entree.lien; as lien) {
+                  <a [routerLink]="lien" [queryParams]="entree.params">{{ entree.libelle }}</a>
+                } @else {
+                  <span class="pied__a-venir">{{ entree.libelle }} <small>bientôt</small></span>
+                }
+              </li>
+            }
+          </ul>
+        </nav>
+      }
+
+      <div class="pied__colonne">
+        <p class="pied__titre-colonne">Le salon</p>
+        <ul>
+          <li>Paris 16<sup>e</sup></li>
+          <li>Du mardi au dimanche, 9h – 19h</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <p class="pied__marque" aria-hidden="true">Brume</p>
+</footer>

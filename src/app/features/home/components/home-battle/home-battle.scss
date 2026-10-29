@@ -1,0 +1,61 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+}
+
+.bataille {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espace-6);
+  max-width: calc(var(--largeur-contenu) + 2 * var(--espace-18));
+  margin-inline: auto;
+  padding: var(--espace-18) var(--espace-5);
+
+  @include m.a-partir-de-ordinateur {
+    padding: 8.75rem var(--espace-18);
+  }
+}
+
+.bataille__doux {
+  color: var(--couleur-texte-doux-sombre);
+}
+
+.bataille__accent {
+  color: var(--couleur-accent-clair);
+}
+
+.bataille__texte {
+  max-width: 34rem;
+  font-weight: 300;
+  color: var(--couleur-texte-doux-sombre);
+}
+
+.bataille__tableau {
+  display: grid;
+  gap: var(--espace-8);
+  width: 100%;
+  margin-block: var(--espace-8);
+
+  @include m.a-partir-de-tablette {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--espace-6);
+  }
+
+  ul {
+    margin: var(--espace-3) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    padding-block: var(--espace-4);
+    border-bottom: 1px solid #333;
+    font-size: var(--texte-petit-taille);
+  }
+}

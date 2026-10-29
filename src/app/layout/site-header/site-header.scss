@@ -1,0 +1,206 @@
+@use '../../../styles/mixins' as m;
+
+/* Transparent par défaut (texte blanc sur photo) ; `.est-plein` : fond clair et filet. */
+:host {
+  --menu-texte: var(--couleur-blanc);
+
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 20;
+  display: block;
+  color: var(--menu-texte);
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease,
+    color 0.3s ease;
+  border-bottom: 1px solid transparent;
+}
+
+:host(.est-plein) {
+  --menu-texte: var(--couleur-encre);
+
+  background-color: var(--couleur-fond);
+  border-bottom-color: var(--couleur-filet);
+  backdrop-filter: blur(7px);
+}
+
+/* Lien d'évitement : invisible tant qu'il n'a pas le focus clavier. */
+.evitement {
+  position: absolute;
+  top: var(--espace-2);
+  left: var(--espace-2);
+  padding: var(--espace-2) var(--espace-4);
+  border-radius: var(--rayon-pilule);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+  font-size: var(--texte-petit-taille);
+  transform: translateY(-200%);
+
+  &:focus {
+    transform: none;
+  }
+}
+
+.menu {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--hauteur-menu);
+  padding-inline: var(--espace-5);
+
+  @include m.a-partir-de-ordinateur {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    padding-inline: var(--espace-18);
+  }
+}
+
+.menu__univers {
+  display: none;
+
+  @include m.a-partir-de-ordinateur {
+    display: flex;
+    gap: var(--espace-8);
+  }
+}
+
+.menu__lien {
+  position: relative;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+
+  /* Soulignement : au survol, et en permanence sur la page active. */
+  &::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 -2px;
+    height: 1px;
+    background-color: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.3s ease;
+  }
+
+  &:hover::after,
+  &.est-actif::after {
+    transform: scaleX(1);
+  }
+}
+
+.menu__logo {
+  font-size: var(--texte-taille);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.5em;
+  /* Compense l'espacement ajouté après la dernière lettre, pour rester centré. */
+  margin-right: -0.5em;
+}
+
+.menu__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--espace-4);
+
+  @include m.a-partir-de-ordinateur {
+    gap: 1.75rem;
+  }
+}
+
+.menu__compte {
+  display: none;
+
+  @include m.a-partir-de-ordinateur {
+    display: inline;
+  }
+}
+
+.menu__ouvrir {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid var(--menu-texte);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  font-size: 0.75rem;
+  line-height: var(--texte-petit-interligne);
+  cursor: pointer;
+
+  @include m.a-partir-de-ordinateur {
+    display: none;
+  }
+}
+
+/* ── Panneau mobile ──────────────────────────────────────────── */
+
+.panneau {
+  width: 100%;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0 var(--espace-5) var(--espace-10);
+  border: 0;
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+
+  &::backdrop {
+    background: none;
+  }
+
+  &[open] {
+    animation: apparition 0.3s ease;
+  }
+}
+
+.panneau__haut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: var(--hauteur-menu);
+  margin-bottom: var(--espace-8);
+}
+
+.panneau__fermer {
+  padding: 0.3125rem 0.75rem;
+  border: 1px solid var(--couleur-fond);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.panneau__liens {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  a {
+    font-family: var(--police-titre);
+    font-weight: 800;
+    font-variation-settings:
+      'opsz' 14,
+      'wdth' 100;
+    font-size: var(--mobile-titre-l-taille);
+    line-height: var(--mobile-titre-l-interligne);
+    letter-spacing: var(--mobile-titre-l-interlettre);
+  }
+
+  .est-actif {
+    color: var(--couleur-accent-clair);
+  }
+}
+
+@keyframes apparition {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+/* Sortie de l'intro : le grand « BRUME » de l'écran d'accueil rejoint ce logo
+   (transition de vue). Le nom n'est posé que dans l'état d'arrivée. */
+:host-context(.intro-arrivee) .menu > .menu__logo {
+  view-transition-name: brand;
+}

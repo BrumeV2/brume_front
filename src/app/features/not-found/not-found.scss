@@ -1,0 +1,48 @@
+@use '../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.introuvable {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espace-5);
+  max-width: calc(var(--largeur-contenu) + 2 * var(--espace-18));
+  min-height: 70dvh;
+  margin-inline: auto;
+  padding: var(--espace-10) var(--espace-5) var(--espace-18);
+
+  @include m.a-partir-de-ordinateur {
+    justify-content: center;
+    gap: 1.625rem;
+    padding: 6rem var(--espace-18);
+  }
+}
+
+.surtitre {
+  color: var(--couleur-texte-doux);
+}
+
+.introuvable__accent {
+  color: var(--couleur-accent);
+}
+
+.introuvable__texte {
+  max-width: 34rem;
+  color: var(--couleur-texte-doux);
+}
+
+.introuvable__retour {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-3);
+  height: var(--hauteur-bouton);
+  padding-inline: 1.75rem;
+  border-radius: var(--rayon-pilule);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+}
