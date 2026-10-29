@@ -17,5 +17,5 @@ export const environment = {
    *
    * À repasser à `false` dès que le back expose `GET` et `PATCH /api/users/me`.
    */
-  useMocks: true,
+  useMocks: false,
 };
