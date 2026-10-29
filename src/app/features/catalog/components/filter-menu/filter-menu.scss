@@ -1,0 +1,73 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Reprend le composant Figma « Pastille », états Normal et Actif. */
+.pastille {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  height: var(--hauteur-pastille);
+  padding-inline: 1.125rem;
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  color: var(--couleur-encre);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.pastille.est-actif {
+  border-color: var(--couleur-encre);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+}
+
+.chevron {
+  font-size: 0.75em;
+}
+
+.menu {
+  position: absolute;
+  top: calc(var(--hauteur-pastille) + var(--espace-2));
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: var(--espace-1);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-carte);
+  background-color: var(--couleur-papier);
+  list-style: none;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  padding: var(--espace-2) var(--espace-3);
+  border: 0;
+  border-radius: var(--rayon-saisie);
+  background: none;
+  color: var(--couleur-encre);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.option:hover,
+.option:focus-visible {
+  background-color: var(--couleur-fond);
+}
+
+.option[aria-selected='true'] {
+  font-weight: 500;
+}
+
+.option[aria-selected='true']::after {
+  content: ' ·';
+}

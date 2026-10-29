@@ -19,6 +19,10 @@ export const routes: Routes = [
       import('./features/auth/inscription/inscription').then((m) => m.Inscription),
   },
   {
+    path: 'boutique',
+    loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.catalogRoutes),
+  },
+  {
     path: 'compte',
     loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
   },

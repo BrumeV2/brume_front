@@ -1,0 +1,96 @@
+<div class="univers-et-tri">
+  <nav class="onglets" aria-label="Univers">
+    <button
+      class="onglet"
+      type="button"
+      [class.est-actif]="critereCategorie() === null"
+      [attr.aria-current]="critereCategorie() === null ? 'true' : null"
+      (click)="changer('category', null)"
+    >
+      <span class="titre">Tout</span>
+      <span class="compte">{{ compte(null) }}</span>
+    </button>
+
+    @for (categorie of categories(); track categorie.id) {
+      <button
+        class="onglet"
+        type="button"
+        [class.est-actif]="critereCategorie() === categorie.slug"
+        [attr.aria-current]="critereCategorie() === categorie.slug ? 'true' : null"
+        (click)="changer('category', categorie.slug)"
+      >
+        <span class="titre">{{ categorie.name }}</span>
+        <span class="compte">{{ compte(categorie.slug) }}</span>
+      </button>
+    }
+  </nav>
+
+  <div class="tri">
+    <span class="doux" id="libelle-tri">Trier par</span>
+    <app-filter-menu
+      nom="Les préférés"
+      [options]="optionsTri"
+      [valeur]="triChoisi()"
+      (choix)="tri.emit($event ?? 'relevance')"
+    />
+  </div>
+</div>
+
+<div class="pastilles">
+  <app-filter-menu
+    nom="Type"
+    [options]="optionsType"
+    [valeur]="filtres().type ?? null"
+    (choix)="changer('type', $event)"
+  />
+  <app-filter-menu
+    nom="Moment"
+    [options]="optionsMoment"
+    [valeur]="filtres().moment ?? null"
+    (choix)="changer('moment', $event)"
+  />
+  <app-filter-menu
+    nom="Caféine"
+    [options]="optionsCaffeine"
+    [valeur]="filtres().caffeine ?? null"
+    (choix)="changer('caffeine', $event)"
+  />
+  <app-filter-menu
+    nom="Prix"
+    [options]="optionsPrix"
+    [valeur]="trancheChoisie()"
+    (choix)="changer('prix', $event)"
+  />
+
+  <button
+    class="bascule-stock"
+    type="button"
+    [class.est-actif]="filtres().inStock === true"
+    [attr.aria-pressed]="filtres().inStock === true"
+    (click)="changer('inStock', filtres().inStock === true ? null : 'true')"
+  >
+    En stock
+  </button>
+</div>
+
+@if (criteresActifs().length > 0) {
+  <div class="criteres" role="status">
+    <span class="doux">Filtres actifs :</span>
+
+    @for (critere of criteresActifs(); track critere.champ) {
+      <button
+        class="critere"
+        type="button"
+        [attr.aria-label]="'Retirer le filtre ' + critere.libelle"
+        (click)="changer(critere.champ, null)"
+      >
+        {{ critere.libelle }}
+        <span class="croix" aria-hidden="true">×</span>
+      </button>
+    }
+
+    <button class="tout-effacer" type="button" (click)="reinitialisation.emit()">
+      Tout effacer
+    </button>
+  </div>
+}

@@ -1,0 +1,34 @@
+<!-- Pas de lien vers la fiche produit : son écran est un autre ticket (US-002),
+     et un lien mort tomberait sur la route joker. -->
+<article class="carte">
+  <div class="photo">
+    @if (produit().image !== null && !imageEnEchec()) {
+      <img
+        [src]="produit().image!.url"
+        [alt]="produit().image!.alt"
+        loading="lazy"
+        (error)="imageEnEchec.set(true)"
+      />
+    } @else {
+      <span class="repli" aria-hidden="true">{{ monogramme() }}</span>
+    }
+
+    @if (badge(); as mention) {
+      <span class="badge">{{ mention }}</span>
+    }
+  </div>
+
+  <p class="nom-et-prix">
+    <span class="nom">{{ produit().name }}</span>
+    <span class="prix">{{ prix() }}</span>
+  </p>
+
+  @if (produit().origin; as origine) {
+    <p class="surtitre doux">{{ origine }}</p>
+  }
+
+  <p class="notes">
+    <span>{{ produit().tastingNotes }}</span>
+    <span class="moment">{{ moment() }}</span>
+  </p>
+</article>

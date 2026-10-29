@@ -1,0 +1,69 @@
+<header class="bandeau">
+  <p class="surtitre">{{ totalCatalogue() }} références · thés, cafés, CBD</p>
+  <h1 class="titre-l"><span>Toute</span><span>la boutique.</span></h1>
+</header>
+
+<app-product-filters
+  class="barre"
+  [filtres]="filtres()"
+  [categories]="categories()"
+  [comptes]="comptes()"
+  [total]="totalCatalogue()"
+  (filtre)="appliquer($event)"
+  (tri)="trier($event)"
+  (reinitialisation)="reinitialiser()"
+/>
+
+<section class="resultats">
+  @switch (statut()) {
+    @case ('chargement') {
+      <p class="message" role="status">Chargement du catalogue…</p>
+    }
+
+    @case ('erreur') {
+      <div class="message etat-vide" role="alert">
+        <p class="titre-vide">Ces filtres ne sont pas valides.</p>
+        <p class="doux">{{ erreur()?.message }}</p>
+
+        @if (erreur()?.fieldErrors; as champs) {
+          <ul class="champs">
+            @for (champ of champs | keyvalue; track champ.key) {
+              <li>{{ champ.key }}</li>
+            }
+          </ul>
+        }
+
+        <button class="bouton" type="button" (click)="reinitialiser()">
+          Repartir du catalogue complet
+        </button>
+      </div>
+    }
+
+    @default {
+      @if (estVide()) {
+        <div class="message etat-vide">
+          <p class="titre-vide">Rien ne correspond.</p>
+          <p class="doux">
+            Aucun produit ne réunit tous ces critères. Retire-en un, ou repars de zéro.
+          </p>
+          <button class="bouton" type="button" (click)="reinitialiser()">
+            Effacer les filtres
+          </button>
+        </div>
+      } @else {
+        <p class="compte-resultats doux" role="status" aria-live="polite">
+          {{ total() }} {{ total() > 1 ? 'références' : 'référence' }}
+          @if (aDesFiltres()) {
+            · sur {{ totalCatalogue() }}
+          }
+        </p>
+
+        <div class="grille">
+          @for (produit of produits(); track produit.id) {
+            <app-product-card [produit]="produit" />
+          }
+        </div>
+      }
+    }
+  }
+</section>

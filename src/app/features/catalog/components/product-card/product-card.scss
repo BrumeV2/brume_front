@@ -1,0 +1,86 @@
+.carte {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  color: inherit;
+}
+
+.photo {
+  position: relative;
+  aspect-ratio: 300 / 375;
+  overflow: hidden;
+  background-color: var(--couleur-papier);
+}
+
+.photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Faute de photo, un aplat avec les initiales : pas d'image cassée. */
+.repli {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--couleur-texte-doux-sombre);
+  font-family: var(--police-titre);
+  font-size: var(--titre-m-taille);
+  font-weight: 800;
+}
+
+.badge {
+  position: absolute;
+  top: 0.875rem;
+  left: 0.875rem;
+  padding: 0.375rem 0.625rem;
+  background-color: var(--couleur-papier);
+  color: var(--couleur-encre);
+  font-size: 0.625rem;
+  font-weight: 500;
+  line-height: 1.3;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.nom-et-prix {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--espace-4);
+}
+
+.nom {
+  flex: 1;
+  font-family: var(--police-titre);
+  font-size: var(--titre-s-taille);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.prix {
+  font-size: var(--texte-taille);
+  line-height: var(--texte-interligne);
+  white-space: nowrap;
+}
+
+.doux {
+  color: var(--couleur-texte-doux);
+}
+
+.notes {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.moment {
+  white-space: nowrap;
+}

@@ -1,0 +1,29 @@
+<button
+  class="pastille"
+  type="button"
+  [class.est-actif]="valeur() !== null"
+  [attr.aria-expanded]="ouvert()"
+  aria-haspopup="listbox"
+  (click)="basculer()"
+>
+  {{ libelle }}
+  <span class="chevron" aria-hidden="true">⌄</span>
+</button>
+
+@if (ouvert()) {
+  <ul class="menu" role="listbox" [attr.aria-label]="nom()">
+    @for (option of options(); track option.valeur) {
+      <li>
+        <button
+          class="option"
+          type="button"
+          role="option"
+          [attr.aria-selected]="option.valeur === valeur()"
+          (click)="choisir(option)"
+        >
+          {{ option.libelle }}
+        </button>
+      </li>
+    }
+  </ul>
+}

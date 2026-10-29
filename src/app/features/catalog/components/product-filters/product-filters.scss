@@ -1,0 +1,147 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  padding: 1.25rem var(--espace-18) 1.125rem;
+  border-bottom: 1px solid var(--couleur-filet);
+  background-color: var(--couleur-fond);
+}
+
+.univers-et-tri {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espace-6);
+  flex-wrap: wrap;
+}
+
+.onglets {
+  display: flex;
+  gap: 1.75rem;
+  flex-wrap: wrap;
+}
+
+.onglet {
+  display: flex;
+  align-items: start;
+  gap: 3px;
+  padding: 0 0 6px;
+  border: 0;
+  border-bottom: 1.5px solid transparent;
+  background: none;
+  color: var(--couleur-texte-doux);
+  cursor: pointer;
+}
+
+.onglet.est-actif {
+  border-bottom-color: var(--couleur-encre);
+  color: var(--couleur-encre);
+}
+
+.titre {
+  font-family: var(--police-titre);
+  font-size: 1.5rem; /* 24px, « Titre/Onglet » de la maquette */
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.compte {
+  font-size: 0.625rem; /* 10px */
+  line-height: var(--texte-petit-interligne);
+}
+
+.tri {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.doux {
+  color: var(--couleur-texte-doux);
+}
+
+.pastilles {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace-2);
+}
+
+/* Même pastille que les menus, mais en simple bascule. */
+.bascule-stock {
+  height: var(--hauteur-pastille);
+  padding-inline: 1.125rem;
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  color: var(--couleur-encre);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.bascule-stock.est-actif {
+  border-color: var(--couleur-encre);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+}
+
+.criteres {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--espace-2);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.critere {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  padding: 0.25rem 0.625rem;
+  border: 1px solid var(--couleur-encre);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  color: var(--couleur-encre);
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.croix {
+  font-size: 1em;
+  line-height: 1;
+}
+
+.tout-effacer {
+  padding: 0.25rem 0;
+  border: 0;
+  background: none;
+  color: var(--couleur-texte-doux);
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.tout-effacer:hover {
+  color: var(--couleur-encre);
+}
+
+@media (max-width: 1023px) {
+  :host {
+    padding-inline: var(--espace-5);
+  }
+
+  .univers-et-tri {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--espace-3);
+  }
+}
