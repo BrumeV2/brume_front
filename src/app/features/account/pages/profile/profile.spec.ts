@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiErrorBody } from '../../../../core/api/api-error';
 import type { UpdateProfileDraft, UserProfile } from '../../../../core/api/api.types';
+import { SessionService } from '../../../../core/api/session.service';
 import { UsersService } from '../../../../core/api/users.service';
 
 import { Profile } from './profile';
@@ -76,7 +77,11 @@ describe('Profile', () => {
     service = new UsersServiceDouble();
     await TestBed.configureTestingModule({
       imports: [Profile],
-      providers: [provideRouter([]), { provide: UsersService, useValue: service }],
+      providers: [
+        provideRouter([]),
+        { provide: UsersService, useValue: service },
+        { provide: SessionService, useValue: { logout: () => of(undefined) } },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(Profile);
@@ -98,6 +103,19 @@ describe('Profile', () => {
 
     const saisies = [...element().querySelectorAll<HTMLInputElement>('input')];
     expect(saisies.some((champ) => champ.value.includes('@'))).toBe(false);
+  });
+
+  it('montre le compte Google relié et propose de se déconnecter, sans Apple', () => {
+    const carte = [...element().querySelectorAll('app-linked-accounts')].find((candidate) =>
+      candidate.textContent?.includes('Tu te connectes sans mot de passe.'),
+    );
+
+    expect(carte?.textContent).toContain('Google');
+    expect(carte?.textContent).toContain('Relié');
+    expect(carte?.querySelector('app-logout-button button')?.textContent).toContain(
+      'Se déconnecter',
+    );
+    expect(texte()).not.toContain('Apple');
   });
 
   it("ne propose pas d'enregistrer tant que rien n'a changé", () => {

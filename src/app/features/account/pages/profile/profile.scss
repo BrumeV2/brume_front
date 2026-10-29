@@ -99,20 +99,7 @@
 }
 
 .onglets {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--espace-2);
   margin-bottom: var(--espace-8);
-}
-
-.onglets__lien {
-  text-decoration: none;
-}
-
-/* Les autres sections du compte n'existent pas encore : pastilles inertes. */
-.onglets__a-venir {
-  cursor: not-allowed;
-  opacity: 0.55;
 }
 
 .colonnes {

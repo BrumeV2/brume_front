@@ -1,0 +1,17 @@
+<nav class="onglets" aria-label="Sections de mon compte">
+  @for (onglet of onglets; track onglet.id) {
+    @if (onglet.lien; as lien) {
+      <a
+        [routerLink]="lien"
+        class="onglets__lien"
+        [attr.aria-current]="onglet.id === actif() ? 'page' : null"
+      >
+        <app-ui-chip [libelle]="onglet.libelle" [actif]="onglet.id === actif()" />
+      </a>
+    } @else {
+      <span class="onglets__a-venir" aria-disabled="true" title="Bientôt disponible">
+        <app-ui-chip [libelle]="onglet.libelle" />
+      </span>
+    }
+  }
+</nav>

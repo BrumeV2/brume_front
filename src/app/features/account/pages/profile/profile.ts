@@ -25,17 +25,13 @@ import { UsersService } from '../../../../core/api/users.service';
 import { AuthStore } from '../../../../core/auth/auth.store';
 import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
 import { UiCard } from '../../../../shared/ui/ui-card/ui-card';
-import { UiChip } from '../../../../shared/ui/ui-chip/ui-chip';
 import { UiField } from '../../../../shared/ui/ui-field/ui-field';
 import { UiStaticField } from '../../../../shared/ui/ui-static-field/ui-static-field';
+import { AccountTabs } from '../../components/account-tabs/account-tabs';
+import { LinkedAccounts } from '../../components/linked-accounts/linked-accounts';
 
 /** Les champs que cet écran peut modifier. */
 type ChampProfil = 'firstName' | 'lastName' | 'birthDate';
-
-interface Onglet {
-  readonly libelle: string;
-  readonly lien: string | null;
-}
 
 interface ValeursProfil {
   readonly firstName: string;
@@ -86,7 +82,16 @@ function dateDeNaissanceValide(control: AbstractControl<string>): ValidationErro
 @Component({
   selector: 'app-profile',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [ReactiveFormsModule, RouterLink, UiButton, UiCard, UiChip, UiField, UiStaticField],
+  imports: [
+    ReactiveFormsModule,
+    RouterLink,
+    UiButton,
+    UiCard,
+    UiField,
+    UiStaticField,
+    AccountTabs,
+    LinkedAccounts,
+  ],
   templateUrl: './profile.html',
   styleUrl: './profile.scss',
 })
@@ -119,14 +124,6 @@ export class Profile {
   protected readonly confirmation = signal(false);
   /** Vrai après une tentative d'envoi : avant, on n'affiche pas d'erreur de saisie. */
   protected readonly soumis = signal(false);
-
-  protected readonly onglets: readonly Onglet[] = [
-    { libelle: 'Commandes', lien: null },
-    { libelle: 'TEA-BOX', lien: null },
-    { libelle: 'Mes créations', lien: null },
-    { libelle: 'Bataille', lien: null },
-    { libelle: 'Profil', lien: '/compte/profil' },
-  ];
 
   protected readonly initiales = computed(() => {
     const profil = this.profil();
