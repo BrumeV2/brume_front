@@ -27,6 +27,10 @@ export const routes: Routes = [
       import('./features/auth/inscription/inscription').then((m) => m.Inscription),
   },
   {
+    path: 'boutique',
+    loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.catalogRoutes),
+  },
+  {
     path: 'compte',
     // Bandeau sombre en haut de chaque page du compte : le menu se pose dessus.
     data: { menu: 'transparent' },

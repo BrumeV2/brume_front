@@ -1,0 +1,28 @@
+<button
+  class="declencheur"
+  type="button"
+  [attr.aria-expanded]="ouvert()"
+  [attr.aria-label]="nom()"
+  aria-haspopup="listbox"
+  (click)="basculer()"
+>
+  <app-ui-chip [libelle]="libelle() + ' ⌄'" [actif]="valeur() !== null" />
+</button>
+
+@if (ouvert()) {
+  <ul class="menu" role="listbox" [attr.aria-label]="nom()">
+    @for (option of options(); track option.valeur) {
+      <li>
+        <button
+          class="option"
+          type="button"
+          role="option"
+          [attr.aria-selected]="option.valeur === valeur()"
+          (click)="choisir(option)"
+        >
+          {{ option.libelle }}
+        </button>
+      </li>
+    }
+  </ul>
+}

@@ -1,0 +1,93 @@
+<header class="bandeau">
+  <p class="surtitre bandeau__surtitre">{{ totalCatalogue() }} références · thés, cafés, CBD</p>
+  <h1 class="titre-l"><span>Toute</span><span>la boutique.</span></h1>
+</header>
+
+<app-catalog-filters
+  class="barre"
+  [filtres]="filtres()"
+  [categories]="universPeuples()"
+  [comptes]="comptes()"
+  [totalCatalogue]="totalCatalogue()"
+  (filtre)="appliquer($event)"
+  (tri)="trier($event)"
+  (reinitialisation)="reinitialiser()"
+/>
+
+<section class="resultats">
+  @switch (statut()) {
+    @case ('chargement') {
+      <p class="message" role="status">Chargement du catalogue…</p>
+    }
+
+    @case ('echec') {
+      <div class="message bloc" role="alert">
+        <p class="bloc__titre titre-carte">Le catalogue n’a pas pu être chargé.</p>
+        <p>{{ erreur()?.message }}</p>
+        <app-ui-button libelle="Réessayer" (presse)="reessayer()" />
+      </div>
+    }
+
+    @case ('filtres-invalides') {
+      <div class="message bloc" role="alert">
+        <p class="bloc__titre titre-carte">Ces filtres ne sont pas valides.</p>
+        <p>{{ erreur()?.message }}</p>
+
+        @if (erreur()?.fieldErrors; as champs) {
+          <ul class="bloc__champs">
+            @for (champ of champs | keyvalue; track champ.key) {
+              <li>{{ champ.key }}</li>
+            }
+          </ul>
+        }
+
+        <app-ui-button libelle="Repartir du catalogue complet" (presse)="reinitialiser()" />
+      </div>
+    }
+
+    @default {
+      @if (estVide()) {
+        <div class="message bloc">
+          <p class="bloc__titre titre-carte">Rien ne correspond.</p>
+          <p>Aucun produit ne réunit tous ces critères. Retire-en un, ou repars de zéro.</p>
+          <app-ui-button libelle="Effacer les filtres" (presse)="reinitialiser()" />
+        </div>
+      } @else if (aDesFiltres()) {
+        <p class="compte" role="status" aria-live="polite">
+          {{ total() }} {{ total() > 1 ? 'références' : 'référence' }} sur {{ totalCatalogue() }}
+        </p>
+
+        <div class="grille">
+          @for (produit of produits(); track produit.id) {
+            <app-ui-product-card
+              [nom]="produit.name"
+              [prixCents]="produit.fromPriceCents"
+              [photo]="produit.image?.url ?? null"
+              [origine]="produit.origin"
+              [notes]="produit.tastingNotes"
+              [moment]="libelleMoment(produit)"
+              [badge]="mentionPhoto(produit)"
+            />
+          }
+        </div>
+
+        @if (resteDesProduits()) {
+          <div class="voir-plus">
+            <app-ui-button
+              variante="contour"
+              [libelle]="'Voir plus (' + (total() - produits().length) + ')'"
+              [occupe]="chargeDavantage()"
+              (presse)="voirPlus()"
+            />
+          </div>
+        }
+      } @else {
+        <p class="compte">{{ totalCatalogue() }} références · rangées par univers</p>
+
+        @for (section of sections(); track section.categorie.id) {
+          <app-universe-section class="univers" [section]="section" />
+        }
+      }
+    }
+  }
+</section>

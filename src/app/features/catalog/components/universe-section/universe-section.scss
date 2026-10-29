@@ -1,0 +1,48 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.entete {
+  display: grid;
+  gap: var(--espace-2);
+  padding-bottom: var(--espace-6);
+  border-bottom: 1px solid var(--couleur-filet);
+  margin-bottom: var(--espace-6);
+
+  @include m.a-partir-de-ordinateur {
+    grid-template-columns: auto 1fr auto;
+    align-items: baseline;
+    gap: var(--espace-6);
+  }
+}
+
+.entete__titre {
+  margin: 0;
+}
+
+.entete__compte {
+  font-family: var(--police-texte);
+  font-size: var(--texte-petit-taille);
+  font-weight: 400;
+  letter-spacing: 0;
+  vertical-align: super;
+}
+
+.entete__phrase {
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--espace-6) var(--espace-3);
+
+  @include m.a-partir-de-ordinateur {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--espace-8) var(--espace-6);
+  }
+}

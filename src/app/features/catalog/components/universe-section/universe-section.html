@@ -1,0 +1,28 @@
+<header class="entete">
+  <h2 class="entete__titre titre-s">
+    {{ section().categorie.name }}
+    <span class="entete__compte">{{ section().total }}</span>
+  </h2>
+
+  @if (section().categorie.description; as phrase) {
+    <p class="entete__phrase">{{ phrase }}</p>
+  }
+
+  <a class="lien-fleche" [routerLink]="[]" [queryParams]="{ category: section().categorie.slug }">
+    Voir tout →
+  </a>
+</header>
+
+<div class="grille">
+  @for (produit of section().produits; track produit.id) {
+    <app-ui-product-card
+      [nom]="produit.name"
+      [prixCents]="produit.fromPriceCents"
+      [photo]="produit.image?.url ?? null"
+      [origine]="produit.origin"
+      [notes]="produit.tastingNotes"
+      [moment]="libelleMoment(produit)"
+      [badge]="mentionPhoto(produit)"
+    />
+  }
+</div>
