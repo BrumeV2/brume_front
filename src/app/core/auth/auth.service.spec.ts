@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 import { AuthService } from './auth.service';
 import { User } from './user';
 
-const api = environment.apiUrl;
+const api = environment.apiBaseUrl;
 
 const client: User = {
   id: '6f1c2c1e-0000-4000-8000-000000000001',

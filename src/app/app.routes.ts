@@ -1,13 +1,8 @@
 import { Routes } from '@angular/router';
-import { authGuard, guestGuard } from './core/auth/auth.guards';
+
+import { guestGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'compte/profil', pathMatch: 'full' },
-  {
-    path: 'compte',
-    loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
-  },
-  { path: '**', redirectTo: 'compte/profil' },
   // Pas encore de page d'accueil : la connexion sert d'entrée.
   { path: '', pathMatch: 'full', redirectTo: 'connexion' },
   {
@@ -25,9 +20,11 @@ export const routes: Routes = [
   },
   {
     path: 'compte',
-    title: 'Mon compte — Brume',
-    canActivate: [authGuard],
-    loadComponent: () => import('./features/compte/compte').then((m) => m.Compte),
+    loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
   },
-  { path: '**', redirectTo: '' },
+  // Toujours en dernier : une route placée après ce joker serait inatteignable.
+  // Cible `connexion` et non `''` : Angular n'enchaîne pas la redirection du
+  // joker avec celle de la route vide, et l'URL inconnue resterait sur une page
+  // blanche (vérifié dans le navigateur).
+  { path: '**', redirectTo: 'connexion' },
 ];

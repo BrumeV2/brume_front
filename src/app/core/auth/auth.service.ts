@@ -14,7 +14,7 @@ import { User } from './user';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = environment.apiUrl;
+  private readonly apiUrl = environment.apiBaseUrl;
 
   /** Navigation pleine page (pas un appel XHR) : l'API redirige vers Google. */
   readonly googleLoginUrl = `${this.apiUrl}/auth/google`;
