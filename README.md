@@ -368,6 +368,7 @@ docs (Front) : Normes de code et architecture
 ## 🚢 Déploiement
 
 Le front est construit en statique (`dist/brume-front/browser/`) et servi par un conteneur derrière Caddy, sur la VM décrite dans le dépôt `brume_infra`.
+La procédure complète d'environnement et de CI/CD est détaillée dans [`docs/ENVIRONNEMENTS-ET-CICD.md`](docs/ENVIRONNEMENTS-ET-CICD.md).
 
 | Environnement | URL                                     | Accès              |
 | ------------- | --------------------------------------- | ------------------ |
