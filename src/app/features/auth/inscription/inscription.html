@@ -1,0 +1,51 @@
+<main class="corps">
+  <section class="inscription" aria-labelledby="titre-inscription">
+    <p class="surtitre doux">Nouveau chez Brume ?</p>
+    <h1 id="titre-inscription" class="titre-l">
+      <span>Rejoins</span>
+      <span class="accent">la maison.</span>
+    </h1>
+    <p class="texte-chapo doux">
+      Crée ton compte en un clic avec Google. Pas de formulaire, pas de mot de passe.
+    </p>
+
+    <div class="offre">
+      <p class="offre-remise">−10&nbsp;%</p>
+      <div>
+        <p class="offre-titre">Sur ta première commande</p>
+        <p class="texte-petit">Appliqué tout seul au panier, sans code à taper.</p>
+      </div>
+    </div>
+
+    <app-fournisseurs action="inscription" />
+
+    <ul class="avantages">
+      @for (a of avantages; track a.titre) {
+        <li>
+          <span class="avantage-titre">{{ a.titre }}</span>
+          <span class="texte-petit doux">{{ a.detail }}</span>
+        </li>
+      }
+    </ul>
+
+    <p class="texte-mention doux">
+      Les thés au CBD sont réservés aux majeurs : on te demandera de le confirmer à ton premier
+      achat. En continuant, tu acceptes les CGV et la politique de confidentialité.
+    </p>
+
+    <p class="texte-courant bascule">
+      <span class="doux">Déjà un compte ?</span>
+      <a routerLink="/connexion">Se connecter →</a>
+    </p>
+  </section>
+
+  <ul class="univers" aria-label="Nos trois univers">
+    @for (u of univers; track u.nom) {
+      <li>
+        <img [src]="u.src" alt="" />
+        <span class="univers-nom">{{ u.nom }}</span>
+        <span class="univers-detail">{{ u.detail }}</span>
+      </li>
+    }
+  </ul>
+</main>

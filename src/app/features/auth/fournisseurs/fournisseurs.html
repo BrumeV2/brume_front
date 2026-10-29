@@ -1,0 +1,9 @@
+<a
+  class="bouton google"
+  [href]="googleUrl"
+  [attr.aria-busy]="redirection()"
+  (click)="redirection.set(true)"
+>
+  <img src="images/auth/logo-google.svg" alt="" width="20" height="20" />
+  {{ redirection() ? 'Redirection vers Google…' : libelle() }}
+</a>
