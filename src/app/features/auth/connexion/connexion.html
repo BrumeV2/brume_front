@@ -1,0 +1,61 @@
+<main class="scene">
+  <div class="mosaique" aria-hidden="true">
+    @for (colonne of colonnes; track $index) {
+      <div class="colonne">
+        @for (p of colonne; track p.src) {
+          <figure class="photo">
+            <img [src]="p.src" alt="" loading="lazy" />
+            @if (p.etiquette) {
+              <figcaption class="etiquette">{{ p.etiquette }}</figcaption>
+            }
+          </figure>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="mosaique-mobile" aria-hidden="true">
+    @for (p of mosaiqueMobile; track p.src) {
+      <img
+        [src]="p.src"
+        alt=""
+        [style.left]="pourcent(p.x, 370)"
+        [style.top]="pourcent(p.y, 360)"
+        [style.width]="pourcent(p.l, 370)"
+        [style.height]="pourcent(p.h, 360)"
+      />
+    }
+  </div>
+
+  <section class="connexion" aria-labelledby="titre-connexion">
+    <p class="surtitre">Ton compte Brume</p>
+    <h1 id="titre-connexion" class="titre-l">
+      <span>Content de</span>
+      <span class="accent">te revoir.</span>
+    </h1>
+    <p class="texte-chapo doux">
+      Un seul bouton pour te connecter ou créer ton compte. Pas de mot de passe à retenir.
+    </p>
+
+    <app-fournisseurs action="connexion" theme="sombre" />
+
+    <ul class="avantages">
+      @for (a of avantages; track a.libelle) {
+        <li>
+          <img [src]="a.src" alt="" loading="lazy" />
+          <span class="texte-petit">{{ a.libelle }}</span>
+        </li>
+      }
+    </ul>
+
+    <p class="texte-courant bascule">
+      <span class="doux">Pas encore de compte ?</span>
+      <a routerLink="/inscription">Créer mon compte →</a>
+    </p>
+
+    <p class="texte-mention doux">
+      En continuant, tu acceptes les CGV et la politique de confidentialité. Brume reçoit
+      seulement ton nom, ton email et ta photo de profil.
+    </p>
+  </section>
+</main>

@@ -1,0 +1,40 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+}
+
+.bouton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  height: 56px;
+  width: 100%;
+  border: 1px solid transparent;
+  border-radius: var(--rayon-pilule);
+  font-size: 15px;
+  font-weight: 500;
+  transition: opacity 0.15s ease;
+
+  // Les pages de connexion tiennent dans l'écran : on gagne un peu sur les écrans bas.
+  @media (min-width: 1024px) {
+    height: clamp(46px, 6.2vh, 56px);
+  }
+}
+
+.google {
+  background: var(--blanc);
+  border-color: var(--filet);
+  color: #1f1f1f;
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+// Sur fond encre (connexion) : pas de filet.
+:host(.sombre) .google {
+  border-color: transparent;
+}

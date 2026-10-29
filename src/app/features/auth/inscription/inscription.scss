@@ -1,0 +1,221 @@
+:host {
+  display: block;
+  min-height: 100dvh;
+  background: var(--fond);
+
+  @media (min-width: 1024px) {
+    display: flex;
+    flex-direction: column;
+    height: 100dvh;
+    min-height: 620px;
+  }
+}
+
+.doux {
+  color: var(--texte-doux);
+}
+
+.accent {
+  color: var(--accent);
+}
+
+// ── Mise en page : univers au-dessus sur mobile, à droite sur ordinateur ──
+// Sur ordinateur, la page tient dans la hauteur de l'écran (le corps prendra ce
+// que laissera le futur menu), tailles en vh plafonnées aux valeurs de la maquette.
+// En dessous de 620 px de haut, on accepte de défiler plutôt que d'écraser.
+
+.corps {
+  display: flex;
+  flex-direction: column-reverse;
+
+  @media (min-width: 1024px) {
+    flex: 1 1 0;
+    flex-direction: row;
+    min-height: 0;
+  }
+}
+
+.inscription {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 32px 20px 56px;
+  max-width: 600px;
+
+  @media (min-width: 1024px) {
+    flex: 1 1 0;
+    justify-content: center;
+    gap: clamp(10px, 2.2vh, 26px);
+    padding: clamp(20px, 4vh, 72px) 72px;
+    max-width: none;
+
+    .titre-l {
+      font-size: clamp(48px, min(6.67vw, 8.5vh), 96px);
+    }
+  }
+}
+
+// ── Offre de bienvenue ──
+
+.offre {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 10px;
+  background: var(--encre);
+  color: var(--texte-doux-sombre);
+
+  @media (min-width: 1024px) {
+    padding: clamp(10px, 1.6vh, 16px) 16px;
+  }
+}
+
+.offre-remise {
+  flex-shrink: 0;
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  font-size: 30px;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--accent-clair);
+
+  @media (min-width: 1024px) {
+    font-size: clamp(30px, 4.4vh, 40px);
+  }
+}
+
+.offre-titre {
+  margin-bottom: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  color: var(--fond);
+}
+
+// ── Avantages ──
+
+.avantages {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin: 0;
+  padding: 20px 0 0;
+  border-top: 1px solid var(--filet);
+  list-style: none;
+
+  @media (min-width: 1024px) {
+    flex-direction: row;
+    gap: 0;
+  }
+
+  li {
+    display: flex;
+    flex: 1 1 0;
+    flex-direction: column;
+    gap: 2px;
+  }
+}
+
+.avantage-titre {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+}
+
+.bascule {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+
+  a {
+    font-weight: 500;
+  }
+}
+
+// ── Trois univers ──
+
+.univers {
+  display: flex;
+  gap: 6px;
+  margin: 0;
+  padding: 16px 20px 0;
+  list-style: none;
+
+  @media (min-width: 1024px) {
+    flex: 0 0 min(760px, 53vw);
+    gap: 10px;
+    padding: clamp(12px, 2.7vh, 24px) 24px clamp(12px, 2.7vh, 24px) 0;
+  }
+
+  li {
+    position: relative;
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: flex-end;
+    gap: 2px;
+    height: 260px;
+    padding: 0 10px 10px;
+    overflow: hidden;
+    border-radius: 6px;
+    color: var(--blanc);
+
+    // Dégradé de lisibilité sous le texte.
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, transparent 45%, rgba(0, 0, 0, 0.65));
+    }
+
+    @media (min-width: 1024px) {
+      height: auto;
+      padding: 0 20px 20px;
+      border-radius: 8px;
+    }
+  }
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.univers-nom,
+.univers-detail {
+  position: relative;
+  z-index: 1;
+  white-space: nowrap;
+}
+
+.univers-nom {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: -0.025em;
+
+  @media (min-width: 1024px) {
+    font-size: 48px;
+    letter-spacing: -0.03em;
+  }
+}
+
+.univers-detail {
+  font-size: 10px;
+  line-height: 1.55;
+
+  @media (min-width: 1024px) {
+    font-size: 13px;
+  }
+}

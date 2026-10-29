@@ -108,9 +108,23 @@ Angular n'utilise **pas** de fichier `.env` : la configuration est compilée dan
 - **Aucun secret dans le front.** Tout ce qui est compilé est public : pas de clé d'API privée, pas de mot de passe. Les clés publiques (ex. clé publiable Stripe) sont acceptables.
 - L'URL de l'API passe par un **proxy de développement** (`proxy.conf.json`) plutôt que par une URL absolue : même origine qu'en production, donc pas de CORS et pas de souci avec le cookie `refresh_token` (httpOnly).
 
----
+## Connexion Google (OAuth)
 
-## ⌨️ Commandes utiles
+Le parcours OAuth est entièrement géré par l'API (`brume_back`, `docs/AUTH.md`) : le bouton
+Google navigue vers `/api/auth/google`, l'API pose un cookie HttpOnly `brume_session` puis
+redirige vers `/compte`. Le front ne manipule aucun jeton.
+
+L'URL de l'API est dans `src/environments/` (`localhost:3000` en développement). Dans le `.env`
+de l'API, en local :
+
+```
+CORS_ORIGIN=http://localhost:4200
+AUTH_SUCCESS_URL=http://localhost:4200/compte
+```
+
+Pages : `/connexion`, `/inscription` (réservées aux visiteurs), `/compte` (réservée aux clients).
+
+## Vérifications
 
 ```bash
 npm start                      # serveur de dev sur http://localhost:4200
