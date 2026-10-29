@@ -1,0 +1,34 @@
+<header class="bandeau">
+  <div class="bandeau__photo" aria-hidden="true">
+    <img src="images/compte/matcha-fouette.jpg" alt="" />
+  </div>
+
+  @if (user(); as compte) {
+    <div class="bandeau__contenu">
+      <p class="bandeau__compte">
+        <span class="bandeau__avatar">
+          @if (compte.avatarUrl; as url) {
+            <img [src]="url" alt="" width="44" height="44" />
+          } @else {
+            <span aria-hidden="true">{{ initiales() }}</span>
+          }
+        </span>
+        <img src="icons/google.svg" alt="Compte Google" width="16" height="16" />
+        <span>{{ compte.email }}</span>
+      </p>
+
+      <h1 class="bandeau__titre">
+        <span>{{ salutation().ligne }}</span>
+        @if (salutation().prenom; as prenom) {
+          <span class="bandeau__prenom">{{ prenom }}</span>
+        }
+      </h1>
+
+      <app-logout-button fond="sombre" />
+    </div>
+  }
+</header>
+
+<main class="contenu">
+  <app-account-tabs />
+</main>

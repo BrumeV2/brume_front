@@ -18,6 +18,10 @@
   --couleur-accent: #6e7a55;
   --couleur-accent-clair: #b9bfa6;
   --couleur-erreur: #b3261e;
+  /* Erreur lisible sur fond encre (le rouge ci-dessus y manque de contraste). */
+  --couleur-erreur-claire: #f2b8b5;
+  /* Contour d'un bouton secondaire sur fond encre (« Se déconnecter » du bandeau). */
+  --couleur-contour-sombre: rgba(255, 255, 255, 0.5);
 
   /* ── Familles ─────────────────────────────────────────────── */
   --police-titre: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;

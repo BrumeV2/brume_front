@@ -21,19 +21,7 @@
 </header>
 
 <main class="contenu">
-  <nav class="onglets" aria-label="Sections de mon compte">
-    @for (onglet of onglets; track onglet.libelle) {
-      @if (onglet.lien; as lien) {
-        <a [routerLink]="lien" class="onglets__lien" aria-current="page">
-          <app-ui-chip [libelle]="onglet.libelle" [actif]="true" />
-        </a>
-      } @else {
-        <span class="onglets__a-venir" aria-disabled="true" title="Bientôt disponible">
-          <app-ui-chip [libelle]="onglet.libelle" />
-        </span>
-      }
-    }
-  </nav>
+  <app-account-tabs class="onglets" actif="profil" />
 
   @switch (statut()) {
     @case ('loading') {
@@ -88,6 +76,8 @@
                 />
               </div>
             </app-ui-card>
+
+            <app-linked-accounts [email]="compte.email" />
           </div>
 
           @if (confirmation()) {

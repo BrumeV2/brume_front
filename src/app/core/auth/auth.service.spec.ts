@@ -1,109 +1,145 @@
-import { provideHttpClient } from '@angular/common/http';
-import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
+import { Observable, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it } from 'vitest';
+
 import { environment } from '../../../environments/environment';
+import type { UpdateProfileDraft, UserProfile } from '../api/api.types';
+import { SessionService } from '../api/session.service';
+import { UsersService } from '../api/users.service';
+
 import { AuthService } from './auth.service';
-import { User } from './user';
+import { AuthStore } from './auth.store';
 
-const api = environment.apiBaseUrl;
-
-const client: User = {
-  id: '6f1c2c1e-0000-4000-8000-000000000001',
-  email: 'client@brume.test',
+const client: UserProfile = {
+  id: 'e0000000-0000-4000-8000-000000000001',
+  email: 'camille.martin@example.com',
   firstName: 'Camille',
-  lastName: null,
+  lastName: 'Martin',
   phone: null,
   role: 'CUSTOMER',
-  status: 'ACTIVE',
-  emailVerifiedAt: '2026-10-27T10:00:00.000Z',
-  createdAt: '2026-10-27T10:00:00.000Z',
-  updatedAt: '2026-10-27T10:00:00.000Z',
+  createdAt: '2025-03-12T09:12:00.000Z',
+  birthDate: null,
+  avatarUrl: null,
 };
+
+function erreur(status: number): HttpErrorResponse {
+  return new HttpErrorResponse({ status, url: `${environment.apiBaseUrl}/users/me` });
+}
+
+class UsersDouble extends UsersService {
+  appels = 0;
+  reponse: () => Observable<UserProfile> = () => of(client);
+
+  override getMe(): Observable<UserProfile> {
+    this.appels++;
+    return this.reponse();
+  }
+
+  override updateMe(_payload: UpdateProfileDraft): Observable<UserProfile> {
+    return of(client);
+  }
+}
+
+class SessionDouble extends SessionService {
+  appels = 0;
+  reponse: () => Observable<void> = () => of(undefined);
+
+  override logout(): Observable<void> {
+    this.appels++;
+    return this.reponse();
+  }
+}
 
 describe('AuthService', () => {
   let auth: AuthService;
-  let http: HttpTestingController;
+  let store: AuthStore;
+  let users: UsersDouble;
+  let session: SessionDouble;
 
   beforeEach(() => {
+    users = new UsersDouble();
+    session = new SessionDouble();
     TestBed.configureTestingModule({
-      providers: [provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        { provide: UsersService, useValue: users },
+        { provide: SessionService, useValue: session },
+      ],
     });
     auth = TestBed.inject(AuthService);
-    http = TestBed.inject(HttpTestingController);
+    store = TestBed.inject(AuthStore);
   });
 
-  afterEach(() => http.verify());
+  /** Ouvre la session comme le fait la garde d'une page du compte. */
+  async function connecter(): Promise<void> {
+    await auth.currentUser();
+  }
 
   it('pointe le bouton Google vers le parcours OAuth de l’API', () => {
-    expect(auth.googleLoginUrl).toBe(`${api}/auth/google`);
+    expect(auth.googleLoginUrl).toBe(`${environment.apiBaseUrl}/auth/google`);
   });
 
-  it('récupère le client connecté avec le cookie de session, une seule fois', async () => {
-    const premier = auth.currentUser();
-    const second = auth.currentUser();
+  it('interroge /users/me une seule fois et alimente le store du profil', async () => {
+    const [premier, second] = await Promise.all([auth.currentUser(), auth.currentUser()]);
 
-    const req = http.expectOne(`${api}/users/me`);
-    expect(req.request.withCredentials).toBe(true);
-    req.flush(client);
-
-    expect(await premier).toEqual(client);
-    expect(await second).toEqual(client);
-    expect(auth.isAuthenticated()).toBe(true);
-
-    // En cache : aucune nouvelle requête.
+    expect(premier).toEqual(client);
+    expect(second).toEqual(client);
     expect(await auth.currentUser()).toEqual(client);
+    expect(users.appels).toBe(1);
+    expect(store.user()).toEqual(client);
+    expect(auth.isAuthenticated()).toBe(true);
   });
 
   it('mémorise un visiteur non connecté sur une 401', async () => {
-    const resultat = auth.currentUser();
-    http
-      .expectOne(`${api}/users/me`)
-      .flush({ code: 'UNAUTHENTICATED' }, { status: 401, statusText: 'Unauthorized' });
+    users.reponse = () => throwError(() => erreur(401));
 
-    expect(await resultat).toBeNull();
     expect(await auth.currentUser()).toBeNull();
-    expect(auth.isAuthenticated()).toBe(false);
+    expect(await auth.currentUser()).toBeNull();
+    expect(users.appels).toBe(1);
   });
 
   it('ne mémorise pas une API indisponible : la question sera reposée', async () => {
-    const resultat = auth.currentUser();
-    http
-      .expectOne(`${api}/users/me`)
-      .flush({ code: 'AUTH_UNAVAILABLE' }, { status: 503, statusText: 'Service Unavailable' });
-    expect(await resultat).toBeNull();
+    users.reponse = () => throwError(() => erreur(503));
+    expect(await auth.currentUser()).toBeNull();
 
-    const nouvelEssai = auth.currentUser();
-    http.expectOne(`${api}/users/me`).flush(client);
-    expect(await nouvelEssai).toEqual(client);
+    users.reponse = () => of(client);
+    expect(await auth.currentUser()).toEqual(client);
+    expect(users.appels).toBe(2);
   });
 
-  it('déconnecte avec l’en-tête CSRF exigé par l’API', async () => {
-    const chargement = auth.currentUser();
-    http.expectOne(`${api}/users/me`).flush(client);
-    await chargement;
+  describe('logout', () => {
+    it('révoque la session puis efface tout ce que le front sait du client', async () => {
+      await connecter();
 
-    const deconnexion = auth.logout();
-    const req = http.expectOne(`${api}/auth/logout`);
-    expect(req.request.method).toBe('POST');
-    expect(req.request.withCredentials).toBe(true);
-    expect(req.request.headers.get('X-CSRF-Protection')).toBe('1');
-    req.flush(null, { status: 204, statusText: 'No Content' });
+      await auth.logout();
 
-    await deconnexion;
-    expect(auth.user()).toBeNull();
-  });
+      expect(session.appels).toBe(1);
+      expect(auth.isAuthenticated()).toBe(false);
+      expect(store.user()).toBeNull();
+      expect(store.status()).toBe('idle');
+      // Plus d'accès authentifié : la garde suivante voit un visiteur, sans redemander à l'API.
+      expect(await auth.currentUser()).toBeNull();
+      expect(users.appels).toBe(1);
+    });
 
-  it('reste connecté si l’API n’a pas confirmé la déconnexion', async () => {
-    const chargement = auth.currentUser();
-    http.expectOne(`${api}/users/me`).flush(client);
-    await chargement;
+    it('ne prétend pas avoir déconnecté si l’API n’a pas confirmé (réseau coupé)', async () => {
+      await connecter();
+      session.reponse = () => throwError(() => new HttpErrorResponse({ status: 0 }));
 
-    const deconnexion = auth.logout();
-    http
-      .expectOne(`${api}/auth/logout`)
-      .flush({ code: 'AUTH_UNAVAILABLE' }, { status: 503, statusText: 'Service Unavailable' });
+      await expect(auth.logout()).rejects.toBeInstanceOf(HttpErrorResponse);
 
-    await expect(deconnexion).rejects.toBeTruthy();
-    expect(auth.user()).toEqual(client);
+      expect(auth.isAuthenticated()).toBe(true);
+      expect(store.user()).toEqual(client);
+    });
+
+    it('ne prétend pas avoir déconnecté si l’API répond en erreur (503)', async () => {
+      await connecter();
+      session.reponse = () => throwError(() => erreur(503));
+
+      await expect(auth.logout()).rejects.toBeInstanceOf(HttpErrorResponse);
+
+      expect(auth.isAuthenticated()).toBe(true);
+      expect(store.user()).toEqual(client);
+    });
   });
 });

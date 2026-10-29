@@ -8,14 +8,15 @@ import { UsersService } from '../users.service';
 
 import { MOCK_CUSTOMER_ID, mockUsers } from './fixtures/users.fixture';
 import { mockFail, mockOk } from './mock-delay';
+import { MockSession } from './mock-session';
 
 const STORAGE_KEY = 'brume.mock.users';
 const PATH = '/api/users/me';
 
 /**
- * Identifiant du compte considéré comme connecté tant que la connexion
- * (US-045 / US-046) n'est pas implémentée. Le vrai back déduit cet
- * identifiant du jeton : le front ne l'envoie jamais.
+ * Identifiant du compte considéré comme connecté tant que `MockSession` est
+ * ouverte. Le vrai back déduit cet identifiant du cookie de session : le front
+ * ne l'envoie jamais.
  */
 const CURRENT_USER_ID = MOCK_CUSTOMER_ID;
 
@@ -39,9 +40,13 @@ interface ValidationDetail {
 @Injectable()
 export class UsersMockService extends UsersService {
   private readonly storage = inject(BROWSER_STORAGE);
+  private readonly session = inject(MockSession);
 
   override getMe(): Observable<UserProfile> {
-    const user = this.readUsers().find((candidate) => candidate.id === CURRENT_USER_ID);
+    // Après une déconnexion, plus aucun compte n'est rattaché à cet appareil.
+    const user = this.session.isOpen
+      ? this.readUsers().find((candidate) => candidate.id === CURRENT_USER_ID)
+      : undefined;
 
     if (user === undefined) {
       return mockFail(
@@ -58,7 +63,9 @@ export class UsersMockService extends UsersService {
 
   override updateMe(payload: UpdateProfileDraft): Observable<UserProfile> {
     const users = this.readUsers();
-    const index = users.findIndex((candidate) => candidate.id === CURRENT_USER_ID);
+    const index = this.session.isOpen
+      ? users.findIndex((candidate) => candidate.id === CURRENT_USER_ID)
+      : -1;
 
     if (index === -1) {
       return mockFail(

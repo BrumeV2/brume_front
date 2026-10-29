@@ -1,0 +1,51 @@
+:host {
+  --bouton-texte: var(--couleur-encre);
+  --bouton-contour: var(--couleur-filet);
+  --bouton-contour-survol: var(--couleur-encre);
+  --erreur-texte: var(--couleur-erreur);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espace-2);
+}
+
+:host(.sur-fond-sombre) {
+  --bouton-texte: var(--couleur-fond);
+  --bouton-contour: var(--couleur-contour-sombre);
+  --bouton-contour-survol: var(--couleur-blanc);
+  --erreur-texte: var(--couleur-erreur-claire);
+}
+
+.bouton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-2);
+  padding: 0.625rem var(--espace-4);
+  border: 1px solid var(--bouton-contour);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  font-family: var(--police-texte);
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+  color: var(--bouton-texte);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.bouton:not(:disabled):hover {
+  border-color: var(--bouton-contour-survol);
+}
+
+.bouton:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
+.erreur {
+  max-width: 36rem;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--erreur-texte);
+}

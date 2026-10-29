@@ -22,7 +22,7 @@ export type PageMeta = components['schemas']['PageMeta'];
  * HORS CONTRAT — champs présents dans la maquette mais absents de
  * `openapi.yaml` (branche `develop` de brume_back) au 27/10/2026.
  *
- * La maquette décrit une connexion par fournisseur d'identité (Google, Apple).
+ * La connexion passe par Google, seul fournisseur d'identité.
  * L'email et la photo viennent du fournisseur et ne se modifient pas depuis
  * Brume ; le prénom et le nom en viennent aussi mais restent corrigeables,
  * puisqu'ils servent de destinataire des colis (écran « Profil client — mobile »).

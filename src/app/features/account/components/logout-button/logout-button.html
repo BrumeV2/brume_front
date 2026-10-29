@@ -1,0 +1,17 @@
+<button
+  class="bouton"
+  type="button"
+  [disabled]="isPending()"
+  [attr.aria-busy]="isPending() ? 'true' : null"
+  (click)="logout()"
+>
+  <img [src]="iconSrc()" alt="" width="16" height="16" />
+  {{ libelle() }}
+</button>
+
+@if (hasFailed()) {
+  <p class="erreur" role="alert">
+    La déconnexion n’a pas pu être confirmée : tu es toujours connecté sur cet appareil. Vérifie ta
+    connexion et réessaie.
+  </p>
+}

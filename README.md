@@ -106,7 +106,7 @@ Angular n'utilise **pas** de fichier `.env` : la configuration est compilée dan
 | `useMocks`   | `true` | `false` | Sert les données simulées au lieu d'appeler l'API (voir plus bas)          |
 
 - **Aucun secret dans le front.** Tout ce qui est compilé est public : pas de clé d'API privée, pas de mot de passe. Les clés publiques (ex. clé publiable Stripe) sont acceptables.
-- L'URL de l'API passe par un **proxy de développement** (`proxy.conf.json`) plutôt que par une URL absolue : même origine qu'en production, donc pas de CORS et pas de souci avec le cookie `refresh_token` (httpOnly).
+- L'URL de l'API passe par un **proxy de développement** (`proxy.conf.json`) plutôt que par une URL absolue : même origine qu'en production, donc pas de CORS et pas de souci avec le cookie de session `brume_session` (HttpOnly).
 
 ## Connexion Google (OAuth)
 
