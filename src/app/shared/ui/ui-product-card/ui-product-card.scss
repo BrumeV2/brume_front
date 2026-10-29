@@ -15,16 +15,27 @@
   overflow: hidden;
   background-color: var(--couleur-photo);
 
+  /* Animation de la maquette HTML : photo un peu éteinte et légèrement agrandie,
+     qui se rapproche et reprend ses couleurs au survol de la carte. */
   img {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+    filter: saturate(0.75);
+    transform: scale(1.02);
+    transition:
+      transform 1.4s var(--courbe-brume),
+      filter 0.9s var(--courbe-brume);
   }
 }
 
-.carte--lien:hover .carte__photo img {
-  transform: scale(1.04);
+.carte:hover .carte__photo img {
+  filter: saturate(1);
+  transform: scale(1.08);
+}
+
+.carte--lien:focus-visible {
+  outline-offset: 6px;
 }
 
 .carte__badge {

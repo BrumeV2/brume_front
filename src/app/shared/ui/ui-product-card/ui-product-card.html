@@ -1,5 +1,5 @@
 @if (lien(); as url) {
-  <a class="carte carte--lien" [routerLink]="url">
+  <a class="carte carte--lien" [routerLink]="url" [queryParams]="params()">
     <ng-container *ngTemplateOutlet="contenu" />
   </a>
 } @else {

@@ -19,6 +19,7 @@ import {
 import { filter } from 'rxjs';
 
 import { COMPTE, UNIVERS } from '../navigation';
+import { SideSwitch } from '../side-switch/side-switch';
 
 /** Au-delà de ce défilement, le menu transparent devient plein (description Figma). */
 const SEUIL_DEFILEMENT = 24;
@@ -34,7 +35,7 @@ const SEUIL_DEFILEMENT = 24;
 @Component({
   selector: 'app-site-header',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [RouterLink, RouterLinkActive, SideSwitch],
   templateUrl: './site-header.html',
   styleUrl: './site-header.scss',
   host: {

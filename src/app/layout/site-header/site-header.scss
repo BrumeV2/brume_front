@@ -198,3 +198,9 @@
     transform: translateY(-8px);
   }
 }
+
+/* Sortie de l'intro : le grand « BRUME » de l'écran d'accueil rejoint ce logo
+   (transition de vue). Le nom n'est posé que dans l'état d'arrivée. */
+:host-context(.intro-arrivee) .menu > .menu__logo {
+  view-transition-name: brand;
+}

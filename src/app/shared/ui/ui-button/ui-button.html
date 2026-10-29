@@ -1,12 +1,22 @@
-<button
-  class="bouton"
-  [type]="type()"
-  [disabled]="disabled() || occupe()"
-  [attr.aria-busy]="occupe() ? 'true' : null"
-  (click)="presse.emit()"
->
+@if (lien(); as route) {
+  <a class="bouton" [routerLink]="route" [queryParams]="params()">
+    <ng-container *ngTemplateOutlet="contenu" />
+  </a>
+} @else {
+  <button
+    class="bouton"
+    [type]="type()"
+    [disabled]="disabled() || occupe()"
+    [attr.aria-busy]="occupe() ? 'true' : null"
+    (click)="presse.emit()"
+  >
+    <ng-container *ngTemplateOutlet="contenu" />
+  </button>
+}
+
+<ng-template #contenu>
   <span class="bouton__libelle">{{ occupe() ? 'Enregistrement…' : libelle() }}</span>
   @if (fleche() && !occupe()) {
     <span class="bouton__fleche" aria-hidden="true">→</span>
   }
-</button>
+</ng-template>

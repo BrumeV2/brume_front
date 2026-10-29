@@ -190,6 +190,9 @@ Un store, c'est un service `providedIn: 'root'` qui expose :
 - des `computed()` pour tout ce qui se déduit (`itemCount`, `subtotalCents`) ;
 - des méthodes pour les modifications (`addItem()`, `removeItem()`).
 
+- **`core/state/side.store.ts`** : préférence « plutôt thé / plutôt café » (interrupteur du menu, écran d'intro de l'accueil), gardée pour la session dans `sessionStorage` (jeton `SESSION_STORAGE`).
+- **`core/api/home.service.ts`** : vitrine de l'accueil (préférés, moments) selon le côté choisi. **Hors contrat** : seule l'implémentation simulée existe, à rebrancher sur le catalogue quand le back aura une route dédiée.
+
 Personne n'écrit dans un signal de store depuis l'extérieur. Pas de librairie d'état : les signaux d'Angular suffisent à l'échelle du projet.
 
 > **Panier du visiteur** (décision D-017 du back) : tant que le client n'est pas connecté, le panier vit dans le `localStorage`, géré par `cart.store.ts`. À la connexion, le front appelle `POST /cart/merge` pour le fusionner avec le panier du compte, puis vide le stockage local.

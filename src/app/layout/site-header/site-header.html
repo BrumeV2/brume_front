@@ -18,7 +18,7 @@
   <a class="menu__logo" routerLink="/" aria-label="Brume, accueil">BRUME</a>
 
   <div class="menu__actions">
-    <ng-content select="[menu-actions]" />
+    <app-side-switch />
     <a
       class="menu__lien menu__compte"
       [routerLink]="compte.lien"
