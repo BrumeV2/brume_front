@@ -1,0 +1,93 @@
+<div class="univers-et-tri">
+  <nav class="onglets" aria-label="Univers">
+    <button
+      class="onglet"
+      type="button"
+      [class.est-actif]="univers() === null"
+      [attr.aria-current]="univers() === null ? 'true' : null"
+      (click)="changer('category', null)"
+    >
+      Tout
+    </button>
+
+    @for (categorie of categories(); track categorie.id) {
+      <button
+        class="onglet"
+        type="button"
+        [class.est-actif]="univers() === categorie.slug"
+        [attr.aria-current]="univers() === categorie.slug ? 'true' : null"
+        (click)="changer('category', categorie.slug)"
+      >
+        {{ categorie.name }}
+      </button>
+    }
+  </nav>
+
+  <div class="tri">
+    <span class="tri__libelle">Trier par</span>
+    <app-filter-menu
+      nom="Les préférés"
+      [options]="optionsTri"
+      [valeur]="triChoisi()"
+      (choix)="tri.emit($event ?? 'relevance')"
+    />
+  </div>
+</div>
+
+<div class="pastilles">
+  <app-filter-menu
+    nom="Type"
+    [options]="optionsType"
+    [valeur]="filtres().type ?? null"
+    (choix)="changer('type', $event)"
+  />
+  <app-filter-menu
+    nom="Moment"
+    [options]="optionsMoment"
+    [valeur]="filtres().moment ?? null"
+    (choix)="changer('moment', $event)"
+  />
+  <app-filter-menu
+    nom="Caféine"
+    [options]="optionsCaffeine"
+    [valeur]="filtres().caffeine ?? null"
+    (choix)="changer('caffeine', $event)"
+  />
+  <app-filter-menu
+    nom="Prix"
+    [options]="optionsPrix"
+    [valeur]="trancheChoisie()"
+    (choix)="changer('prix', $event)"
+  />
+
+  <button
+    class="bascule"
+    type="button"
+    [attr.aria-pressed]="filtres().inStock === true"
+    (click)="changer('inStock', filtres().inStock === true ? null : 'true')"
+  >
+    <app-ui-chip libelle="En stock" [actif]="filtres().inStock === true" />
+  </button>
+</div>
+
+@if (criteresActifs().length > 0) {
+  <div class="criteres">
+    <span class="criteres__libelle">Filtres actifs :</span>
+
+    @for (critere of criteresActifs(); track critere.champ) {
+      <button
+        class="critere"
+        type="button"
+        [attr.aria-label]="'Retirer le filtre ' + critere.libelle"
+        (click)="changer(critere.champ, null)"
+      >
+        {{ critere.libelle }}
+        <span class="critere__croix" aria-hidden="true">×</span>
+      </button>
+    }
+
+    <button class="tout-effacer" type="button" (click)="reinitialisation.emit()">
+      Tout effacer
+    </button>
+  </div>
+}

@@ -172,7 +172,7 @@ export const routes: Routes = [
 - Le cadre commun (`App` : `layout/site-header`, contenu, `layout/site-footer`) lit les `data` de la route : `menu: 'transparent'` quand la page commence par une photo ou un bandeau sombre (le menu fixe se pose dessus et devient plein au défilement), `piedDePage: false` pour les écrans pleins (connexion, inscription). Sans `menu: 'transparent'`, le contenu est décalé de `--hauteur-menu`.
 - Les entrées du menu et du pied de page sont déclarées dans `layout/navigation.ts`. Une entrée sans `lien` est une fonction pas encore livrée : jamais rendue en lien.
 - Les paramètres d'URL se lisent par **signal d'entrée** (`withComponentInputBinding()`), pas par un abonnement à `ActivatedRoute`.
-- Les filtres du catalogue (`q`, `category`, `sort`, `page`) vivent dans les **paramètres de requête**, pour qu'une recherche soit partageable et que le retour arrière fonctionne.
+- Les filtres du catalogue (`category`, `type`, `minPriceCents`, `maxPriceCents`, `inStock`, `q`, `sort`, `moment`, `caffeine`) vivent dans les **paramètres de requête**, pour qu'une sélection soit partageable et que le retour arrière défasse le dernier filtre. L'URL est la seule source de vérité : les composants de filtre ne gardent aucun état. Une valeur inconnue n'est pas corrigée en silence, elle part à l'API qui la refuse, et l'écran affiche l'erreur.
 
 ## État de l'application
 

@@ -1,0 +1,86 @@
+<nav class="fil" aria-label="Fil d’Ariane">
+  <a class="lien-fleche" routerLink="/boutique" [queryParams]="contexte()">
+    {{ libelleRetour() }}
+  </a>
+</nav>
+
+@switch (statut()) {
+  @case ('chargement') {
+    <p class="message" role="status">Chargement du produit…</p>
+  }
+
+  @case ('introuvable') {
+    <div class="message bloc">
+      <p class="bloc__titre titre-carte">Ce produit n’existe pas.</p>
+      <p>Il a peut-être été retiré de la boutique.</p>
+      <app-ui-button libelle="Toute la boutique" lien="/boutique" />
+    </div>
+  }
+
+  @case ('echec') {
+    <div class="message bloc" role="alert">
+      <p class="bloc__titre titre-carte">Ce produit n’a pas pu être chargé.</p>
+      <p>{{ erreur()?.message }}</p>
+      <app-ui-button libelle="Réessayer" (presse)="reessayer()" />
+    </div>
+  }
+
+  @default {
+    @if (produit(); as p) {
+      <article class="produit">
+        <div class="produit__photo">
+          @if (p.image; as image) {
+            <img [src]="image.url" [alt]="image.alt" />
+          }
+        </div>
+
+        <div class="produit__infos">
+          @if (p.origin; as origine) {
+            <p class="surtitre">{{ origine }}</p>
+          }
+
+          <div class="produit__entete">
+            <h1 class="titre-m">{{ p.name }}</h1>
+            <p class="produit__prix">{{ p.fromPriceCents | price }}</p>
+          </div>
+
+          @if (p.tastingNotes; as notes) {
+            <p class="texte-intro">{{ notes }}</p>
+          }
+
+          <dl class="reperes">
+            <div>
+              <dt>Disponibilité</dt>
+              <dd [class.est-epuise]="p.availability === 'OUT_OF_STOCK'">{{ disponibilite() }}</dd>
+            </div>
+            <div>
+              <dt>Moment</dt>
+              <dd>{{ moment() }}</dd>
+            </div>
+            <div>
+              <dt>Univers</dt>
+              <dd>
+                <a
+                  class="lien-fleche"
+                  routerLink="/boutique"
+                  [queryParams]="{ category: p.category.slug }"
+                >
+                  {{ p.category.name }}
+                </a>
+              </dd>
+            </div>
+          </dl>
+
+          @if (p.ageRestricted) {
+            <p class="mention texte-mention">
+              Produit réservé aux personnes majeures. Un contrôle d’âge est demandé à la commande.
+            </p>
+          }
+
+          <!-- Formats, quantité et ajout au panier : US-002 et US-004. -->
+          <p class="mention-bientot">Achat en ligne bientôt disponible</p>
+        </div>
+      </article>
+    }
+  }
+}

@@ -1,0 +1,51 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.declencheur {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.menu {
+  position: absolute;
+  top: calc(var(--hauteur-pastille) + var(--espace-2));
+  left: 0;
+  z-index: 20;
+  min-width: 100%;
+  margin: 0;
+  padding: var(--espace-1);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-carte);
+  background-color: var(--couleur-papier);
+  list-style: none;
+}
+
+.option {
+  display: block;
+  width: 100%;
+  padding: var(--espace-2) var(--espace-3);
+  border: 0;
+  border-radius: var(--rayon-saisie);
+  background: none;
+  color: var(--couleur-encre);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  text-align: left;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background-color 0.2s var(--courbe-brume);
+}
+
+.option:hover,
+.option:focus-visible {
+  background-color: var(--couleur-fond);
+}
+
+.option[aria-selected='true'] {
+  font-weight: 500;
+}

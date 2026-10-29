@@ -1,0 +1,97 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.bandeau {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-5);
+  padding: var(--espace-10) var(--espace-5);
+  background-color: var(--couleur-encre);
+  color: var(--couleur-fond);
+
+  @include m.a-partir-de-ordinateur {
+    padding: var(--espace-18) var(--espace-18) var(--espace-10);
+  }
+}
+
+.bandeau__surtitre {
+  color: var(--couleur-texte-doux-sombre);
+}
+
+/* La barre reste visible pendant qu'on parcourt la grille. */
+.barre {
+  position: sticky;
+  top: var(--hauteur-menu);
+  z-index: 10;
+}
+
+/*
+ * Pleine largeur, avec la seule marge latérale de la page : le bandeau et la
+ * barre de filtres sont à fond perdu, donc borner le contenu à
+ * `--largeur-contenu` décalerait la grille vers la droite des onglets dès que
+ * l'écran dépasse 1440 px.
+ */
+.resultats {
+  padding: var(--espace-8) var(--espace-5) var(--espace-10);
+
+  @include m.a-partir-de-ordinateur {
+    padding: var(--espace-10) var(--espace-18) var(--espace-18);
+  }
+}
+
+.compte {
+  margin-bottom: var(--espace-8);
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+}
+
+.grille {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--espace-6) var(--espace-3);
+
+  @include m.a-partir-de-ordinateur {
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--espace-8) var(--espace-6);
+  }
+}
+
+.univers + .univers {
+  display: block;
+  margin-top: var(--espace-10);
+}
+
+.voir-plus {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--espace-10);
+}
+
+.message {
+  padding-block: var(--espace-10);
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-taille);
+  line-height: var(--texte-interligne);
+}
+
+.bloc {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espace-3);
+  max-width: 34rem;
+}
+
+.bloc__titre {
+  color: var(--couleur-encre);
+}
+
+.bloc__champs {
+  margin: 0;
+  padding-left: var(--espace-5);
+  font-size: var(--texte-petit-taille);
+}

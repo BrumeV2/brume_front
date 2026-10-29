@@ -6,7 +6,9 @@ import { HomeService } from './core/api/home.service';
 import { HomeMockService } from './core/api/mocks/home.mock.service';
 import { SessionHttpService, SessionService } from './core/api/session.service';
 import { SessionMockService } from './core/api/mocks/session.mock.service';
+import { ProductsHttpService, ProductsService } from './core/api/products.service';
 import { UsersHttpService, UsersService } from './core/api/users.service';
+import { ProductsMockService } from './core/api/mocks/products.mock.service';
 import { UsersMockService } from './core/api/mocks/users.mock.service';
 import { credentialsInterceptor } from './core/interceptors/credentials-interceptor';
 import { environment } from '../environments/environment';
@@ -27,6 +29,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: UsersService,
       useClass: environment.useMocks ? UsersMockService : UsersHttpService,
+    },
+    {
+      provide: ProductsService,
+      useClass: environment.useMocks ? ProductsMockService : ProductsHttpService,
     },
     // Pas encore de route au contrat pour la vitrine de l'accueil : simulée dans tous les cas.
     { provide: HomeService, useClass: HomeMockService },
