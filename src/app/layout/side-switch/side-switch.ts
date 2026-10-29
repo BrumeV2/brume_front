@@ -34,7 +34,10 @@ export class SideSwitch {
     const changer = () => this.store.toggle(side);
 
     if (this.router.url.split(/[?#]/)[0] === '/') {
-      void avecTransitionDeVue('transition-fondu', changer, () => this.appRef.tick());
+      // Le menu reste en place pendant le fondu, comme dans la maquette.
+      void avecTransitionDeVue(['transition-fondu', 'menu-fixe'], changer, () =>
+        this.appRef.tick(),
+      );
     } else {
       changer();
     }
