@@ -67,6 +67,8 @@
               [notes]="produit.tastingNotes"
               [moment]="libelleMoment(produit)"
               [badge]="mentionPhoto(produit)"
+              [lien]="'/boutique/' + produit.slug"
+              [params]="filtres()"
             />
           }
         </div>

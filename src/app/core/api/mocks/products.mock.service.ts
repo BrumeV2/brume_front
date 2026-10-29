@@ -37,6 +37,16 @@ export class ProductsMockService extends ProductsService {
     return mockOk([...CATEGORIES_FIXTURE]);
   }
 
+  override getBySlug(slug: string): Observable<CatalogProduct> {
+    const produit = PRODUCTS_FIXTURE.filter(publie).find((p) => p.slug === slug);
+
+    // Un produit non publié répond 404 comme un slug inconnu : son existence
+    // n'a pas à transparaître.
+    return produit === undefined
+      ? mockFail(404, 'NOT_FOUND', 'Ressource introuvable.', undefined, `/api/products/${slug}`)
+      : mockOk({ ...produit });
+  }
+
   override list(query: CatalogQuery): Observable<CatalogPage> {
     const problemes = valider(query);
     if (problemes.length > 0) {

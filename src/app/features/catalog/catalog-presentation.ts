@@ -1,4 +1,4 @@
-import type { CatalogProduct } from '../../core/api/api.types';
+import type { Availability, CatalogProduct } from '../../core/api/api.types';
 import { LIBELLES_MOMENT } from '../../core/api/catalog-rules';
 
 /**
@@ -23,4 +23,16 @@ export function badgeDe(produit: CatalogProduct): string | null {
   if (produit.availability === 'OUT_OF_STOCK') return 'Épuisé';
   if (produit.availability === 'LOW_STOCK') return 'Derniers exemplaires';
   return produit.badge;
+}
+
+/** Disponibilité en toutes lettres, pour la fiche produit. */
+export function libelleDisponibilite(availability: Availability): string {
+  switch (availability) {
+    case 'OUT_OF_STOCK':
+      return 'Épuisé pour le moment';
+    case 'LOW_STOCK':
+      return 'Derniers exemplaires';
+    default:
+      return 'En stock';
+  }
 }

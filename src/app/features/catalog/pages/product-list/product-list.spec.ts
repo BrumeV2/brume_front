@@ -5,18 +5,24 @@ import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import type { CatalogPage, Category } from '../../../../core/api/api.types';
+import type { CatalogPage, CatalogProduct, Category } from '../../../../core/api/api.types';
 import { ProductsMockService } from '../../../../core/api/mocks/products.mock.service';
 import { ProductsService } from '../../../../core/api/products.service';
 import { catalogRoutes } from '../../catalog.routes';
 
-/** API injoignable : ni page de produits, ni catégories. */
+/** API injoignable : aucune requête n'aboutit. */
 class ApiMuette extends ProductsService {
+  private readonly panne = (): Observable<never> =>
+    throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }));
+
   override list(): Observable<CatalogPage> {
-    return throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }));
+    return this.panne();
   }
   override categories(): Observable<Category[]> {
-    return throwError(() => new HttpErrorResponse({ status: 0, statusText: 'Unknown Error' }));
+    return this.panne();
+  }
+  override getBySlug(): Observable<CatalogProduct> {
+    return this.panne();
   }
 }
 
@@ -95,6 +101,23 @@ describe('ProductList', () => {
       const page = await afficher('/boutique?category=thes');
 
       expect(noms(page)).not.toContain('Oolong de printemps');
+    });
+
+    it('fait de chaque carte un lien vers sa fiche, qui emporte les filtres', async () => {
+      const page = await afficher('/boutique?category=thes&caffeine=HIGH');
+
+      const lien = page.querySelector('app-ui-product-card a');
+      expect(lien?.getAttribute('href')).toBe(
+        '/boutique/matcha-ceremonie?category=thes&caffeine=HIGH',
+      );
+    });
+
+    it('fait de même dans la vue par univers, avec le filtre de l’univers', async () => {
+      const page = await afficher('/boutique');
+
+      const lien = page.querySelector('app-universe-section app-ui-product-card a');
+      expect(lien?.getAttribute('href')).toContain('/boutique/');
+      expect(lien?.getAttribute('href')).toContain('category=thes');
     });
 
     it('propose un « Voir tout » par univers, qui pose le filtre de catégorie', async () => {

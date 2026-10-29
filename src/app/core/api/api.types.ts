@@ -60,11 +60,14 @@ export type UpdateProfileDraft = UpdateProfileRequest &
  * HORS CONTRAT — ce que la maquette du catalogue montre et que
  * `openapi.yaml` (branche `develop` de brume_back) ne porte pas, au 29/10/2026.
  *
- * La carte produit affiche une origine, des notes de dégustation et un moment
- * de la journée ; la barre de filtres ajoute aux filtres du contrat une
- * pastille « Moment » et une pastille « Caféine ». Le seed du back porte bien
- * une caféine sous `attributes.caffeine`, mais aucun de ces champs n'est
- * interrogeable et `ProductSummary` n'en expose aucun.
+ * La carte produit affiche une origine, des notes de dégustation, un moment de
+ * la journée et une mention éditoriale ; la barre de filtres ajoute aux filtres
+ * du contrat une pastille « Moment » et une pastille « Caféine ».
+ *
+ * `origin` existe bien au contrat, mais sur `ProductDetail` seulement : la
+ * liste ne le renvoie pas, alors que la carte l'affiche. `attributes.caffeine`
+ * est dans le seed et dans `ProductDetail`, sans être interrogeable. Les deux
+ * autres n'existent nulle part.
  *
  * À faire ajouter au contrat : `moment` et `caffeine` en paramètres de
  * `GET /products`, et les quatre champs sur `ProductSummary`. Tant que ce

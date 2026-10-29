@@ -58,6 +58,12 @@ describe('ProductsHttpService', () => {
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
   });
 
+  it('appelle `GET /products/{slug}`, en échappant le slug', () => {
+    service.getBySlug('earl grey/au chanvre').subscribe();
+
+    http.expectOne(`${PRODUCTS_URL}/earl%20grey%2Fau%20chanvre`).flush({});
+  });
+
   it('appelle `GET /categories`', () => {
     service.categories().subscribe();
 

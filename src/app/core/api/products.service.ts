@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import type { CatalogPage, CatalogQuery, Category } from './api.types';
+import type { CatalogPage, CatalogProduct, CatalogQuery, Category } from './api.types';
 
 /**
  * Catalogue : liste filtrée des produits et catégories (US-001, US-016).
@@ -16,6 +16,14 @@ import type { CatalogPage, CatalogQuery, Category } from './api.types';
 export abstract class ProductsService {
   abstract list(query: CatalogQuery): Observable<CatalogPage>;
   abstract categories(): Observable<Category[]>;
+  /**
+   * Un produit par son `slug`.
+   *
+   * `GET /products/{slug}` renvoie un `ProductDetail` — description, images,
+   * ingrédients, variantes. La fiche n'en lit pour l'instant que la part
+   * commune avec la liste : le reste est l'affaire d'US-002.
+   */
+  abstract getBySlug(slug: string): Observable<CatalogProduct>;
 }
 
 @Injectable()
@@ -31,6 +39,10 @@ export class ProductsHttpService extends ProductsService {
 
   override categories(): Observable<Category[]> {
     return this.http.get<Category[]>(`${this.baseUrl}/categories`);
+  }
+
+  override getBySlug(slug: string): Observable<CatalogProduct> {
+    return this.http.get<CatalogProduct>(`${this.baseUrl}/products/${encodeURIComponent(slug)}`);
   }
 }
 

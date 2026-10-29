@@ -150,6 +150,30 @@ describe('ProductsMockService', () => {
     });
   });
 
+  describe('lecture d’un produit', () => {
+    it('renvoie le produit demandé par son slug', async () => {
+      const produit = await firstValueFrom(service.getBySlug('matcha-ceremonie'));
+
+      expect(produit.name).toBe('Matcha cérémonie');
+      expect(produit.fromPriceCents).toBe(2400);
+    });
+
+    it('répond 404 pour un slug inconnu', async () => {
+      await expect(firstValueFrom(service.getBySlug('inexistant'))).rejects.toBeTruthy();
+    });
+
+    it('répond 404 pour un produit non publié, sans révéler son existence', async () => {
+      try {
+        await firstValueFrom(service.getBySlug('oolong-de-printemps'));
+        throw new Error('la requête aurait dû échouer');
+      } catch (erreur) {
+        const api = toApiError(erreur);
+        expect(api.statusCode).toBe(404);
+        expect(api.message).not.toContain('Oolong');
+      }
+    });
+  });
+
   // Critère 3 d'US-001.
   describe('parcours des lots', () => {
     it('ne duplique ni ne saute de produit d’un lot à l’autre', async () => {

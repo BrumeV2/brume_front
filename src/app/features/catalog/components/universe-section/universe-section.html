@@ -23,6 +23,8 @@
       [notes]="produit.tastingNotes"
       [moment]="libelleMoment(produit)"
       [badge]="mentionPhoto(produit)"
+      [lien]="'/boutique/' + produit.slug"
+      [params]="{ category: section().categorie.slug }"
     />
   }
 </div>
