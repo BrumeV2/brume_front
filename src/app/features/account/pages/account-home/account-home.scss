@@ -107,9 +107,9 @@
   font-variation-settings:
     'opsz' 14,
     'wdth' 100;
-  font-size: 2.75rem; /* Mobile/Titre L : 44px */
-  line-height: 0.95;
-  letter-spacing: -0.03em;
+  font-size: var(--mobile-titre-l-taille);
+  line-height: var(--mobile-titre-l-interligne);
+  letter-spacing: var(--mobile-titre-l-interlettre);
   color: var(--couleur-fond);
 
   @include m.a-partir-de-ordinateur {

@@ -1,0 +1,41 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.etape__photo {
+  aspect-ratio: 4 / 3;
+  background-color: var(--couleur-photo);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.etape__numero {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  font-size: var(--titre-carte-taille);
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: var(--titre-carte-interlettre);
+}
+
+/* Le titre de l'étape est en Geist medium dans la maquette, pas dans la police de titre. */
+.etape__titre {
+  font-family: var(--police-texte);
+  font-size: var(--texte-intro-taille);
+  font-weight: 500;
+  line-height: var(--texte-interligne);
+}
+
+.etape__texte {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}

@@ -103,26 +103,76 @@ textarea {
   text-transform: uppercase;
 }
 
-.titre-l {
+/* Titres : valeur « Mobile/… » d'abord, valeur ordinateur à partir de 1024px. */
+%titre {
   font-family: var(--police-titre);
   font-weight: 800;
   font-variation-settings:
     'opsz' 14,
     'wdth' 100;
-  // Valeurs du style « Mobile/Titre L » de la maquette, sans équivalent en token.
-  font-size: 2.75rem; /* 44px */
-  line-height: 0.95;
-  letter-spacing: -0.03em;
+
+  span {
+    display: block;
+  }
+}
+
+.titre-xl {
+  @extend %titre;
+  font-size: var(--mobile-titre-xl-taille);
+  line-height: var(--mobile-titre-xl-interligne);
+  letter-spacing: var(--mobile-titre-xl-interlettre);
+
+  @media (min-width: 1024px) {
+    font-size: clamp(6rem, 11vw, var(--titre-xl-taille));
+    line-height: var(--titre-xl-interligne);
+    letter-spacing: var(--titre-xl-interlettre);
+  }
+}
+
+.titre-l {
+  @extend %titre;
+  font-size: var(--mobile-titre-l-taille);
+  line-height: var(--mobile-titre-l-interligne);
+  letter-spacing: var(--mobile-titre-l-interlettre);
 
   @media (min-width: 1024px) {
     font-size: clamp(4rem, 6.67vw, var(--titre-l-taille));
     line-height: var(--titre-l-interligne);
     letter-spacing: var(--titre-l-interlettre);
   }
+}
 
-  span {
-    display: block;
+.titre-m {
+  @extend %titre;
+  font-size: var(--mobile-titre-m-taille);
+  line-height: var(--mobile-titre-m-interligne);
+  letter-spacing: var(--mobile-titre-m-interlettre);
+
+  @media (min-width: 1024px) {
+    font-size: var(--titre-m-taille);
+    line-height: var(--titre-m-interligne);
+    letter-spacing: var(--titre-m-interlettre);
   }
+}
+
+.titre-s {
+  @extend %titre;
+  font-size: var(--titre-s-taille);
+  line-height: var(--titre-s-interligne);
+  letter-spacing: var(--titre-s-interlettre);
+}
+
+.titre-carte {
+  @extend %titre;
+  font-size: var(--titre-carte-taille);
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: var(--titre-carte-interlettre);
+}
+
+.texte-intro {
+  font-size: var(--texte-intro-taille);
+  font-weight: 300;
+  line-height: var(--texte-intro-interligne);
 }
 
 .texte-chapo {
