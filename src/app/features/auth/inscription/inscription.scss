@@ -1,7 +1,7 @@
 :host {
   display: block;
   min-height: 100dvh;
-  background: var(--fond);
+  background: var(--couleur-fond);
 
   @media (min-width: 1024px) {
     display: flex;
@@ -12,11 +12,11 @@
 }
 
 .doux {
-  color: var(--texte-doux);
+  color: var(--couleur-texte-doux);
 }
 
 .accent {
-  color: var(--accent);
+  color: var(--couleur-accent);
 }
 
 // ── Mise en page : univers au-dessus sur mobile, à droite sur ordinateur ──
@@ -65,8 +65,8 @@
   width: 100%;
   padding: 16px;
   border-radius: 10px;
-  background: var(--encre);
-  color: var(--texte-doux-sombre);
+  background: var(--couleur-encre);
+  color: var(--couleur-texte-doux-sombre);
 
   @media (min-width: 1024px) {
     padding: clamp(10px, 1.6vh, 16px) 16px;
@@ -77,11 +77,13 @@
   flex-shrink: 0;
   font-family: var(--police-titre);
   font-weight: 800;
-  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
   font-size: 30px;
   line-height: 1;
   letter-spacing: -0.03em;
-  color: var(--accent-clair);
+  color: var(--couleur-accent-clair);
 
   @media (min-width: 1024px) {
     font-size: clamp(30px, 4.4vh, 40px);
@@ -93,7 +95,7 @@
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
-  color: var(--fond);
+  color: var(--couleur-fond);
 }
 
 // ── Avantages ──
@@ -105,7 +107,7 @@
   width: 100%;
   margin: 0;
   padding: 20px 0 0;
-  border-top: 1px solid var(--filet);
+  border-top: 1px solid var(--couleur-filet);
   list-style: none;
 
   @media (min-width: 1024px) {
@@ -164,7 +166,7 @@
     padding: 0 10px 10px;
     overflow: hidden;
     border-radius: 6px;
-    color: var(--blanc);
+    color: var(--couleur-blanc);
 
     // Dégradé de lisibilité sous le texte.
     &::after {
@@ -200,7 +202,9 @@
 .univers-nom {
   font-family: var(--police-titre);
   font-weight: 800;
-  font-variation-settings: 'opsz' 14, 'wdth' 100;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
   font-size: 24px;
   line-height: 1;
   letter-spacing: -0.025em;
