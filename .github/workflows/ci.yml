@@ -35,7 +35,16 @@ jobs:
         run: npm ci
 
       - name: Execution des tests unitaires
-        run: npm test -- --no-watch
+        run: |
+          npm test -- --no-watch 2>&1 | tee test.log
+
+      - name: Publier le resume des tests dans GitHub Actions
+        if: always()
+        run: |
+          echo "### Resultats des tests unitaires (Vitest)" >> $GITHUB_STEP_SUMMARY
+          echo '```text' >> $GITHUB_STEP_SUMMARY
+          tail -n 25 test.log >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Verification du build de production
         run: npm run build
