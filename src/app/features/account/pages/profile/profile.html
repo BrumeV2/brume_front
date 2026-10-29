@@ -1,0 +1,127 @@
+<header class="bandeau">
+  <div class="bandeau__contenu">
+    <a class="bandeau__retour" routerLink="/compte">← Mon compte</a>
+
+    <div class="bandeau__identite">
+      <div class="bandeau__avatar">
+        @if (profil()?.avatarUrl; as url) {
+          <img [src]="url" alt="" width="88" height="88" />
+        } @else {
+          <span aria-hidden="true">{{ initiales() }}</span>
+        }
+      </div>
+      <div class="bandeau__textes">
+        <h1 class="bandeau__titre">Mon profil</h1>
+        @if (profil() !== null) {
+          <p class="bandeau__sous-titre">{{ nomComplet() }} · chez Brume depuis {{ depuis() }}</p>
+        }
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="contenu">
+  <nav class="onglets" aria-label="Sections de mon compte">
+    @for (onglet of onglets; track onglet.libelle) {
+      @if (onglet.lien; as lien) {
+        <a [routerLink]="lien" class="onglets__lien" aria-current="page">
+          <app-ui-chip [libelle]="onglet.libelle" [actif]="true" />
+        </a>
+      } @else {
+        <span class="onglets__a-venir" aria-disabled="true" title="Bientôt disponible">
+          <app-ui-chip [libelle]="onglet.libelle" />
+        </span>
+      }
+    }
+  </nav>
+
+  @switch (statut()) {
+    @case ('loading') {
+      <p class="etat" role="status">Chargement de ton profil…</p>
+    }
+    @case ('error') {
+      <div class="etat etat--erreur" role="alert">
+        <p>{{ erreurChargement()?.message }}</p>
+        <app-ui-button libelle="Réessayer" variante="contour" (presse)="reessayerChargement()" />
+      </div>
+    }
+    @default {
+      @if (profil(); as compte) {
+        <form class="formulaire" [formGroup]="form" (ngSubmit)="enregistrer()">
+          <div class="colonnes">
+            <app-ui-card
+              titre="Identité"
+              description="Prénom et nom sont le destinataire de tes colis. Ta photo et ton email viennent de Google."
+            >
+              <div class="ligne">
+                <app-ui-field
+                  libelle="Prénom"
+                  [control]="form.controls.firstName"
+                  [obligatoire]="true"
+                  autocomplete="given-name"
+                  [erreur]="erreurDuChamp('firstName')"
+                />
+                <app-ui-field
+                  libelle="Nom"
+                  [control]="form.controls.lastName"
+                  [obligatoire]="true"
+                  autocomplete="family-name"
+                  [erreur]="erreurDuChamp('lastName')"
+                />
+              </div>
+
+              <div class="ligne">
+                <app-ui-static-field
+                  libelle="Email"
+                  [valeur]="compte.email"
+                  iconeSrc="icons/google.svg"
+                  iconeAlt="Fourni par Google"
+                  aide="Géré par ton compte Google."
+                />
+                <app-ui-field
+                  libelle="Date de naissance"
+                  type="date"
+                  [control]="form.controls.birthDate"
+                  autocomplete="bday"
+                  aide="Facultatif. Confirme ta majorité pour les thés au CBD."
+                  [erreur]="erreurDuChamp('birthDate')"
+                />
+              </div>
+            </app-ui-card>
+          </div>
+
+          @if (confirmation()) {
+            <p class="message message--succes" role="status">Ton profil est à jour.</p>
+          }
+          @if (erreurEnregistrement(); as erreur) {
+            <p class="message message--erreur" role="alert">{{ erreur.message }}</p>
+          }
+
+          @if (aDesModifications() || enregistrement()) {
+            <div class="barre-enregistrement">
+              <p class="barre-enregistrement__compte" aria-live="polite">
+                {{ libelleModifications() }}
+              </p>
+              <div class="barre-enregistrement__actions">
+                <button
+                  type="button"
+                  class="barre-enregistrement__annuler"
+                  [disabled]="enregistrement()"
+                  (click)="annuler()"
+                >
+                  Annuler
+                </button>
+                <app-ui-button
+                  libelle="Enregistrer"
+                  variante="clair"
+                  type="submit"
+                  [occupe]="enregistrement()"
+                />
+              </div>
+            </div>
+          }
+        </form>
+      }
+    }
+  }
+</main>

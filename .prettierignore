@@ -1,0 +1,8 @@
+# Fichiers générés
+dist/
+.angular/
+package-lock.json
+
+# Types générés depuis le contrat d'API (openapi.yaml de brume_back) :
+# régénérés par openapi-typescript, jamais modifiés ni reformatés à la main.
+src/app/core/api/schema.d.ts

@@ -2,6 +2,12 @@ import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guards';
 
 export const routes: Routes = [
+  { path: '', redirectTo: 'compte/profil', pathMatch: 'full' },
+  {
+    path: 'compte',
+    loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
+  },
+  { path: '**', redirectTo: 'compte/profil' },
   // Pas encore de page d'accueil : la connexion sert d'entrée.
   { path: '', pathMatch: 'full', redirectTo: 'connexion' },
   {

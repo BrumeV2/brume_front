@@ -1,0 +1,12 @@
+<div class="champ-fige">
+  <p class="champ-fige__libelle">{{ libelle() }}</p>
+  <p class="champ-fige__valeur">
+    <span>{{ valeur() }}</span>
+    @if (iconeSrc(); as src) {
+      <img class="champ-fige__icone" [src]="src" [alt]="iconeAlt()" width="14" height="14" />
+    }
+  </p>
+  @if (aide(); as texte) {
+    <p class="champ-fige__aide">{{ texte }}</p>
+  }
+</div>

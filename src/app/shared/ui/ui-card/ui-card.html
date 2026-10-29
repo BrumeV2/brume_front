@@ -1,0 +1,9 @@
+<section class="carte">
+  <header class="carte__entete">
+    <h2 class="carte__titre">{{ titre() }}</h2>
+    @if (description(); as texte) {
+      <p class="carte__description">{{ texte }}</p>
+    }
+  </header>
+  <ng-content />
+</section>
