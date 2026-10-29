@@ -87,7 +87,7 @@ describe('Home', () => {
     expect(element().querySelector('app-home-intro')).toBeNull();
   });
 
-  it('côté café : univers café en premier et section café remontée sous les univers', async () => {
+  it('côté café : univers café en premier, sections dans l’ordre de la maquette Figma', async () => {
     store.markIntroSeen();
     store.choose('cafe');
     await rendre();
@@ -95,8 +95,16 @@ describe('Home', () => {
     const univers = [...element().querySelectorAll('.univers__nom')].map((n) => n.textContent);
     expect(univers[0]).toBe('Le café');
 
-    const sections = [...element().querySelectorAll('h2')].map((h) => h.id);
-    expect(sections.indexOf('titre-cafe')).toBeLessThan(sections.indexOf('titre-maniere'));
+    // L'ordre des sections ne dépend pas du côté choisi : celui de la maquette Figma.
+    const sections = [...element().querySelectorAll('h2[id]')].map((h) => h.id);
+    expect(sections.slice(0, 6)).toEqual([
+      'titre-maniere',
+      'titre-moments',
+      'titre-preferes',
+      'titre-cafe',
+      'titre-teaomatic',
+      'titre-manifeste',
+    ]);
     expect(element().querySelector('h1')?.closest('section')?.textContent).toContain('Côté café');
   });
 
