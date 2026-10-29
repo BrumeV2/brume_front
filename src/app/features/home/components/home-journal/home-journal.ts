@@ -43,11 +43,23 @@ import { RevealDirective } from '../../../../shared/directives/reveal.directive'
       overflow: hidden;
       background-color: var(--couleur-photo);
 
+      /* Même animation que les cartes produit : la photo se rapproche et
+         reprend ses couleurs au survol de l'article. */
       img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        filter: saturate(0.75);
+        transform: scale(1.02);
+        transition:
+          transform 1.4s var(--courbe-brume),
+          filter 0.9s var(--courbe-brume);
       }
+    }
+
+    .articles li:hover .articles__photo img {
+      filter: saturate(1);
+      transform: scale(1.08);
     }
 
     .articles__rubrique {
