@@ -1,0 +1,83 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.apercu {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: var(--espace-8) var(--espace-6);
+  border: 1px solid var(--couleur-filet);
+  background-color: var(--couleur-papier);
+}
+
+.apercu__entete,
+.apercu__pied {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-3);
+}
+
+.apercu__doux {
+  color: var(--couleur-texte-doux);
+}
+
+.apercu__note {
+  font-size: 0.75rem;
+  color: var(--couleur-texte-doux);
+}
+
+.apercu__choix {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espace-2);
+
+  button {
+    padding: 0;
+    border: 0;
+    border-radius: var(--rayon-pilule);
+    background: none;
+    cursor: pointer;
+  }
+}
+
+/* Proportions : chaque part s'élargit ou se resserre en douceur. */
+.apercu__barre {
+  display: flex;
+  height: 44px;
+  margin-top: var(--espace-2);
+  overflow: hidden;
+  border-radius: var(--rayon-pilule);
+  background-color: var(--couleur-filet);
+
+  span {
+    display: flex;
+    align-items: center;
+    padding-left: 0.875rem;
+    overflow: hidden;
+    font-size: var(--surtitre-taille);
+    color: var(--couleur-blanc);
+    white-space: nowrap;
+    transition: flex-grow 0.7s var(--courbe-brume);
+  }
+}
+
+.apercu__pied {
+  align-items: center;
+  padding-top: var(--espace-5);
+  border-top: 1px solid var(--couleur-filet);
+}
+
+.apercu__nom {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  font-size: 1.75rem;
+  line-height: 1.05;
+  letter-spacing: var(--titre-carte-interlettre);
+}

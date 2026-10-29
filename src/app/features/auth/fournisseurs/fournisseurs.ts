@@ -6,7 +6,7 @@ import { AuthService } from '../../../core/auth/auth.service';
  *
  * Simple lien vers l'API, qui gère tout le parcours OAuth (state, PKCE, nonce)
  * puis redirige vers /compte avec le cookie de session posé.
- * La maquette prévoit aussi Apple, retiré tant que l'API ne le propose pas.
+ * Google est le seul fournisseur d'identité de Brume.
  */
 @Component({
   selector: 'app-fournisseurs',

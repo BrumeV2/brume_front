@@ -1,8 +1,18 @@
 :host {
+  --bouton-fond: transparent;
+  --bouton-texte: var(--couleur-encre);
+  --bouton-contour: transparent;
+  /* Au survol, une couleur monte depuis le bas (maquette HTML) et le texte change. */
+  --bouton-survol-fond: var(--couleur-encre);
+  --bouton-survol-texte: var(--couleur-fond);
+
   display: inline-flex;
 }
 
 .bouton {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10,19 +20,45 @@
   min-width: 200px;
   height: var(--hauteur-bouton);
   padding-inline: 1.75rem;
-  border: 1px solid transparent;
+  border: 1px solid var(--bouton-contour);
   border-radius: var(--rayon-pilule);
-  background: none;
+  background-color: var(--bouton-fond);
   font-family: var(--police-texte);
   font-size: var(--bouton-taille);
   font-weight: 500;
   line-height: 1;
+  color: var(--bouton-texte);
   white-space: nowrap;
   cursor: pointer;
   transition:
-    background-color 0.2s ease,
-    color 0.2s ease,
-    border-color 0.2s ease;
+    color 0.5s var(--courbe-brume),
+    border-color 0.5s var(--courbe-brume);
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background-color: var(--bouton-survol-fond);
+    transform: translateY(101%);
+    transition: transform 0.5s var(--courbe-brume);
+  }
+}
+
+.bouton:not(:disabled):hover {
+  color: var(--bouton-survol-texte);
+
+  &::before {
+    transform: none;
+  }
+
+  .bouton__fleche {
+    transform: translateX(4px);
+  }
+}
+
+.bouton__fleche {
+  transition: transform 0.5s var(--courbe-brume);
 }
 
 .bouton:disabled {
@@ -30,31 +66,20 @@
   opacity: 0.45;
 }
 
-:host(.variante-plein) .bouton {
-  background-color: var(--couleur-encre);
-  border-color: var(--couleur-encre);
-  color: var(--couleur-fond);
+:host(.variante-plein) {
+  --bouton-fond: var(--couleur-encre);
+  --bouton-contour: var(--couleur-encre);
+  --bouton-texte: var(--couleur-fond);
+  --bouton-survol-fond: var(--couleur-accent);
 }
 
-:host(.variante-plein) .bouton:not(:disabled):hover {
-  background-color: #000000;
+:host(.variante-contour) {
+  --bouton-contour: var(--couleur-encre);
 }
 
-:host(.variante-contour) .bouton {
-  border-color: var(--couleur-filet);
-  color: var(--couleur-encre);
-}
-
-:host(.variante-contour) .bouton:not(:disabled):hover {
-  border-color: var(--couleur-encre);
-}
-
-:host(.variante-clair) .bouton {
-  border-color: var(--couleur-blanc);
-  color: var(--couleur-blanc);
-}
-
-:host(.variante-clair) .bouton:not(:disabled):hover {
-  background-color: var(--couleur-blanc);
-  color: var(--couleur-encre);
+:host(.variante-clair) {
+  --bouton-contour: var(--couleur-blanc);
+  --bouton-texte: var(--couleur-blanc);
+  --bouton-survol-fond: var(--couleur-blanc);
+  --bouton-survol-texte: var(--couleur-encre);
 }

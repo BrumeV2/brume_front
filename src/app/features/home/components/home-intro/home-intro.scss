@@ -1,0 +1,124 @@
+/* Écran partagé de la maquette HTML. Les volets ont leurs propres styles
+   (home-intro-panel) ; ici, le cadre, le grand « BRUME » et les barres. */
+
+.intro {
+  --duree: 0.9s;
+  --courbe: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background-color: var(--couleur-encre);
+  color: var(--couleur-blanc);
+
+  &:focus {
+    outline: none;
+  }
+
+  &::backdrop {
+    background-color: var(--couleur-encre);
+  }
+}
+
+.intro__volets {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.intro__marque {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Le grand « BRUME » : il rejoindra le logo du menu (transition de vue). */
+.intro__grand {
+  padding-left: 0.5em;
+  font-size: clamp(3rem, 11vw, 12rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: 0.5em;
+  color: var(--couleur-fond);
+  view-transition-name: brand;
+  opacity: 0;
+  transform: translateX(-4vw);
+  transition:
+    opacity 1s var(--courbe-brume) 0.35s,
+    transform 1.3s var(--courbe-brume) 0.2s;
+
+  .en-balayage & {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.intro__haut,
+.intro__bas {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  padding-inline: 5vw;
+  transition: opacity 0.4s;
+
+  .a-choisi & {
+    opacity: 0;
+  }
+}
+
+.intro__haut {
+  top: 0;
+  justify-content: center;
+  padding-block: 1.625rem;
+  pointer-events: none;
+}
+
+.intro__logo {
+  padding-left: 0.5em;
+  font-size: var(--texte-taille);
+  font-weight: 500;
+  letter-spacing: 0.5em;
+}
+
+.intro__bas {
+  bottom: 0;
+  justify-content: space-between;
+  gap: var(--espace-4);
+  padding-block: 1.375rem;
+  font-size: var(--surtitre-taille);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+
+  @media (max-width: 700px) {
+    justify-content: center;
+
+    span {
+      display: none;
+    }
+  }
+}
+
+.intro__passer {
+  border: 0;
+  background: none;
+  color: var(--couleur-blanc);
+  font-size: var(--surtitre-taille);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}

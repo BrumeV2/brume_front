@@ -1,0 +1,39 @@
+:host {
+  display: block;
+}
+
+.fournisseur {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-3);
+  padding: var(--espace-3);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-saisie);
+  background-color: var(--couleur-blanc);
+}
+
+.fournisseur__textes {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.fournisseur__nom,
+.fournisseur__statut {
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.fournisseur__email {
+  overflow-wrap: anywhere;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}
+
+.fournisseur__statut {
+  color: var(--couleur-accent);
+}

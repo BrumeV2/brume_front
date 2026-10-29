@@ -1,0 +1,77 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  display: block;
+}
+
+.univers {
+  display: grid;
+  gap: var(--espace-6);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  @include m.a-partir-de-tablette {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Côté choisi : sa colonne s'élargit. */
+  @include m.a-partir-de-ordinateur {
+    &.avec-choix {
+      grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr) minmax(0, 1fr);
+    }
+  }
+}
+
+.univers__carte {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-3);
+}
+
+.univers__photo {
+  display: block;
+  aspect-ratio: 4 / 3;
+  margin-bottom: var(--espace-2);
+  overflow: hidden;
+  background-color: var(--couleur-photo);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 1.4s var(--courbe-brume);
+  }
+}
+
+.univers__carte:hover .univers__photo img {
+  transform: scale(1.05);
+}
+
+@include m.a-partir-de-ordinateur {
+  .avec-choix .est-choisi .univers__photo {
+    aspect-ratio: 16 / 10;
+  }
+}
+
+.univers__chiffre {
+  color: var(--couleur-texte-doux);
+}
+
+.univers__nom {
+  font-family: var(--police-titre);
+  font-weight: 800;
+  font-variation-settings:
+    'opsz' 14,
+    'wdth' 100;
+  font-size: clamp(2.25rem, 3.4vw, var(--titre-m-taille));
+  line-height: 1;
+  letter-spacing: var(--titre-m-interlettre);
+}
+
+.univers__texte {
+  max-width: 21rem;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}

@@ -17,24 +17,63 @@
   --couleur-texte-doux-sombre: #a9a39a;
   --couleur-accent: #6e7a55;
   --couleur-accent-clair: #b9bfa6;
+  /* Fond d'attente d'une photo (« photo » dans la maquette). */
+  --couleur-photo: #ddd8cf;
   --couleur-erreur: #b3261e;
+  /* Erreur lisible sur fond encre (le rouge ci-dessus y manque de contraste). */
+  --couleur-erreur-claire: #f2b8b5;
+  /* Contour d'un bouton secondaire sur fond encre (« Se déconnecter » du bandeau). */
+  --couleur-contour-sombre: rgba(255, 255, 255, 0.5);
 
   /* ── Familles ─────────────────────────────────────────────── */
   --police-titre: 'Bricolage Grotesque', 'Geist', system-ui, sans-serif;
   --police-texte: 'Geist', system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* ── Styles de texte (un token = un style de la maquette) ─── */
+  /* ── Styles de texte (un token = un style de la maquette) ───
+   * Les interlettrages de Figma sont en pourcentage de la taille :
+   * « -4 » sur Titre/L = -0.04em. Les classes `.titre-*` de styles.scss
+   * passent d'une valeur mobile à une valeur ordinateur.
+   */
+  --titre-xl-taille: 10rem; /* 160px */
+  --titre-xl-interligne: 0.86;
+  --titre-xl-interlettre: -0.045em;
+
   --titre-l-taille: 6rem; /* 96px */
   --titre-l-interligne: 0.92;
   --titre-l-interlettre: -0.04em;
 
   --titre-m-taille: 3.5rem; /* 56px */
   --titre-m-interligne: 1;
-  --titre-m-interlettre: -0.054em;
+  --titre-m-interlettre: -0.03em;
 
-  --titre-s-taille: 1.375rem; /* 22px, titre de carte */
+  --titre-s-taille: 2.25rem; /* 36px */
   --titre-s-interligne: 1.05;
-  --titre-s-interlettre: -0.02em;
+  --titre-s-interlettre: -0.025em;
+
+  --titre-carte-taille: 1.625rem; /* 26px, carte produit, étape */
+  --titre-carte-interligne: 1.05;
+  --titre-carte-interlettre: -0.02em;
+
+  /* Titre des cartes de formulaire (« Identité », « Connexion »), 22px :
+     présent dans les écrans du compte, sans style dédié dans les Fondations. */
+  --titre-bloc-taille: 1.375rem;
+  --titre-bloc-interligne: 1.05;
+  --titre-bloc-interlettre: -0.02em;
+
+  --mobile-titre-xl-taille: 4rem; /* 64px */
+  --mobile-titre-xl-interligne: 0.88;
+  --mobile-titre-xl-interlettre: -0.04em;
+
+  --mobile-titre-l-taille: 2.75rem; /* 44px */
+  --mobile-titre-l-interligne: 0.95;
+  --mobile-titre-l-interlettre: -0.03em;
+
+  --mobile-titre-m-taille: 2rem; /* 32px */
+  --mobile-titre-m-interligne: 1;
+  --mobile-titre-m-interlettre: -0.025em;
+
+  --texte-intro-taille: 1.0625rem; /* 17px, graisse 300 */
+  --texte-intro-interligne: 1.7;
 
   --texte-taille: 0.9375rem; /* 15px */
   --texte-interligne: 1.6;
@@ -72,6 +111,8 @@
   --hauteur-saisie: 48px;
   --hauteur-bouton: 52px;
   --hauteur-pastille: 40px;
+  /* Menu fixe en haut : les pages sans photo en haut se décalent d'autant. */
+  --hauteur-menu: 64px;
 
   /* ── Mise en page ─────────────────────────────────────────── */
   --largeur-contenu: 1296px;

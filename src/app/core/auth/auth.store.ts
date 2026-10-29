@@ -10,10 +10,9 @@ export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error';
 /**
  * Utilisateur connecté, partagé par toute l'application (en-tête, pages du compte).
  *
- * Tant que la connexion n'est pas implémentée (US-045, US-046), la session est
- * celle que renvoie `UsersService` : un compte de test en mode simulé, le
- * porteur du jeton une fois le back branché. Ce store est l'endroit où la
- * connexion viendra se greffer, sans toucher aux pages.
+ * Le profil est celui que renvoie `UsersService` : un compte de test en mode
+ * simulé, le titulaire du cookie de session avec le vrai back. `AuthService`
+ * le remplit à l'ouverture de session et le vide à la déconnexion (`clear()`).
  */
 @Injectable({ providedIn: 'root' })
 export class AuthStore {
@@ -56,6 +55,13 @@ export class AuthStore {
   setUser(user: UserProfile): void {
     this.userSignal.set(user);
     this.statusSignal.set('ready');
+    this.errorSignal.set(null);
+  }
+
+  /** Oublie le client après une déconnexion confirmée : plus aucune donnée privée en mémoire. */
+  clear(): void {
+    this.userSignal.set(null);
+    this.statusSignal.set('idle');
     this.errorSignal.set(null);
   }
 }

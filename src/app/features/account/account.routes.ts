@@ -2,6 +2,8 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from '../../core/auth/auth.guards';
 
+// Toutes les pages du compte exigent une session. La garde passe par
+// `UsersService` : elle fonctionne aussi en mode simulé (`useMocks`).
 export const accountRoutes: Routes = [
   {
     // Point d'arrivée du parcours Google (AUTH_SUCCESS_URL côté API) : le
@@ -9,15 +11,12 @@ export const accountRoutes: Routes = [
     path: '',
     title: 'Mon compte — Brume',
     canActivate: [authGuard],
-    loadComponent: () => import('../compte/compte').then((m) => m.Compte),
+    loadComponent: () => import('./pages/account-home/account-home').then((m) => m.AccountHome),
   },
   {
-    // Pas de `authGuard` ici tant que `useMocks` est à `true` : la garde
-    // interroge la vraie API, qui n'existe pas encore, et renverrait vers
-    // /connexion un écran dont la story demande qu'il soit démontrable.
-    // À ajouter en même temps que le branchement du back.
     path: 'profil',
     title: 'Mon profil — Brume',
+    canActivate: [authGuard],
     loadComponent: () => import('./pages/profile/profile').then((m) => m.Profile),
   },
 ];

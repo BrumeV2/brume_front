@@ -57,7 +57,7 @@ Ce dépôt ne contient **que le front**. L'API est dans [`brume_back`](https://g
 | [`docs/DECISIONS.md`](https://github.com/BrumeV2/brume_back/blob/develop/docs/DECISIONS.md)                   | Décisions produit (TVA, livraison, statuts…)                           |
 | [`docs/contract/seed.json`](https://github.com/BrumeV2/brume_back/blob/develop/docs/contract/seed.json)       | Jeu de données de référence, utilisé pour nos fixtures et nos mocks    |
 
-L'architecture détaillée du front est dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+L'architecture détaillée du front est dans [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). Les tokens et les composants communs sont décrits dans [`docs/DESIGN-SYSTEM.md`](docs/DESIGN-SYSTEM.md).
 
 ---
 
@@ -106,7 +106,7 @@ Angular n'utilise **pas** de fichier `.env` : la configuration est compilée dan
 | `useMocks`   | `true` | `false` | Sert les données simulées au lieu d'appeler l'API (voir plus bas)          |
 
 - **Aucun secret dans le front.** Tout ce qui est compilé est public : pas de clé d'API privée, pas de mot de passe. Les clés publiques (ex. clé publiable Stripe) sont acceptables.
-- L'URL de l'API passe par un **proxy de développement** (`proxy.conf.json`) plutôt que par une URL absolue : même origine qu'en production, donc pas de CORS et pas de souci avec le cookie `refresh_token` (httpOnly).
+- L'URL de l'API passe par un **proxy de développement** (`proxy.conf.json`) plutôt que par une URL absolue : même origine qu'en production, donc pas de CORS et pas de souci avec le cookie de session `brume_session` (HttpOnly).
 
 ## Connexion Google (OAuth)
 

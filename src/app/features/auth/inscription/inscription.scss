@@ -6,8 +6,9 @@
   @media (min-width: 1024px) {
     display: flex;
     flex-direction: column;
-    height: 100dvh;
-    min-height: 620px;
+    // Le cadre décale déjà la page sous le menu fixe.
+    height: calc(100dvh - var(--hauteur-menu));
+    min-height: 556px;
   }
 }
 

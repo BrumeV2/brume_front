@@ -69,7 +69,7 @@ src/
     │   │   ├── orders.service.ts
     │   │   └── mocks/               # implémentations simulées + fixtures (voir plus bas)
     │   ├── auth/
-    │   │   ├── auth.service.ts      # login, register, refresh, logout
+    │   │   ├── auth.service.ts      # session Google : utilisateur courant, déconnexion
     │   │   └── auth.store.ts        # utilisateur courant, rôle, état connecté
     │   ├── state/
     │   │   └── cart.store.ts        # panier, partagé entre header, catalogue et checkout
@@ -77,7 +77,7 @@ src/
     │   │   ├── auth-guard.ts        # route réservée aux connectés
     │   │   └── admin-guard.ts       # route réservée au rôle ADMIN
     │   ├── interceptors/
-    │   │   ├── auth-interceptor.ts  # ajoute Authorization, rejoue après /auth/refresh
+    │   │   ├── credentials-interceptor.ts # cookie de session + en-tête CSRF vers l'API
     │   │   └── error-interceptor.ts # normalise les erreurs de l'API
     │   └── models/                  # types métier qui ne viennent pas du contrat
     │
@@ -169,6 +169,8 @@ export const routes: Routes = [
 
 - **Les chemins d'URL sont en français** (`/boutique`, `/panier`, `/commande/:id`), les noms de fichiers et de symboles en anglais.
 - Chaque route porte un `title`, repris par Angular dans l'onglet du navigateur.
+- Le cadre commun (`App` : `layout/site-header`, contenu, `layout/site-footer`) lit les `data` de la route : `menu: 'transparent'` quand la page commence par une photo ou un bandeau sombre (le menu fixe se pose dessus et devient plein au défilement), `piedDePage: false` pour les écrans pleins (connexion, inscription). Sans `menu: 'transparent'`, le contenu est décalé de `--hauteur-menu`.
+- Les entrées du menu et du pied de page sont déclarées dans `layout/navigation.ts`. Une entrée sans `lien` est une fonction pas encore livrée : jamais rendue en lien.
 - Les paramètres d'URL se lisent par **signal d'entrée** (`withComponentInputBinding()`), pas par un abonnement à `ActivatedRoute`.
 - Les filtres du catalogue (`q`, `category`, `sort`, `page`) vivent dans les **paramètres de requête**, pour qu'une recherche soit partageable et que le retour arrière fonctionne.
 
@@ -187,6 +189,9 @@ Un store, c'est un service `providedIn: 'root'` qui expose :
 - des signaux **en lecture seule** (`asReadonly()`) ;
 - des `computed()` pour tout ce qui se déduit (`itemCount`, `subtotalCents`) ;
 - des méthodes pour les modifications (`addItem()`, `removeItem()`).
+
+- **`core/state/side.store.ts`** : préférence « plutôt thé / plutôt café » (interrupteur du menu, écran d'intro de l'accueil), gardée pour la session dans `sessionStorage` (jeton `SESSION_STORAGE`).
+- **`core/api/home.service.ts`** : vitrine de l'accueil (préférés, moments) selon le côté choisi. **Hors contrat** : seule l'implémentation simulée existe, à rebrancher sur le catalogue quand le back aura une route dédiée.
 
 Personne n'écrit dans un signal de store depuis l'extérieur. Pas de librairie d'état : les signaux d'Angular suffisent à l'échelle du projet.
 
@@ -216,7 +221,8 @@ Règles :
   ```
 - **Les montants sont des entiers en centimes** (`priceCents`, `totalCents`) et les taux des points de base (`vatRateBps`). Le front les **formate** pour l'affichage, il ne les recalcule jamais. Un total, une TVA ou des frais de port viennent de `POST /checkout/quote` — c'est la règle du back, et une addition faite côté front finirait par diverger.
 - **Aucun renommage de champ.** On garde les noms du contrat pour pouvoir relire le code à côté de l'`openapi.yaml`.
-- **L'authentification est portée par les intercepteurs**, pas par les services : `auth-interceptor.ts` ajoute `Authorization: Bearer …`, et sur une `401` de code `TOKEN_EXPIRED` il appelle `POST /auth/refresh` puis rejoue la requête une fois.
+- **L'authentification est portée par un intercepteur**, pas par les services. La session est un cookie HttpOnly `brume_session` posé par l'API après Google (voir `docs/AUTH.md` du back) : le front ne voit aucun jeton. `credentials-interceptor.ts` ajoute `withCredentials` à toute requête vers `apiBaseUrl`, et l'en-tête `X-CSRF-Protection: 1` sur les mutations. Une `401` signifie « non connecté » : il n'y a pas de rafraîchissement de session.
+- **Déconnexion** (ADD-087) : `AuthService.logout()` appelle `SessionService` (`POST /auth/logout`), puis vide `AuthStore`. Sans confirmation de l'API, rien n'est effacé et l'interface affiche l'échec.
 - **Pagination** : les listes renvoient `{ data, meta: { page, limit, total, totalPages } }`. Un composant de liste lit `meta`, il ne compte jamais lui-même.
 
 ## Données simulées
@@ -303,7 +309,7 @@ L'API renvoie **toujours** la même forme d'erreur (voir [`API.md`](https://gith
 - `error-interceptor.ts` transforme la réponse en un type `ApiError` unique. Un composant ne manipule jamais un `HttpErrorResponse` brut.
 - Chaque écran traite explicitement quatre états : **chargement**, **vide**, **erreur**, **contenu**. Les trois premiers ne s'ajoutent pas après coup.
 - Les codes à gérer au cas par cas, avec un message utile et une action : `OUT_OF_STOCK`, `PRICE_CHANGED`, `AGE_DECLARATION_REQUIRED`, `SHIPPING_ZONE_NOT_SERVED`, `CART_EMPTY`. Tout le reste tombe dans un message générique.
-- `TOKEN_EXPIRED` est invisible pour l'utilisateur : l'intercepteur rafraîchit et rejoue.
+- `UNAUTHENTICATED` (401) renvoie vers `/connexion` : les gardes de route s'en chargent.
 
 ## Styles
 
@@ -325,7 +331,7 @@ export const environment = {
 };
 ```
 
-Le build de production remplace le fichier via `fileReplacements` dans `angular.json`. En développement, `proxy.conf.json` renvoie `/api` vers l'API locale, pour avoir la même origine qu'en production : pas de CORS, et le cookie `refresh_token` (httpOnly) fonctionne.
+Le build de production remplace le fichier via `fileReplacements` dans `angular.json`. En développement, `proxy.conf.json` renvoie `/api` vers l'API locale, pour avoir la même origine qu'en production : pas de CORS, et le cookie de session `brume_session` (HttpOnly) fonctionne. En production, l'API est sur un autre sous-domaine : c'est l'intercepteur qui fait partir le cookie.
 
 ```json
 // proxy.conf.json
