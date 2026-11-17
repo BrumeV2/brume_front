@@ -115,6 +115,31 @@
   }
 }
 
+.menu__panier {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+/* « Compteur » : rond de 22 px cerclé de la couleur du texte. */
+.menu__compteur {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding-inline: 0.25rem;
+  border: 1px solid currentColor;
+  border-radius: 11px;
+  font-size: var(--surtitre-taille);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
 .menu__ouvrir {
   padding: 0.3125rem 0.75rem;
   border: 1px solid var(--menu-texte);

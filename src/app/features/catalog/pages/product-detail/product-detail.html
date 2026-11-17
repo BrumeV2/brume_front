@@ -41,7 +41,7 @@
 
           <div class="produit__entete">
             <h1 class="titre-m">{{ p.name }}</h1>
-            <p class="produit__prix">{{ p.fromPriceCents | price }}</p>
+            <p class="produit__prix">{{ variante()?.priceCents ?? p.fromPriceCents | price }}</p>
           </div>
 
           @if (p.tastingNotes; as notes) {
@@ -77,8 +77,92 @@
             </p>
           }
 
-          <!-- Formats, quantité et ajout au panier : US-002 et US-004. -->
-          <p class="mention-bientot">Achat en ligne bientôt disponible</p>
+          @if (p.variants.length > 0) {
+            <fieldset class="formats">
+              <legend class="surtitre">Format</legend>
+              <div class="formats__options">
+                @for (v of p.variants; track v.id) {
+                  <label
+                    class="format"
+                    [class.est-choisi]="v.id === variante()?.id"
+                    [class.est-epuise]="v.availability === 'OUT_OF_STOCK'"
+                  >
+                    <input
+                      class="visuellement-masque"
+                      type="radio"
+                      name="format"
+                      [value]="v.id"
+                      [checked]="v.id === variante()?.id"
+                      (change)="choisir(v)"
+                    />
+                    <span class="format__libelle">{{ v.label }}</span>
+                    <span class="format__prix">
+                      {{ v.priceCents | price }}
+                      @if (v.availability === 'OUT_OF_STOCK') {
+                        · épuisé
+                      } @else if (v.availability === 'LOW_STOCK') {
+                        · stock faible
+                      }
+                    </span>
+                  </label>
+                }
+              </div>
+            </fieldset>
+          }
+
+          @if (variante(); as v) {
+            <div class="ajout">
+              <app-ui-quantity
+                [(valeur)]="quantite"
+                [max]="quantiteMax"
+                [disabled]="estEpuisee() || ajout().etat === 'envoi'"
+                [objet]="p.name + ', ' + v.label"
+              />
+              <app-ui-button
+                class="ajout__bouton"
+                [libelle]="
+                  estEpuisee()
+                    ? 'Épuisé pour le moment'
+                    : 'Ajouter au panier · ' + (v.priceCents | price)
+                "
+                [fleche]="true"
+                [pleineLargeur]="true"
+                [disabled]="estEpuisee()"
+                [occupe]="ajout().etat === 'envoi'"
+                libelleOccupe="Ajout en cours…"
+                (presse)="ajouter()"
+              />
+            </div>
+          } @else {
+            <p class="mention-bientot">Ce produit n’est pas encore proposé à la vente.</p>
+          }
+
+          <div class="retour-ajout" aria-live="polite">
+            @if (confirmation(); as c) {
+              <div class="confirmation" role="status">
+                <p>
+                  <strong>Ajouté à ton panier</strong> : {{ c.quantite }} ×
+                  {{ c.ligne.productName }}, {{ c.ligne.variantLabel }}.
+                </p>
+                <p class="texte-petit">
+                  @if (ligneDansPanier(); as l) {
+                    Ce format dans ton panier : {{ l.quantity }}
+                    @if (l.lineTotalCents !== null && l.state === 'stable') {
+                      · {{ l.lineTotalCents | price }}
+                    }
+                  } @else {
+                    Ce format n’est plus dans ton panier.
+                  }
+                </p>
+                <button class="lien-fleche" type="button" (click)="panier.openDrawer()">
+                  Voir mon panier →
+                </button>
+              </div>
+            }
+            @if (refus(); as r) {
+              <p class="refus" role="alert">{{ r.message }}</p>
+            }
+          </div>
         </div>
       </article>
     }

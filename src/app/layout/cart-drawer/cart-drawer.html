@@ -1,0 +1,178 @@
+<dialog
+  #tiroir
+  id="tiroir-panier"
+  class="tiroir"
+  aria-labelledby="tiroir-panier-titre"
+  (close)="surFermeture()"
+  (click)="surClic($event)"
+>
+  <div class="tiroir__contenu">
+    <div class="tiroir__haut">
+      <h2 id="tiroir-panier-titre" class="tiroir__titre">
+        Ton panier
+        @if (panier.itemsCount() > 0) {
+          ({{ panier.itemsCount() }})
+        }
+      </h2>
+      <button class="tiroir__fermer" type="button" (click)="fermer()">Fermer ×</button>
+    </div>
+
+    @if (ecarts(); as v) {
+      <div class="encadre" role="alert">
+        <p class="encadre__titre">
+          @if (v.status === 'changed') {
+            Ton panier a changé depuis son affichage. Vérifie-le, puis confirme.
+          } @else {
+            À corriger avant de commander :
+          }
+        </p>
+        <ul>
+          @for (ecart of v.discrepancies; track $index) {
+            <li>{{ ecart.message }}</li>
+          }
+        </ul>
+      </div>
+    } @else if (panier.warnings().length > 0) {
+      <ul class="encadre" role="status">
+        @for (avertissement of panier.warnings(); track $index) {
+          <li>{{ avertissement.message ?? 'Une ligne de ton panier a changé.' }}</li>
+        }
+      </ul>
+    }
+
+    @if (panier.status() === 'loading' && panier.lines().length === 0) {
+      <p class="tiroir__message" role="status">Chargement du panier…</p>
+    } @else if (panier.status() === 'error' && panier.lines().length === 0) {
+      <div class="tiroir__message" role="alert">
+        <p>Ton panier n’a pas pu être chargé. {{ panier.error()?.message }}</p>
+        <app-ui-button libelle="Réessayer" variante="contour" (presse)="panier.reload()" />
+      </div>
+    } @else if (panier.lines().length === 0) {
+      <div class="vide">
+        <img class="vide__photo" src="images/accueil/theiere-et-tasses.jpg" alt="" />
+        <p class="vide__titre">Rien <span>à infuser.</span></p>
+        <p class="vide__texte">Ton panier est vide. Commence par un de nos préférés.</p>
+      </div>
+    } @else {
+      <ul class="lignes">
+        @for (ligne of panier.lines(); track ligne.variantId) {
+          <li
+            class="ligne"
+            [class.est-en-cours]="ligne.state !== 'stable'"
+            [attr.aria-busy]="ligne.state !== 'stable' ? 'true' : null"
+          >
+            <div class="ligne__photo">
+              @if (ligne.imageUrl; as image) {
+                <img [src]="image" alt="" />
+              }
+            </div>
+            <div class="ligne__infos">
+              <div class="ligne__entete">
+                <a
+                  class="ligne__nom"
+                  [routerLink]="['/boutique', ligne.productSlug]"
+                  (click)="fermer()"
+                >
+                  {{ ligne.productName }}
+                </a>
+                <p class="ligne__prix">
+                  {{ ligne.lineTotalCents ?? ligne.unitPriceCents | price }}
+                </p>
+              </div>
+              <p class="ligne__detail">
+                {{ ligne.variantLabel }}
+                @if (ligne.lineTotalCents === null && ligne.unitPriceCents !== null) {
+                  · {{ ligne.unitPriceCents | price }} l’unité
+                }
+              </p>
+              <div class="ligne__actions">
+                <app-ui-quantity
+                  taille="compacte"
+                  [valeur]="ligne.quantity"
+                  (valeurChange)="changerQuantite(ligne, $event)"
+                  [max]="quantiteMax"
+                  [disabled]="ligne.state === 'removing'"
+                  [objet]="ligne.productName + ', ' + ligne.variantLabel"
+                />
+                <button
+                  class="ligne__retirer"
+                  type="button"
+                  [disabled]="ligne.state === 'removing'"
+                  [attr.aria-label]="'Retirer ' + ligne.productName + ', ' + ligne.variantLabel"
+                  (click)="retirer(ligne)"
+                >
+                  {{ ligne.state === 'removing' ? 'Retrait…' : 'Retirer' }}
+                </button>
+              </div>
+              @if (ligne.error; as erreur) {
+                <p class="ligne__erreur" role="alert">{{ erreur }}</p>
+              } @else if (ligne.variantId === panier.lastAddedVariantId()) {
+                <p class="ligne__nouvelle">Vient d’être ajouté</p>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    <div class="tiroir__bas">
+      @if (panier.lines().length > 0) {
+        @if (panier.itemsTotalCents(); as total) {
+          <dl class="montants" [class.est-en-cours]="panier.totalState() === 'updating'">
+            <div class="montants__ligne montants__sous-total">
+              <dt>Sous-total</dt>
+              <dd>{{ total | price }}</dd>
+            </div>
+            <div class="montants__ligne">
+              <dt>Livraison</dt>
+              <dd>Calculée à l’étape suivante</dd>
+            </div>
+          </dl>
+        }
+        <p
+          class="tiroir__note"
+          [class.est-a-confirmer]="panier.totalState() === 'unconfirmed'"
+          aria-live="polite"
+        >
+          {{ mentionTotal() }}
+        </p>
+
+        @if (messageValidation(); as message) {
+          <p class="tiroir__refus" role="alert">{{ message }}</p>
+        }
+
+        @if (panier.isAccountCart()) {
+          <app-ui-button
+            class="tiroir__commander"
+            [libelle]="libelleCommander()"
+            [fleche]="true"
+            [pleineLargeur]="true"
+            [disabled]="panier.isBusy() || ecarts()?.status === 'blocked'"
+            [occupe]="validationEnCours()"
+            libelleOccupe="Vérification du panier…"
+            (presse)="commander()"
+          />
+        } @else {
+          <app-ui-button
+            libelle="Me connecter pour commander"
+            lien="/connexion"
+            [fleche]="true"
+            [pleineLargeur]="true"
+            (click)="fermer()"
+          />
+        }
+        <button class="tiroir__continuer" type="button" (click)="fermer()">
+          Continuer mes achats
+        </button>
+      } @else {
+        <app-ui-button
+          libelle="Voir la boutique"
+          lien="/boutique"
+          [fleche]="true"
+          [pleineLargeur]="true"
+          (click)="fermer()"
+        />
+      }
+    </div>
+  </div>
+</dialog>

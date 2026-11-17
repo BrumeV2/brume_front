@@ -20,6 +20,16 @@ describe('PricePipe', () => {
     expect(prix(123400)).toBe('1 234 €');
   });
 
+  // US-024 : arrondis monétaires. L'API donne des centimes entiers ; le pipe ne
+  // fait que les mettre en forme, sans perdre ni ajouter un centime.
+  it('restitue chaque centime d’un total à quantités multiples', () => {
+    expect(prix(1290 * 3)).toBe('38,70 €');
+    expect(prix(4999)).toBe('49,99 €');
+    expect(prix(10)).toBe('0,10 €');
+    expect(prix(1)).toBe('0,01 €');
+    expect(prix(100)).toBe('1 €');
+  });
+
   it('n’affiche rien sans montant', () => {
     expect(prix(null)).toBe('');
     expect(prix(undefined)).toBe('');

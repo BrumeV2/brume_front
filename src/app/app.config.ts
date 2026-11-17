@@ -7,7 +7,9 @@ import {
   withViewTransitions,
 } from '@angular/router';
 
+import { CartHttpService, CartService } from './core/api/cart.service';
 import { HomeService } from './core/api/home.service';
+import { CartMockService } from './core/api/mocks/cart.mock.service';
 import { HomeMockService } from './core/api/mocks/home.mock.service';
 import { SessionHttpService, SessionService } from './core/api/session.service';
 import { SessionMockService } from './core/api/mocks/session.mock.service';
@@ -44,6 +46,10 @@ export const appConfig: ApplicationConfig = {
     {
       provide: ProductsService,
       useClass: environment.useMocks ? ProductsMockService : ProductsHttpService,
+    },
+    {
+      provide: CartService,
+      useClass: environment.useMocks ? CartMockService : CartHttpService,
     },
     // Pas encore de route au contrat pour la vitrine de l'accueil : simulée dans tous les cas.
     { provide: HomeService, useClass: HomeMockService },

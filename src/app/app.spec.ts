@@ -7,8 +7,11 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { App } from './app';
 import { routes } from './app.routes';
 import type { UserProfile } from './core/api/api.types';
+import { ProductsMockService } from './core/api/mocks/products.mock.service';
+import { ProductsService } from './core/api/products.service';
 import { SessionService } from './core/api/session.service';
 import { UsersService } from './core/api/users.service';
+import { provideCartForTests } from './core/state/cart.testing';
 
 /** Visiteur sans compte : `/users/me` répond 401. */
 class VisiteurDouble extends UsersService {
@@ -40,8 +43,11 @@ describe('App (cadre commun et routes publiques)', () => {
       imports: [App],
       providers: [
         provideRouter(routes),
+        // En premier : les doubles propres à ce test passent après et l'emportent.
+        provideCartForTests(),
         { provide: UsersService, useClass: VisiteurDouble },
         { provide: SessionService, useValue: { logout: () => of(undefined) } },
+        { provide: ProductsService, useClass: ProductsMockService },
       ],
     }).compileComponents();
 

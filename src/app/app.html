@@ -1,4 +1,5 @@
 <app-site-header [transparent]="menuTransparent()" />
+<app-cart-drawer />
 
 <div #contenu id="contenu" class="contenu" tabindex="-1" [class.sous-le-menu]="!menuTransparent()">
   <router-outlet />
