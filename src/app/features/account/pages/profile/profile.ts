@@ -181,6 +181,19 @@ export class Profile {
     return Number.isNaN(date.getTime()) ? '' : MOIS_ANNEE.format(date);
   });
 
+  /**
+   * « Camille Martin · chez Brume depuis mars 2025 ».
+   *
+   * Le séparateur n'apparaît qu'entre deux morceaux présents : sur un compte
+   * qui n'a pas encore de nom, il ne doit rien rester à sa gauche.
+   */
+  protected readonly sousTitre = computed(() => {
+    const depuis = this.depuis();
+    return [this.nomComplet(), depuis === '' ? '' : `chez Brume depuis ${depuis}`]
+      .filter((partie) => partie !== '')
+      .join(' · ');
+  });
+
   /** Champs dont la valeur saisie diffère du profil enregistré. */
   protected readonly champsModifies = computed<readonly ChampProfil[]>(() => {
     const enregistre = this.profil();

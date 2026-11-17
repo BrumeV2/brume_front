@@ -12,17 +12,36 @@ import { UsersService } from '../../../../core/api/users.service';
 
 import { Profile } from './profile';
 
-/** Le compte du seed : un seul endroit à corriger quand le contrat change. */
-const profil: UserProfile = mockUsers[0];
+/** Un compte tout juste créé : seul l'email est connu. C'est l'état de la fixture. */
+const profilVide: UserProfile = mockUsers[0];
+
+/**
+ * Un profil rempli, composé ici plutôt que pris dans la fixture : celle-ci est
+ * vide exprès, pour que l'application simulée montre ce que montrera le vrai
+ * back. Les valeurs reprennent l'adresse du seed de `brume_back`.
+ */
+const profil: UserProfile = {
+  ...profilVide,
+  firstName: 'Camille',
+  lastName: 'Martin',
+  phone: '0612345678',
+  address: '12 rue des Lilas',
+  postalCode: '69003',
+  city: 'Lyon',
+  doNewsletter: true,
+};
 
 /** Faux service : on contrôle ce que renvoie `updateMe` et on inspecte ce qu'il reçoit. */
 class UsersServiceDouble extends UsersService {
   readonly appels: UpdateProfileDraft[] = [];
+  constructor(private readonly charge: UserProfile = profil) {
+    super();
+  }
   reponse: (payload: UpdateProfileDraft) => Observable<UserProfile> = (payload) =>
-    of({ ...profil, ...payload } as UserProfile);
+    of({ ...this.charge, ...payload } as UserProfile);
 
   override getMe(): Observable<UserProfile> {
-    return of(profil);
+    return of(this.charge);
   }
 
   override updateMe(payload: UpdateProfileDraft): Observable<UserProfile> {
@@ -65,8 +84,8 @@ describe('Profile', () => {
     return element().textContent ?? '';
   }
 
-  beforeEach(async () => {
-    service = new UsersServiceDouble();
+  async function monter(charge: UserProfile = profil): Promise<void> {
+    service = new UsersServiceDouble(charge);
     await TestBed.configureTestingModule({
       imports: [Profile],
       providers: [
@@ -78,7 +97,9 @@ describe('Profile', () => {
 
     fixture = TestBed.createComponent(Profile);
     await fixture.whenStable();
-  });
+  }
+
+  beforeEach(() => monter());
 
   it('préremplit le formulaire avec le profil chargé', () => {
     const champs = element().querySelectorAll<HTMLInputElement>('input');
@@ -95,10 +116,18 @@ describe('Profile', () => {
 
   it("affiche l'email en lecture seule, sans champ de saisie", () => {
     expect(texte()).toContain('camille.martin@example.com');
-    expect(texte()).toContain('Géré par ton compte Google.');
 
     const saisies = [...element().querySelectorAll<HTMLInputElement>('input')];
     expect(saisies.some((champ) => champ.value.includes('@'))).toBe(false);
+  });
+
+  // L'authentification va changer : rien dans le formulaire ne doit nommer un
+  // fournisseur en particulier.
+  it("ne rattache le profil à aucun fournisseur d'identité", () => {
+    const identite = element().querySelector('app-ui-card');
+
+    expect(identite?.textContent).not.toContain('Google');
+    expect(identite?.querySelector('img')).toBeNull();
   });
 
   it('montre le compte Google relié et propose de se déconnecter, sans Apple', () => {
@@ -236,6 +265,47 @@ describe('Profile', () => {
     expect(champ?.value).toBe('Camille');
     expect(texte()).not.toContain('non enregistrée');
   });
+
+  /*
+   * Un compte tout juste créé : tout est à remplir. C'est l'état par défaut de
+   * l'application simulée, et celui qu'aura le premier client du vrai back.
+   */
+  describe('profil encore vide', () => {
+    beforeEach(async () => {
+      TestBed.resetTestingModule();
+      await monter(profilVide);
+    });
+
+    it("n'affiche pas de séparateur là où le nom manque", () => {
+      const sousTitre = element().querySelector('.bandeau__sous-titre')?.textContent ?? '';
+
+      expect(sousTitre.trim()).toBe('chez Brume depuis mars 2025');
+    });
+
+    it("ouvre un formulaire vierge, sans rien proposer d'enregistrer", () => {
+      const valeurs = saisies().map((champ) => champ.value);
+
+      expect(valeurs).not.toHaveLength(0);
+      expect(valeurs.every((valeur) => valeur === '')).toBe(true);
+      expect(interrupteur().checked).toBe(false);
+      expect(texte()).not.toContain('non enregistrée');
+    });
+
+    it("n'envoie que les champs remplis, et laisse les autres de côté", async () => {
+      const champs = saisies();
+      saisir('#' + champs[0].id, 'Camille');
+      saisir('#' + champs[1].id, 'Martin');
+      await fixture.whenStable();
+      soumettre();
+      await fixture.whenStable();
+
+      expect(service.appels).toEqual([{ firstName: 'Camille', lastName: 'Martin' }]);
+    });
+  });
+
+  function saisies(): HTMLInputElement[] {
+    return [...element().querySelectorAll<HTMLInputElement>('.champ__saisie')];
+  }
 
   /** Identifiant du champ prérempli avec cette valeur. */
   function champId(valeur: string): string {

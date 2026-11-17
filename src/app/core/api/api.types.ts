@@ -52,12 +52,12 @@ export interface ProductQuery {
  * HORS CONTRAT — ce que la maquette du profil montre et que `openapi.yaml`
  * (branche `develop` de brume_back) ne porte pas, au 17/11/2026.
  *
- * La connexion passe par Google, seul fournisseur d'identité. L'email et la
- * photo en viennent et ne se modifient pas depuis Brume ; le prénom et le nom
- * aussi, mais restent corrigeables puisqu'ils servent de destinataire des colis.
- *
- * Reste donc la seule photo, facultative : l'écran retombe sur les initiales
- * quand l'API n'en renvoie pas, ce qui est le cas aujourd'hui.
+ * Une seule chose, et facultative : la photo du compte. Elle vient du
+ * fournisseur d'identité quand il y en a un, et l'écran retombe sur les
+ * initiales puis sur l'email quand l'API n'en renvoie pas — ce qui est le cas
+ * aujourd'hui. Rien dans l'écran ne suppose donc un fournisseur en
+ * particulier : l'authentification par email et mot de passe est en cours
+ * d'écriture, et Google n'est plus le seul chemin prévu.
  *
  * La date de naissance de la maquette a été retirée : `UpdateProfileRequest`
  * déclare `additionalProperties: false`, donc l'envoyer ferait répondre 400 à

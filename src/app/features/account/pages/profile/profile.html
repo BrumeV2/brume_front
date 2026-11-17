@@ -12,8 +12,8 @@
       </div>
       <div class="bandeau__textes">
         <h1 class="bandeau__titre">Mon profil</h1>
-        @if (profil() !== null) {
-          <p class="bandeau__sous-titre">{{ nomComplet() }} · chez Brume depuis {{ depuis() }}</p>
+        @if (sousTitre(); as sous) {
+          <p class="bandeau__sous-titre">{{ sous }}</p>
         }
       </div>
     </div>
@@ -40,7 +40,7 @@
             <div class="colonne">
               <app-ui-card
                 titre="Identité"
-                description="Prénom et nom sont le destinataire de tes colis. Ta photo et ton email viennent de Google."
+                description="Prénom et nom sont le destinataire de tes colis. Ton email sert à te connecter et ne se modifie pas ici."
               >
                 <div class="ligne">
                   <app-ui-field
@@ -59,13 +59,7 @@
                   />
                 </div>
 
-                <app-ui-static-field
-                  libelle="Email"
-                  [valeur]="compte.email"
-                  iconeSrc="icons/google.svg"
-                  iconeAlt="Fourni par Google"
-                  aide="Géré par ton compte Google."
-                />
+                <app-ui-static-field libelle="Email" [valeur]="compte.email" />
               </app-ui-card>
 
               <app-ui-card
