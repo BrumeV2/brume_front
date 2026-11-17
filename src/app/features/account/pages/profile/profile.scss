@@ -113,6 +113,13 @@
   }
 }
 
+/* Chaque colonne empile ses cartes, comme dans la maquette. */
+.colonne {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+}
+
 .ligne {
   display: flex;
   flex-direction: column;

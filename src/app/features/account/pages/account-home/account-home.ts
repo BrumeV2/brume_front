@@ -23,14 +23,17 @@ export class AccountHome {
 
   protected readonly initiales = computed(() => {
     const user = this.user();
-    return user === null
-      ? ''
-      : `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+    if (user === null) {
+      return '';
+    }
+    // Le contrat laisse prénom et nom à `null` : reste l'email.
+    const lettres = `${user.firstName?.charAt(0) ?? ''}${user.lastName?.charAt(0) ?? ''}`;
+    return (lettres === '' ? user.email.charAt(0) : lettres).toUpperCase();
   });
 
   /** « Bonjour » puis « Camille. » ; « Bonjour. » seul si Google n'a pas fourni de prénom. */
   protected readonly salutation = computed(() => {
-    const prenom = this.user()?.firstName.trim() ?? '';
+    const prenom = this.user()?.firstName?.trim() ?? '';
     return prenom === ''
       ? { ligne: 'Bonjour.', prenom: null }
       : { ligne: 'Bonjour', prenom: `${prenom}.` };

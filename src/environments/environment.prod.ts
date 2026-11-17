@@ -11,11 +11,13 @@ export const environment = {
    */
   apiBaseUrl: 'https://api.ybrume.duckdns.org/api',
   /**
-   * ⚠️ Volontairement à `true` : l'API `/users/me` n'existe pas encore.
-   * Sans cela, l'écran de profil déployé en préproduction n'afficherait
-   * qu'une erreur, alors que la story demande un comportement démontrable.
+   * La préproduction parle à la vraie API : rien de simulé n'y est démontré.
    *
-   * À repasser à `false` dès que le back expose `GET` et `PATCH /api/users/me`.
+   * `GET` et `PATCH /users/me` sont écrits côté back, mais sur sa branche
+   * `develop` : tant qu'ils ne sont pas livrés en préproduction, l'écran de
+   * profil y annoncera un échec de chargement. C'est voulu, et c'est plus
+   * honnête que de remettre les données simulées : il n'y a plus rien à
+   * corriger côté front, seulement à livrer côté back.
    */
   useMocks: false,
 };

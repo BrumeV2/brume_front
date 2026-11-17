@@ -6,22 +6,14 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import type { ApiErrorBody } from '../../../../core/api/api-error';
 import type { UpdateProfileDraft, UserProfile } from '../../../../core/api/api.types';
+import { mockUsers } from '../../../../core/api/mocks/fixtures/users.fixture';
 import { SessionService } from '../../../../core/api/session.service';
 import { UsersService } from '../../../../core/api/users.service';
 
 import { Profile } from './profile';
 
-const profil: UserProfile = {
-  id: 'e0000000-0000-4000-8000-000000000001',
-  email: 'camille.martin@example.com',
-  firstName: 'Camille',
-  lastName: 'Martin',
-  phone: '0612345678',
-  role: 'CUSTOMER',
-  createdAt: '2025-03-12T09:12:00.000Z',
-  birthDate: '1996-05-14',
-  avatarUrl: null,
-};
+/** Le compte du seed : un seul endroit à corriger quand le contrat change. */
+const profil: UserProfile = mockUsers[0];
 
 /** Faux service : on contrôle ce que renvoie `updateMe` et on inspecte ce qu'il reçoit. */
 class UsersServiceDouble extends UsersService {
@@ -94,7 +86,11 @@ describe('Profile', () => {
 
     expect(valeurs).toContain('Camille');
     expect(valeurs).toContain('Martin');
-    expect(valeurs).toContain('1996-05-14');
+    expect(valeurs).toContain('12 rue des Lilas');
+    expect(valeurs).toContain('69003');
+    expect(valeurs).toContain('Lyon');
+    expect(valeurs).toContain('0612345678');
+    expect(interrupteur().checked).toBe(true);
   });
 
   it("affiche l'email en lecture seule, sans champ de saisie", () => {
@@ -158,20 +154,58 @@ describe('Profile', () => {
     expect(texte()).toContain('Ce champ est obligatoire.');
   });
 
-  it('refuse une date de naissance dans le futur', async () => {
-    const champDate = [...element().querySelectorAll<HTMLInputElement>('input')].find(
-      (champ) => champ.type === 'date',
-    );
-    expect(champDate).toBeDefined();
+  it('bascule la lettre de Brume et ne renvoie que ce choix', async () => {
+    basculer();
+    await fixture.whenStable();
+    soumettre();
+    await fixture.whenStable();
 
-    champDate!.value = '2099-01-01';
-    champDate!.dispatchEvent(new Event('input'));
+    expect(service.appels).toEqual([{ doNewsletter: false }]);
+  });
+
+  it("n'envoie rien quand le code postal n'a pas cinq chiffres", async () => {
+    saisir('#' + champId('69003'), '6900');
     await fixture.whenStable();
     soumettre();
     await fixture.whenStable();
 
     expect(service.appels).toHaveLength(0);
-    expect(texte()).toContain('Cette date est dans le futur.');
+    expect(texte()).toContain('Cinq chiffres. Par exemple 69003.');
+  });
+
+  it("n'envoie rien quand le téléphone n'a pas le bon format", async () => {
+    saisir('#' + champId('0612345678'), '12345');
+    await fixture.whenStable();
+    soumettre();
+    await fixture.whenStable();
+
+    expect(service.appels).toHaveLength(0);
+    expect(texte()).toContain('Dix chiffres, en commençant par 0.');
+  });
+
+  it('efface un champ facultatif en envoyant null, pas une chaîne vide', async () => {
+    saisir('#' + champId('12 rue des Lilas'), '  ');
+    await fixture.whenStable();
+    soumettre();
+    await fixture.whenStable();
+
+    expect(service.appels).toEqual([{ address: null }]);
+  });
+
+  // Critère de validation 2 de l'US : une modification ne peut pas viser un
+  // autre compte. Le front n'envoie aucun identifiant ; l'API prend le sien
+  // dans le cookie de session.
+  it("ne joint jamais d'identifiant ni d'email au corps envoyé", async () => {
+    saisir('#' + premierChampId(), 'Camille-Rose');
+    await fixture.whenStable();
+    soumettre();
+    await fixture.whenStable();
+
+    const envoye = service.appels[0] as Record<string, unknown>;
+    expect(envoye).not.toHaveProperty('id');
+    expect(envoye).not.toHaveProperty('userId');
+    expect(envoye).not.toHaveProperty('email');
+    expect(envoye).not.toHaveProperty('role');
   });
 
   it('garde les corrections saisies quand le serveur refuse', async () => {
@@ -202,6 +236,32 @@ describe('Profile', () => {
     expect(champ?.value).toBe('Camille');
     expect(texte()).not.toContain('non enregistrée');
   });
+
+  /** Identifiant du champ prérempli avec cette valeur. */
+  function champId(valeur: string): string {
+    const champ = [...element().querySelectorAll<HTMLInputElement>('input')].find(
+      (candidat) => candidat.value === valeur,
+    );
+    if (champ === undefined) {
+      throw new Error(`aucun champ ne porte la valeur ${valeur}`);
+    }
+    return champ.id;
+  }
+
+  function interrupteur(): HTMLInputElement {
+    const case_ = element().querySelector<HTMLInputElement>('input[type="checkbox"]');
+    if (case_ === null) {
+      throw new Error('aucun interrupteur');
+    }
+    return case_;
+  }
+
+  /** Bascule l'interrupteur comme le ferait un clic. */
+  function basculer(): void {
+    const case_ = interrupteur();
+    case_.checked = !case_.checked;
+    case_.dispatchEvent(new Event('change'));
+  }
 
   /** Identifiant généré par `app-ui-field` pour le premier champ (le prénom). */
   function premierChampId(): string {

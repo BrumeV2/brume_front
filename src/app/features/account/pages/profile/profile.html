@@ -37,28 +37,28 @@
       @if (profil(); as compte) {
         <form class="formulaire" [formGroup]="form" (ngSubmit)="enregistrer()">
           <div class="colonnes">
-            <app-ui-card
-              titre="Identité"
-              description="Prénom et nom sont le destinataire de tes colis. Ta photo et ton email viennent de Google."
-            >
-              <div class="ligne">
-                <app-ui-field
-                  libelle="Prénom"
-                  [control]="form.controls.firstName"
-                  [obligatoire]="true"
-                  autocomplete="given-name"
-                  [erreur]="erreurDuChamp('firstName')"
-                />
-                <app-ui-field
-                  libelle="Nom"
-                  [control]="form.controls.lastName"
-                  [obligatoire]="true"
-                  autocomplete="family-name"
-                  [erreur]="erreurDuChamp('lastName')"
-                />
-              </div>
+            <div class="colonne">
+              <app-ui-card
+                titre="Identité"
+                description="Prénom et nom sont le destinataire de tes colis. Ta photo et ton email viennent de Google."
+              >
+                <div class="ligne">
+                  <app-ui-field
+                    libelle="Prénom"
+                    [control]="form.controls.firstName"
+                    [obligatoire]="true"
+                    autocomplete="given-name"
+                    [erreur]="erreurDuChamp('firstName')"
+                  />
+                  <app-ui-field
+                    libelle="Nom"
+                    [control]="form.controls.lastName"
+                    [obligatoire]="true"
+                    autocomplete="family-name"
+                    [erreur]="erreurDuChamp('lastName')"
+                  />
+                </div>
 
-              <div class="ligne">
                 <app-ui-static-field
                   libelle="Email"
                   [valeur]="compte.email"
@@ -66,18 +66,56 @@
                   iconeAlt="Fourni par Google"
                   aide="Géré par ton compte Google."
                 />
-                <app-ui-field
-                  libelle="Date de naissance"
-                  type="date"
-                  [control]="form.controls.birthDate"
-                  autocomplete="bday"
-                  aide="Facultatif. Confirme ta majorité pour les thés au CBD."
-                  [erreur]="erreurDuChamp('birthDate')"
-                />
-              </div>
-            </app-ui-card>
+              </app-ui-card>
 
-            <app-linked-accounts [email]="compte.email" />
+              <app-ui-card
+                titre="Adresse de livraison"
+                description="Là où partent tes colis. Le téléphone ne sert qu'au transporteur, le jour de la livraison."
+              >
+                <app-ui-field
+                  libelle="Adresse"
+                  [control]="form.controls.address"
+                  autocomplete="street-address"
+                  [erreur]="erreurDuChamp('address')"
+                />
+
+                <div class="ligne">
+                  <app-ui-field
+                    libelle="Code postal"
+                    [control]="form.controls.postalCode"
+                    autocomplete="postal-code"
+                    [erreur]="erreurDuChamp('postalCode')"
+                  />
+                  <app-ui-field
+                    libelle="Ville"
+                    [control]="form.controls.city"
+                    autocomplete="address-level2"
+                    [erreur]="erreurDuChamp('city')"
+                  />
+                </div>
+
+                <app-ui-field
+                  libelle="Téléphone"
+                  type="tel"
+                  [control]="form.controls.phone"
+                  autocomplete="tel-national"
+                  aide="Facultatif. Dix chiffres, en commençant par 0."
+                  [erreur]="erreurDuChamp('phone')"
+                />
+              </app-ui-card>
+            </div>
+
+            <div class="colonne">
+              <app-ui-card titre="Emails et notifications">
+                <app-ui-switch
+                  libelle="La lettre de Brume"
+                  [control]="form.controls.doNewsletter"
+                  aide="Une fois par mois, pas plus. Désinscription en un clic, à tout moment."
+                />
+              </app-ui-card>
+
+              <app-linked-accounts [email]="compte.email" />
+            </div>
           </div>
 
           @if (confirmation()) {

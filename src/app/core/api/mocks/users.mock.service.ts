@@ -89,9 +89,13 @@ export class UsersMockService extends UsersService {
       ...(payload.firstName === undefined ? {} : { firstName: payload.firstName.trim() }),
       ...(payload.lastName === undefined ? {} : { lastName: payload.lastName.trim() }),
       ...(payload.phone === undefined ? {} : { phone: normalizeOptional(payload.phone) }),
-      ...(payload.birthDate === undefined
+      ...(payload.address === undefined ? {} : { address: normalizeOptional(payload.address) }),
+      ...(payload.postalCode === undefined
         ? {}
-        : { birthDate: normalizeOptional(payload.birthDate) }),
+        : { postalCode: normalizeOptional(payload.postalCode) }),
+      ...(payload.city === undefined ? {} : { city: normalizeOptional(payload.city) }),
+      ...(payload.doNewsletter === undefined ? {} : { doNewsletter: payload.doNewsletter }),
+      updatedAt: new Date().toISOString(),
     };
 
     const next = [...users];
@@ -172,33 +176,55 @@ function validate(payload: UpdateProfileDraft): ValidationDetail[] {
     }
   }
 
-  const phone = received['phone'];
-  if (phone !== undefined && phone !== null) {
-    if (typeof phone !== 'string') {
-      details.push({ field: 'phone', constraints: ['phone must be a string'] });
-    } else if (phone.trim() !== '' && !PROFILE_RULES.phone.pattern.test(phone.trim())) {
+  // Les champs facultatifs : `null` les efface, une valeur doit rester valide.
+  for (const field of ['phone', 'postalCode'] as const) {
+    const value = received[field];
+    if (value === undefined || value === null) {
+      continue;
+    }
+    if (typeof value !== 'string') {
+      details.push({ field, constraints: [`${field} must be a string`] });
+    } else if (value.trim() !== '' && !PROFILE_RULES[field].pattern.test(value.trim())) {
       details.push({
-        field: 'phone',
-        constraints: ['phone must match /^0[1-9]\\d{8}$/ regular expression'],
+        field,
+        constraints: [
+          `${field} must match ${String(PROFILE_RULES[field].pattern)} regular expression`,
+        ],
       });
     }
   }
 
-  const birthDate = received['birthDate'];
-  if (birthDate !== undefined && birthDate !== null && birthDate !== '') {
-    if (typeof birthDate !== 'string' || !PROFILE_RULES.birthDate.pattern.test(birthDate)) {
+  const address = received['address'];
+  if (address !== undefined && address !== null) {
+    if (typeof address !== 'string') {
+      details.push({ field: 'address', constraints: ['address must be a string'] });
+    } else if (address.trim().length > PROFILE_RULES.address.maxLength) {
       details.push({
-        field: 'birthDate',
-        constraints: ['birthDate must be a valid ISO 8601 date'],
+        field: 'address',
+        constraints: [
+          `address must be shorter than or equal to ${PROFILE_RULES.address.maxLength} characters`,
+        ],
       });
-    } else {
-      const date = new Date(`${birthDate}T00:00:00.000Z`);
-      if (Number.isNaN(date.getTime())) {
-        details.push({ field: 'birthDate', constraints: ['birthDate must be a valid date'] });
-      } else if (date.getTime() > Date.now()) {
-        details.push({ field: 'birthDate', constraints: ['birthDate must not be in the future'] });
-      }
     }
+  }
+
+  const city = received['city'];
+  if (city !== undefined && city !== null) {
+    if (typeof city !== 'string') {
+      details.push({ field: 'city', constraints: ['city must be a string'] });
+    } else if (city.trim().length > PROFILE_RULES.city.maxLength) {
+      details.push({
+        field: 'city',
+        constraints: [
+          `city must be shorter than or equal to ${PROFILE_RULES.city.maxLength} characters`,
+        ],
+      });
+    }
+  }
+
+  const doNewsletter = received['doNewsletter'];
+  if (doNewsletter !== undefined && typeof doNewsletter !== 'boolean') {
+    details.push({ field: 'doNewsletter', constraints: ['doNewsletter must be a boolean value'] });
   }
 
   return details;
