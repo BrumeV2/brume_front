@@ -8,21 +8,22 @@ import type { Availability, Variant } from '../../api.types';
  * moins chère »). Ceux du Matcha cérémonie sont ceux de la maquette
  * (Boîte 50 g · 24 €, Boîte 100 g · 42 €, Recharge 100 g · 36 €).
  *
- * `stock` n'existe pas au contrat : l'API ne renvoie qu'une `availability`.
- * Il ne sert qu'à l'implémentation simulée du panier, pour qu'elle refuse un
- * ajout au-delà du stock comme le back (`409 OUT_OF_STOCK`).
+ * `stock` est servi par l'API depuis US-004 (`CatalogueFormat.stock`) : la
+ * fiche en dispose, et l'implémentation simulée du panier s'en sert pour
+ * refuser un ajout au-delà du stock comme le back (`409 OUT_OF_STOCK`).
  */
 export interface MockVariant extends Variant {
   readonly productId: string;
   readonly stock: number;
 }
 
-/** Seuil sous lequel un format est annoncé « stock faible ». */
+/** Au-delà de ce stock, le format est annoncé disponible (règle d'US-004). */
 const SEUIL_STOCK_FAIBLE = 5;
 
+/** Les seuils du back : plus de 5 disponible, 1 à 5 faible, 0 épuisé. */
 function disponibilite(stock: number): Availability {
   if (stock === 0) return 'OUT_OF_STOCK';
-  return stock < SEUIL_STOCK_FAIBLE ? 'LOW_STOCK' : 'IN_STOCK';
+  return stock <= SEUIL_STOCK_FAIBLE ? 'LOW_STOCK' : 'IN_STOCK';
 }
 
 /** `b0000000-…-0000000001 02` : produit n° 1, format n° 2. */
@@ -49,6 +50,7 @@ function formats(produit: number, liste: readonly Format[]): MockVariant[] {
     weightGrams,
     stock,
     availability: disponibilite(stock),
+    isOrderable: stock > 0,
   }));
 }
 
@@ -115,9 +117,9 @@ export const VARIANTS_FIXTURE: readonly MockVariant[] = [
   ...formats(15, [['OOL-50G', 'Boîte 50 g', 2800, 50, 0]]),
 ];
 
-/** Formats d'un produit, dans l'ordre de la fiche, sans le stock interne. */
+/** Formats d'un produit, dans l'ordre de la fiche. */
 export function variantesDuProduit(productId: string): Variant[] {
   return VARIANTS_FIXTURE.filter((variante) => variante.productId === productId).map(
-    ({ productId: _productId, stock: _stock, ...variante }) => variante,
+    ({ productId: _productId, ...variante }) => variante,
   );
 }

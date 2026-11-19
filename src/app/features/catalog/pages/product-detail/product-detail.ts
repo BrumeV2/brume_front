@@ -13,17 +13,31 @@ import { Title } from '@angular/platform-browser';
 import type { Params } from '@angular/router';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 
+import { firstValueFrom } from 'rxjs';
+
 import { toApiError, type ApiError } from '../../../../core/api/api-error';
 import type { CatalogProductDetail, Variant } from '../../../../core/api/api.types';
 import { CART_RULES } from '../../../../core/api/cart-rules';
 import { ProductsService } from '../../../../core/api/products.service';
-import { CartStore, type AddRefusal, type CartLine } from '../../../../core/state/cart.store';
+import {
+  CartStore,
+  type AddRefusal,
+  type AddRefusalCode,
+  type CartLine,
+} from '../../../../core/state/cart.store';
 import { PricePipe } from '../../../../shared/pipes/price-pipe';
 import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
 import { UiQuantity } from '../../../../shared/ui/ui-quantity/ui-quantity';
 import { libelleDisponibilite, momentDe } from '../../catalog-presentation';
 
 type Statut = 'chargement' | 'pret' | 'introuvable' | 'echec';
+
+/** Refus qui signifient « ce qui est affiché n'est plus vrai » (US-004). */
+const CONFLITS_DE_STOCK: readonly AddRefusalCode[] = [
+  'OUT_OF_STOCK',
+  'PRODUCT_UNAVAILABLE',
+  'STOCK_UNAVAILABLE',
+];
 
 /** Où en est le dernier ajout au panier. */
 type Ajout =
@@ -89,7 +103,19 @@ export class ProductDetail {
     return libelleDisponibilite(variante?.availability ?? produit?.availability ?? 'IN_STOCK');
   });
 
-  protected readonly quantiteMax = CART_RULES.quantity.max;
+  /**
+   * Plafond de la quantité : le stock du format quand l'API le donne.
+   *
+   * Mieux vaut empêcher de choisir treize unités d'un format qui n'en a que
+   * trois que de laisser le visiteur les demander pour les lui refuser
+   * ensuite. Stock non consultable : on retombe sur le plafond du panier,
+   * et c'est le contrôle d'US-004 qui tranchera.
+   */
+  protected readonly quantiteMax = computed(() => {
+    const stock = this.variante()?.stock ?? null;
+    if (stock === null) return CART_RULES.quantity.max;
+    return Math.min(CART_RULES.quantity.max, Math.max(1, stock));
+  });
   private readonly varianteChoisie = signal<string | null>(null);
   protected readonly quantite = signal(1);
   protected readonly ajout = signal<Ajout>({ etat: 'repos' });
@@ -128,7 +154,11 @@ export class ProductDetail {
     return ajout.etat === 'refuse' ? ajout.refus : null;
   });
 
-  protected readonly estEpuisee = computed(() => this.variante()?.availability === 'OUT_OF_STOCK');
+  /** Épuisé : plus rien de commandable, même une seule unité (US-004). */
+  protected readonly estEpuisee = computed(() => {
+    const variante = this.variante();
+    return variante === null || !variante.isOrderable;
+  });
 
   constructor() {
     effect(() => {
@@ -154,13 +184,81 @@ export class ProductDetail {
 
     const quantite = this.quantite();
     this.ajout.set({ etat: 'envoi' });
+
+    // US-004 : le stock affiché date du chargement de la page, et le plafond
+    // du sélecteur avec lui. Avant d'ajouter, on demande au back si la
+    // quantité choisie est commandable *maintenant*.
+    const refus = await this.controler(produit.id, variante.id, quantite);
+    if (refus !== null) {
+      this.ajout.set({ etat: 'refuse', refus });
+      await this.rafraichir();
+      return;
+    }
+
     const resultat = await this.panier.add(produit, variante, quantite);
     this.ajout.set(
       resultat.ok
         ? { etat: 'ajoute', ligne: resultat.line, quantite }
         : { etat: 'refuse', refus: resultat.refusal },
     );
-    if (resultat.ok) this.quantite.set(1);
+    if (resultat.ok) {
+      this.quantite.set(1);
+    } else if (CONFLITS_DE_STOCK.includes(resultat.refusal.code)) {
+      await this.rafraichir();
+    }
+  }
+
+  /**
+   * Relit la fiche après un conflit de disponibilité (US-004).
+   *
+   * Un refus pour cause de stock veut dire que ce qui est à l'écran est
+   * périmé : les mentions de disponibilité, le plafond du sélecteur et
+   * l'état du bouton doivent suivre, sinon le visiteur retente exactement
+   * le même ajout. Le message du refus, lui, reste affiché — c'est lui qui
+   * explique ce qui vient de se passer.
+   */
+  private async rafraichir(): Promise<void> {
+    try {
+      const produit = await firstValueFrom(this.productsService.getBySlug(this.slug()));
+      this.produit.set(produit);
+      // Le stock a pu descendre sous la quantité choisie : on la ramène
+      // dans les clous plutôt que de laisser un chiffre impossible.
+      this.quantite.update((quantite) => Math.min(quantite, this.quantiteMax()));
+    } catch {
+      // La fiche reste telle quelle : le refus est déjà expliqué à l'écran.
+    }
+  }
+
+  /**
+   * Contrôle la quantité auprès de l'API. `null` si elle est commandable.
+   *
+   * Le sélecteur plafonne déjà la quantité au stock, mais ce stock est celui
+   * du chargement de la page. Ce contrôle, lui, est daté de maintenant.
+   *
+   * Une panne du contrôle ne bloque pas l'ajout : le panier refait la
+   * vérification côté serveur, et c'est lui qui a le dernier mot. Mieux vaut
+   * laisser passer que refuser un ajout qui aurait marché.
+   */
+  private async controler(
+    produitId: string,
+    formatId: string,
+    quantite: number,
+  ): Promise<AddRefusal | null> {
+    try {
+      const controle = await firstValueFrom(
+        this.productsService.checkAvailability(produitId, formatId, quantite),
+      );
+      if (controle.isOrderable) return null;
+      return {
+        code: 'OUT_OF_STOCK',
+        message:
+          quantite === 1
+            ? 'Ce format vient de passer en rupture.'
+            : `Il n’en reste pas assez pour ${quantite} unités.`,
+      };
+    } catch {
+      return null;
+    }
   }
 
   private charger(slug: string): void {

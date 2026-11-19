@@ -212,4 +212,22 @@ describe('ProductsHttpService', () => {
 
     http.expectOne(`${environment.apiBaseUrl}/categories`).flush([]);
   });
+
+  // US-004 : la quantité voyage en paramètre, les identifiants dans le chemin.
+  it('contrôle une quantité sur un format', () => {
+    service.checkAvailability('produit-1', 'format-2', 7).subscribe();
+
+    const requete = http.expectOne(
+      (r) => r.url === `${PRODUCTS_URL}/produit-1/formats/format-2/availability`,
+    );
+    expect(requete.request.method).toBe('GET');
+    expect(requete.request.params.get('quantity')).toBe('7');
+    requete.flush({
+      productId: 'produit-1',
+      formatId: 'format-2',
+      quantity: 7,
+      availability: 'LOW_STOCK',
+      isOrderable: false,
+    });
+  });
 });

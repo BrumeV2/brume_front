@@ -23,9 +23,32 @@ export type CategoryRef = components['schemas']['CategoryRef'];
 export type ProductSummary = components['schemas']['ProductSummary'];
 export type ProductType = components['schemas']['ProductType'];
 export type Availability = components['schemas']['Availability'];
+/**
+ * Format vendable, tel que la fiche l'affiche.
+ *
+ * N'est plus l'alias du `Variant` du cadrage initial : l'API sert un
+ * `CatalogueFormat`, qui porte en plus la commandabilité d'une unité et le
+ * stock courant (US-004). Le stock vaut `null` quand il n'est pas
+ * consultable — ce qui ne veut pas dire zéro.
+ */
+export interface Variant {
+  readonly id: string;
+  readonly sku: string;
+  readonly label: string;
+  readonly priceCents: number;
+  readonly weightGrams: number;
+  readonly availability: Availability;
+  /** Commandable pour **une** unité. Une quantité précise se vérifie à l'API. */
+  readonly isOrderable: boolean;
+  /** Stock courant, `null` s'il n'est pas consultable. */
+  readonly stock: number | null;
+}
+
 export type Image = components['schemas']['Image'];
-export type Variant = components['schemas']['Variant'];
 export type ProductDetail = components['schemas']['ProductDetail'];
+
+/** Réponse du contrôle public d'une quantité sur un format (US-004). */
+export type FormatAvailability = components['schemas']['FormatAvailability'];
 
 export type Cart = components['schemas']['Cart'];
 export type CartItem = components['schemas']['CartItem'];
@@ -162,11 +185,10 @@ export interface CatalogProduct {
 }
 
 /**
- * Produit tel que la fiche l'affiche : la carte du catalogue, plus les
- * variantes de `ProductDetail` (formats, prix et disponibilité), sans
- * lesquelles rien ne peut être ajouté au panier.
+ * Produit tel que la fiche l'affiche : la carte du catalogue, plus ses
+ * formats vendables, sans lesquels rien ne peut être ajouté au panier.
  */
-export type CatalogProductDetail = CatalogProduct & Pick<ProductDetail, 'variants'>;
+export type CatalogProductDetail = CatalogProduct & { readonly variants: readonly Variant[] };
 
 /**
  * Filtres tels que **l'écran** les manipule, et tels que l'URL les porte.

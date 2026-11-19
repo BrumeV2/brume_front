@@ -10,6 +10,7 @@ import type {
   CatalogProductDetail,
   CatalogQuery,
   Category,
+  FormatAvailability,
   Moment,
 } from './api.types';
 import type {
@@ -43,6 +44,20 @@ export abstract class ProductsService {
    * l'affaire d'US-002.
    */
   abstract getBySlug(slug: string): Observable<CatalogProductDetail>;
+
+  /**
+   * Commandabilité d'une quantité précise sur un format (US-004).
+   *
+   * La disponibilité portée par la fiche ne vaut que pour **une** unité :
+   * un format « en stock » peut très bien ne pas en avoir douze. Seul le
+   * back sait répondre pour une quantité choisie, et sa réponse ne réserve
+   * rien — elle peut être périmée dès que le stock bouge.
+   */
+  abstract checkAvailability(
+    productId: string,
+    formatId: string,
+    quantity: number,
+  ): Observable<FormatAvailability>;
 }
 
 @Injectable()
@@ -125,6 +140,17 @@ export class ProductsHttpService extends ProductsService {
       .get<FicheApi>(`${this.baseUrl}/products/${encodeURIComponent(slug)}`)
       .pipe(map(versFiche));
   }
+
+  override checkAvailability(
+    productId: string,
+    formatId: string,
+    quantity: number,
+  ): Observable<FormatAvailability> {
+    const chemin = `${this.baseUrl}/products/${encodeURIComponent(productId)}/formats/${encodeURIComponent(formatId)}/availability`;
+    return this.http.get<FormatAvailability>(chemin, {
+      params: new HttpParams().set('quantity', quantity),
+    });
+  }
 }
 
 /** Moments de l'API vers ceux de la maquette. */
@@ -203,6 +229,8 @@ function versFiche(api: FicheApi): CatalogProductDetail {
       priceCents: format.price,
       weightGrams: format.quantity,
       availability: format.availability,
+      isOrderable: format.isOrderable,
+      stock: format.stock,
     })),
   };
 }
