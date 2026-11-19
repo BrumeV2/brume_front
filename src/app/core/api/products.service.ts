@@ -1,6 +1,6 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { type Observable, catchError, map, of } from 'rxjs';
+import { type Observable, catchError, forkJoin, map, of, switchMap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import type {
@@ -20,6 +20,8 @@ import type {
   PageApi,
   ProduitApi,
 } from './catalogue-api.types';
+import { CATALOG_RULES } from './catalog-rules';
+import { nettoyerRecherche, nomCorrespond } from './product-search';
 
 /**
  * Catalogue : liste filtrée des produits et catégories (US-001, US-016).
@@ -49,9 +51,61 @@ export class ProductsHttpService extends ProductsService {
   private readonly baseUrl = environment.apiBaseUrl;
 
   override list(query: CatalogQuery): Observable<CatalogPage> {
+    const recherche = nettoyerRecherche(query.q ?? '');
+    return recherche === '' ? this.pageApi(query) : this.rechercher(query, recherche);
+  }
+
+  /** Une page du catalogue, telle que l'API la pagine et la trie. */
+  private pageApi(query: CatalogQuery): Observable<CatalogPage> {
     return this.http
       .get<PageApi>(`${this.baseUrl}/products`, { params: versParams(query) })
       .pipe(map((page) => ({ data: page.data.map(versProduit), meta: page.meta })));
+  }
+
+  /**
+   * Recherche par nom (US-014), faute de paramètre de recherche à l'API.
+   *
+   * `GET /products` ne sait pas chercher : seul le `q` des routes admin
+   * existe au contrat. Plutôt que d'afficher le catalogue entier sous un
+   * libellé « Recherche : … », le front rapatrie le résultat trié et filtré
+   * par l'API, puis applique la recherche dessus.
+   *
+   * Le tri reste donc celui de l'API — on ne retrie rien ici — et la
+   * pagination est recalculée sur les seuls produits retenus. Deux requêtes
+   * suffisent aux 159 références du catalogue ; le jour où il en portera
+   * beaucoup plus, c'est au back de savoir chercher.
+   */
+  private rechercher(query: CatalogQuery, recherche: string): Observable<CatalogPage> {
+    const toutes = { ...query, page: undefined, limit: CATALOG_RULES.limit.max };
+
+    return this.pageApi({ ...toutes, page: 1 }).pipe(
+      switchMap((premiere) => {
+        const suivantes = [];
+        for (let page = 2; page <= premiere.meta.totalPages; page += 1) {
+          suivantes.push(this.pageApi({ ...toutes, page }));
+        }
+        return suivantes.length === 0 ? of([premiere]) : forkJoin([of(premiere), ...suivantes]);
+      }),
+      map((pages) => {
+        const retenus = pages
+          .flatMap((page) => page.data)
+          .filter((produit) => nomCorrespond(produit.name, recherche));
+
+        const limit = query.limit ?? CATALOG_RULES.limit.default;
+        const page = query.page ?? CATALOG_RULES.page.default;
+        const debut = (page - 1) * limit;
+
+        return {
+          data: retenus.slice(debut, debut + limit),
+          meta: {
+            page,
+            limit,
+            total: retenus.length,
+            totalPages: Math.max(1, Math.ceil(retenus.length / limit)),
+          },
+        };
+      }),
+    );
   }
 
   /**
@@ -165,12 +219,11 @@ function prixLePlusBas(formats: readonly FormatApi[]): number | null {
  * se superposent plus : les bornes de prix changent de nom, les moments et la
  * caféine changent de valeurs, et quatre filtres n'ont plus d'équivalent.
  *
- * `category`, `type`, `inStock` et `q` sont donc **laissés de côté**. Les
- * envoyer ferait rejeter la requête entière par le `ValidationPipe` du back,
- * et les envoyer sous un autre nom afficherait une liste qui ne correspond pas
- * à ce que l'écran annonce. Tant que le contrat ne les porte pas, mieux vaut
- * un filtre sans effet qu'une liste fausse — et l'implémentation simulée, elle,
- * les honore, pour que la maquette reste démontrable.
+ * `category`, `type`, `inStock` et `q` sont donc **laissés de côté** : les
+ * envoyer ferait rejeter la requête entière par le `ValidationPipe` du back.
+ * `q` est repris par `rechercher()`, qui filtre côté front ; les trois autres
+ * restent sans effet sur l'API, l'implémentation simulée les honorant pour
+ * que la maquette reste démontrable.
  */
 const MOMENTS_API: Readonly<Record<Moment, 'morning' | 'noon' | 'snack' | 'evening'>> = {
   MORNING: 'morning',

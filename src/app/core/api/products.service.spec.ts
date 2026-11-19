@@ -89,11 +89,90 @@ describe('ProductsHttpService', () => {
   });
 
   it('n’envoie PAS les filtres absents du contrat, que le back rejetterait', () => {
-    service.list({ category: 'thes', type: 'TEA', inStock: true, q: 'matcha' }).subscribe();
+    service.list({ category: 'thes', type: 'TEA', inStock: true }).subscribe();
 
     const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
     expect(requete.request.params.keys()).toEqual([]);
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+  });
+
+  describe('recherche, que l’API ne sait pas faire', () => {
+    const produit = (name: string): Record<string, unknown> => ({
+      id: name,
+      name,
+      typeTea: null,
+      origin: null,
+      ingredients: [],
+      moment: 'morning',
+      image: null,
+      lowestPrice: 500,
+      averageRating: null,
+      ratingCount: 0,
+      availability: 'IN_STOCK',
+      isOrderable: true,
+    });
+
+    it('rapatrie toutes les pages, puis filtre sur le nom', async () => {
+      const page = firstValueFrom(service.list({ q: 'matcha', sort: 'name_asc' }));
+
+      const premiere = http.expectOne((r) => r.url === PRODUCTS_URL);
+      // La recherche n’est pas un paramètre d’API : elle ne part pas.
+      expect(premiere.request.params.has('q')).toBe(false);
+      // La pagination de l’écran non plus : elle est recalculée après filtrage.
+      expect(premiere.request.params.get('limit')).toBe('100');
+      expect(premiere.request.params.get('page')).toBe('1');
+      expect(premiere.request.params.get('sort')).toBe('name_asc');
+      premiere.flush({
+        data: [produit('Matcha Nature')],
+        meta: { page: 1, limit: 100, total: 2, totalPages: 2 },
+      });
+
+      const seconde = http.expectOne((r) => r.params.get('page') === '2');
+      seconde.flush({
+        data: [produit('Sencha Hibiscus')],
+        meta: { page: 2, limit: 100, total: 2, totalPages: 2 },
+      });
+
+      const resultat = await page;
+      expect(resultat.data.map((p) => p.name)).toEqual(['Matcha Nature']);
+      expect(resultat.meta).toMatchObject({ total: 1, totalPages: 1 });
+    });
+
+    it('ignore la casse et les accents, comme l’implémentation simulée', async () => {
+      const page = firstValueFrom(service.list({ q: 'MATE' }));
+
+      http
+        .expectOne((r) => r.url === PRODUCTS_URL)
+        .flush({
+          data: [produit('Maté Tropical'), produit('Sencha Nature')],
+          meta: { page: 1, limit: 100, total: 2, totalPages: 1 },
+        });
+
+      expect((await page).data.map((p) => p.name)).toEqual(['Maté Tropical']);
+    });
+
+    it('pagine les résultats retenus, pas le catalogue entier', async () => {
+      const page = firstValueFrom(service.list({ q: 'thé', page: 2, limit: 2 }));
+
+      http
+        .expectOne((r) => r.url === PRODUCTS_URL)
+        .flush({
+          data: ['Thé A', 'Thé B', 'Thé C', 'Autre'].map(produit),
+          meta: { page: 1, limit: 100, total: 4, totalPages: 1 },
+        });
+
+      const resultat = await page;
+      expect(resultat.data.map((p) => p.name)).toEqual(['Thé C']);
+      expect(resultat.meta).toMatchObject({ page: 2, limit: 2, total: 3, totalPages: 2 });
+    });
+
+    it('n’appelle qu’une fois l’API quand une recherche est vide', () => {
+      service.list({ q: '   ' }).subscribe();
+
+      const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
+      expect(requete.request.params.keys()).toEqual([]);
+      requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+    });
   });
 
   it('appelle `GET /products/{id}` avec l’UUID, échappé', () => {
