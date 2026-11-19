@@ -129,7 +129,14 @@ function versProduit(api: ProduitApi): CatalogProduct {
  */
 function versFiche(api: FicheApi): CatalogProductDetail {
   return {
-    ...versProduit({ ...api, ingredients: [], lowestPrice: prixLePlusBas(api.formats) }),
+    ...versProduit({
+      ...api,
+      ingredients: [],
+      lowestPrice: prixLePlusBas(api.formats),
+      // La fiche ne porte pas les notes : seule la liste les agrège (US-017).
+      averageRating: null,
+      ratingCount: 0,
+    }),
     shortDescription: api.description,
     caffeine: CAFFEINES_ECRAN[api.howMuchCaffeine] ?? null,
     // Les ingrédients de la fiche tiennent lieu de notes de dégustation : ce

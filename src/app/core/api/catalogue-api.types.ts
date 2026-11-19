@@ -1,83 +1,36 @@
-/* ─────────────────────────────────────────────────────────────────────────
- * Ce que l'API sert RÉELLEMENT sur le catalogue.
+/**
+ * Formes du catalogue servies par l'API, extraites du contrat.
  *
- * Ces types sont écrits à la main, à rebours de la règle du dépôt, et c'est
- * volontaire : ils ne peuvent pas être extraits de `schema.d.ts`, parce que
- * l'implémentation du back ne sert pas le contrat qu'elle publie.
+ * Le catalogue a son propre jeu de schémas, `Catalogue*`, auquel
+ * `GET /products` et `GET /products/{id}` renvoient. `ProductSummary` et
+ * `ProductDetail`, qui cohabitent dans le même `openapi.yaml`, viennent du
+ * cadrage initial et ne sont plus référencés par aucune route : les lire comme
+ * le contrat du catalogue mène à décrire une API qui n'existe pas.
  *
- * `openapi.yaml` 1.3.0 déclare un `ProductSummary` avec `slug`, `category`,
- * `type`, `shortDescription`, `fromPriceCents`, `image: { url, alt }` et
- * `ageRestricted`. Mesuré sur la pile locale au 19/11/2026, `GET /products`
- * n'en sert aucun : il renvoie les champs ci-dessous. De même, la fiche est
- * `GET /products/{id}` en UUID — `GET /products/{slug}` répond 400 — et ses
- * formats s'appellent `formats`, pas `variants`.
- *
- * `GET /categories` répond 404 : les univers de la maquette n'ont aucune
- * donnée derrière.
- *
- * Tant que le back n'est pas revenu à son contrat, `ProductsHttpService`
- * traduit ces formes vers le modèle de l'écran. Le jour où il s'y conforme,
- * ce fichier et le traducteur disparaissent ensemble.
- * ───────────────────────────────────────────────────────────────────────── */
+ * Comme partout ailleurs, la source de vérité est `schema.d.ts`. Ces alias ne
+ * sont là que pour nommer les formes de l'API côté traducteur, et les
+ * distinguer du modèle de l'écran.
+ */
 
-import type { Availability, PageMeta } from './api.types';
+import type { components } from './schema';
 
 /** Niveaux de caféine de l'API, en minuscules. */
-export type CaffeineApi = 'none' | 'low' | 'medium' | 'high';
+export type CaffeineApi = components['schemas']['CatalogueProductDetail']['howMuchCaffeine'];
 
 /** Moments de l'API. `snack` est le « Goûter » de la maquette. */
-export type MomentApi = 'morning' | 'noon' | 'snack' | 'evening';
+export type MomentApi = components['schemas']['CatalogueProduct']['moment'];
 
 /** Un produit tel que `GET /products` le renvoie. */
-export interface ProduitApi {
-  readonly id: string;
-  readonly name: string;
-  readonly typeTea: string | null;
-  readonly origin: string | null;
-  readonly availability: Availability;
-  /** Commandable pour une unité au moment de la consultation (US-004). */
-  readonly isOrderable: boolean;
-  /** Noms des ingrédients, la base en premier. */
-  readonly ingredients: readonly string[];
-  readonly moment: MomentApi;
-  /** Image en `data:` URI, base64, ou `null`. */
-  readonly image: string | null;
-  /** Prix du format le moins cher, en centimes. `null` si aucun format. */
-  readonly lowestPrice: number | null;
-  readonly averageRating: number | null;
-  readonly ratingCount: number;
-}
+export type ProduitApi = components['schemas']['CatalogueProduct'];
 
-export interface PageApi {
-  readonly data: readonly ProduitApi[];
-  readonly meta: PageMeta;
-}
+/** Une page de catalogue : les produits et le total après filtrage. */
+export type PageApi = components['schemas']['CataloguePage'];
 
-/** Un format vendable, l'équivalent de la « variante » du contrat. */
-export interface FormatApi {
-  readonly id: string;
-  readonly packaging: string;
-  readonly quantity: number;
-  /** En centimes. */
-  readonly price: number;
-  readonly stock: number;
-  readonly availability: Availability;
-  readonly isOrderable: boolean;
-}
+/** Un format vendable, l'équivalent de la « variante » du cadrage initial. */
+export type FormatApi = components['schemas']['CatalogueFormat'];
 
-export interface IngredientApi {
-  readonly id: string;
-  readonly name: string;
-  readonly description: string | null;
-  readonly type: string;
-}
+/** Un ingrédient tel que la fiche le détaille. */
+export type IngredientApi = components['schemas']['CatalogueProductDetail']['ingredients'][number];
 
-/** Une fiche telle que `GET /products/{id}` la renvoie. */
-export interface FicheApi extends Omit<ProduitApi, 'ingredients' | 'lowestPrice'> {
-  readonly description: string | null;
-  readonly howMuchCaffeine: CaffeineApi;
-  readonly ingredients: readonly IngredientApi[];
-  readonly formats: readonly FormatApi[];
-  readonly createdAt: string;
-  readonly updatedAt: string;
-}
+/** Une fiche telle que `GET /products/{id}` la renvoie. L'identifiant est un UUID. */
+export type FicheApi = components['schemas']['CatalogueProductDetail'];

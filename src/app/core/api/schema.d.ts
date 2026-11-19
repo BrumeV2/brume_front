@@ -156,15 +156,52 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/products/{slug}": {
+    "/products/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Fiche produit et disponibilité (US-002, US-004) */
+        /** Fiche produit et disponibilité des formats (US-002, US-004) */
         get: operations["getProduct"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{id}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Produits similaires commandables */
+        get: operations["getSimilarProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/{id}/formats/{formatId}/availability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Contrôler si une quantité du format est commandable (US-004)
+         * @description Relit le stock. Retourne 200 et isOrderable=false si le stock est insuffisant. Le format doit appartenir au produit. Ne réserve et ne décrémente aucun stock.
+         */
+        get: operations["checkFormatAvailability"];
         put?: never;
         post?: never;
         delete?: never;
@@ -620,7 +657,7 @@ export interface components {
             /** @example 409 */
             statusCode: number;
             /** @enum {string} */
-            code: "VALIDATION_ERROR" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "FORBIDDEN" | "NOT_FOUND" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
+            code: "VALIDATION_ERROR" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "FORBIDDEN" | "NOT_FOUND" | "STOCK_UNAVAILABLE" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
             /** @description Texte lisible en français (peut changer, ne pas s'en servir comme clé) */
             message: string;
             /** @description Contexte propre au code (voir docs/API.md) */
@@ -805,9 +842,15 @@ export interface components {
             quantity: number;
             /** @description Centimes */
             price: number;
-            stock: number;
+            stock: number | null;
+            availability: components["schemas"]["Availability"];
+            /** @description Commandable pour une unité */
+            isOrderable: boolean;
         };
         CatalogueProduct: {
+            availability: components["schemas"]["Availability"];
+            /** @description Au moins un format commandable pour une unité */
+            isOrderable: boolean;
             /** Format: uuid */
             id: string;
             name: string;
@@ -824,6 +867,43 @@ export interface components {
             averageRating: number | null;
             /** @description Nombre d'avis notés. */
             ratingCount: number;
+        };
+        FormatAvailability: {
+            /** Format: uuid */
+            productId: string;
+            /** Format: uuid */
+            formatId: string;
+            quantity: number;
+            availability: components["schemas"]["Availability"];
+            /** @description Toute la quantité demandée peut être commandée selon le stock courant */
+            isOrderable: boolean;
+        };
+        CatalogueProductDetail: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string | null;
+            typeTea: string | null;
+            origin: string | null;
+            /** @enum {string} */
+            howMuchCaffeine: "none" | "low" | "medium" | "high";
+            /** @enum {string} */
+            moment: "morning" | "noon" | "snack" | "evening";
+            image: string | null;
+            ingredients: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                description: string | null;
+                type: string;
+            }[];
+            formats: components["schemas"]["CatalogueFormat"][];
+            availability: components["schemas"]["Availability"];
+            isOrderable: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
         };
         CataloguePage: {
             data: components["schemas"]["CatalogueProduct"][];
@@ -852,10 +932,10 @@ export interface components {
         /** @enum {string} */
         ProductType: "TEA" | "COFFEE" | "CBD" | "BOX" | "ADVENT_CALENDAR" | "ACCESSORY";
         /**
-         * @description `IN_STOCK` (> 5), `LOW_STOCK` (1 à 5), `OUT_OF_STOCK` (0). La quantité exacte n'est pas publique.
+         * @description `IN_STOCK` (> 5), `LOW_STOCK` (1 à 5), `OUT_OF_STOCK` (0 ou aucun format), `UNKNOWN` (stock invalide ou manquant). UNKNOWN interdit la commande pour le format concerné.
          * @enum {string}
          */
-        Availability: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK";
+        Availability: "IN_STOCK" | "LOW_STOCK" | "OUT_OF_STOCK" | "UNKNOWN";
         Image: {
             /** @example https://cdn.brume.dev/products/earl-grey-imperial-1.jpg */
             url: string;
@@ -1608,6 +1688,15 @@ export interface components {
         };
     };
     responses: {
+        /** @description `STOCK_UNAVAILABLE` — stock non consultable ; aucun accord de commandabilité. */
+        StockUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description `AUTH_UNAVAILABLE` — service indisponible, aucune donnée sensible. */
         AuthUnavailable: {
             headers: {
@@ -2032,6 +2121,7 @@ export interface operations {
                 };
             };
             400: components["responses"]["ValidationError"];
+            503: components["responses"]["StockUnavailable"];
         };
     };
     getCatalogueFilters: {
@@ -2059,23 +2149,77 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                /** @example earl-grey-imperial */
-                slug: string;
+                id: components["parameters"]["IdPath"];
             };
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Fiche */
+            /** @description Fiche et disponibilités au moment de la lecture, sans réservation. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductDetail"];
+                    "application/json": components["schemas"]["CatalogueProductDetail"];
                 };
             };
+            400: components["responses"]["ValidationError"];
             404: components["responses"]["NotFound"];
+            503: components["responses"]["StockUnavailable"];
+        };
+    };
+    getSimilarProducts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Produits similaires avec disponibilité courante. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueProduct"][];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["StockUnavailable"];
+        };
+    };
+    checkFormatAvailability: {
+        parameters: {
+            query?: {
+                quantity?: number;
+            };
+            header?: never;
+            path: {
+                id: components["parameters"]["IdPath"];
+                formatId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Disponibilité du format et commandabilité de la quantité demandée. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormatAvailability"];
+                };
+            };
+            400: components["responses"]["ValidationError"];
+            404: components["responses"]["NotFound"];
+            503: components["responses"]["StockUnavailable"];
         };
     };
     getCart: {

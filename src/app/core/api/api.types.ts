@@ -75,19 +75,15 @@ export type UpdateProfileDraft = UpdateProfileRequest;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du catalogue montre et que
- * `openapi.yaml` (contrat 1.3.0) ne porte pas, au 19/11/2026.
+ * `CatalogueProduct` ne porte pas, au 19/11/2026.
  *
- * `moment` et `caffeine` sont **arrivés** au contrat en paramètres de
- * `GET /products` : ils ne sont plus hors contrat comme filtres, seulement
- * comme champs de la carte produit, que `ProductSummary` ne renvoie toujours
- * pas. `origin` existe sur `ProductDetail` seulement ; les notes de
- * dégustation et la mention éditoriale n'existent nulle part.
+ * L'univers (`category`) et le type de produit attendent la story qui
+ * introduira l'enum thé / café / CBD côté back : le modèle ne connaît
+ * aujourd'hui que des thés, distingués par `typeTea`. Le slug, la mention
+ * éditoriale et les notes de dégustation n'existent nulle part.
  *
- * `averageRating` et `ratingCount` manquent au contrat, mais l'API les sert
- * bel et bien — mesuré sur la pile locale. C'est le contrat qui est en
- * retard sur l'implémentation, pas l'inverse : à corriger côté back.
- *
- * Le détail de l'écart, dans l'autre sens, est dans `catalogue-api.types.ts`.
+ * `moment`, `caffeine`, `averageRating` et `ratingCount`, eux, sont bien au
+ * contrat : ils ne sont plus hors contrat du tout.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -103,9 +99,9 @@ export type Caffeine = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
 /**
  * Produit tel que la grille du catalogue l'affiche.
  *
- * N'est plus dérivé de `ProductSummary` : l'API ne sert pas
- * `ProductSummary`, quoi qu'en dise le contrat (voir `catalogue-api.types.ts`).
- * Ce qu'elle ne fournit pas vaut `null` plutôt que d'être inventé : l'écran
+ * N'est plus dérivé de `ProductSummary`, qui vient du cadrage initial et
+ * qu'aucune route ne sert : le catalogue renvoie `CatalogueProduct`.
+ * Ce que l'API ne fournit pas vaut `null` plutôt que d'être inventé : l'écran
  * tait ce qu'il ne sait pas, au lieu d'afficher du faux.
  */
 export interface CatalogProduct {

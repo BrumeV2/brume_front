@@ -11,8 +11,8 @@ export const environment = {
    * Demande la pile du back : `docker compose up -d --build` dans
    * `brume_back`, puis `migration:run`, `seed` et `seed:reviews`. Le front
    * parle alors à `localhost:3000` via `proxy.conf.json`, et
-   * `ProductsHttpService` traduit ce que l'API sert réellement — voir
-   * `catalogue-api.types.ts`, l'écart avec le contrat est important.
+   * `ProductsHttpService` traduit les formes du contrat vers le modèle de
+   * l'écran — voir `catalogue-api.types.ts`.
    *
    * À repasser à `true` pour travailler sans Docker : seul le catalogue
    * retombe sur les données simulées, le reste ne bouge pas.
