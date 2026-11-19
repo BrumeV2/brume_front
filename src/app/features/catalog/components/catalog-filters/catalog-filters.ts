@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 import type { Category, IngredientsMatch } from '../../../../core/api/api.types';
 import {
   CAFFEINES,
+  CATALOG_RULES,
   LIBELLES_CAFFEINE,
   LIBELLES_MOMENT,
   LIBELLES_SORT,
@@ -92,7 +93,16 @@ export class CatalogFilters {
   });
 
   protected readonly univers = computed(() => this.filtres().category ?? null);
-  protected readonly triChoisi = computed(() => this.filtres().sort ?? null);
+
+  /**
+   * Tri en vigueur, et non « celui que l'URL porte » : sans paramètre `sort`,
+   * l'API trie quand même, et le sélecteur doit montrer cet ordre-là plutôt
+   * qu'un libellé de repli.
+   */
+  protected readonly triChoisi = computed(() => this.filtres().sort ?? CATALOG_RULES.defaultSort);
+
+  /** Re-choisir le tri en vigueur revient à revenir au tri par défaut. */
+  protected readonly triParDefaut = CATALOG_RULES.defaultSort;
 
   /**
    * Critères posés, dans l'ordre où la barre les présente.

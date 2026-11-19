@@ -21,7 +21,8 @@ import { PricePipe } from '../../pipes/price-pipe';
 })
 export class UiProductCard {
   readonly nom = input.required<string>();
-  readonly prixCents = input.required<number>();
+  /** `null` quand le produit n'a aucun format vendable : la carte tait le prix. */
+  readonly prixCents = input.required<number | null>();
   readonly photo = input<string | null>(null);
   /** Ligne en petites capitales sous le nom, ex. « Vert · Uji, Japon ». */
   readonly origine = input<string | null>(null);

@@ -70,7 +70,7 @@ describe('ProductsMockService', () => {
       const page = await lister({ category: 'thes' });
 
       expect(page.data).not.toHaveLength(0);
-      expect(page.data.every((p) => p.category.slug === 'thes')).toBe(true);
+      expect(page.data.every((p) => p.category?.slug === 'thes')).toBe(true);
     });
 
     it('filtre par type', async () => {
@@ -84,9 +84,11 @@ describe('ProductsMockService', () => {
       const page = await lister({ minPriceCents: 1500, maxPriceCents: 2500, limit: 100 });
 
       expect(page.data).not.toHaveLength(0);
-      expect(page.data.every((p) => p.fromPriceCents >= 1500 && p.fromPriceCents <= 2500)).toBe(
-        true,
-      );
+      expect(
+        page.data.every(
+          (p) => p.fromPriceCents !== null && p.fromPriceCents >= 1500 && p.fromPriceCents <= 2500,
+        ),
+      ).toBe(true);
       // La borne basse est bien incluse : un produit à 1500 exactement y figure.
       expect(page.data.map((p) => p.fromPriceCents)).toContain(1500);
     });
@@ -122,10 +124,12 @@ describe('ProductsMockService', () => {
     it('ordonne par prix croissant puis décroissant', async () => {
       // Sur le catalogue entier : comparer deux premières pages ne dirait rien.
       const croissant = (await lister({ sort: 'price_asc', limit: 100 })).data.map(
-        (p) => p.fromPriceCents,
+        (p) => p.fromPriceCents ?? 0,
       );
+      // Le jeu simulé donne un prix à chaque produit : le cas « sans prix »
+      // se teste sur le tri lui-même, pas ici.
       const decroissant = (await lister({ sort: 'price_desc', limit: 100 })).data.map(
-        (p) => p.fromPriceCents,
+        (p) => p.fromPriceCents ?? 0,
       );
 
       expect(croissant).toEqual([...croissant].sort((a, b) => a - b));
@@ -352,12 +356,14 @@ describe('ProductsMockService', () => {
 
     it('renvoie plusieurs noms pour une même requête accentuée (validation US-014)', async () => {
       const page = await lister({ q: 'É', category: 'cafes' });
+      // Sans `sort`, le contrat trie par `name_asc` (US-017) : les résultats
+      // reviennent dans l'ordre alphabétique, et non dans celui du jeu simulé.
       expect(page.data.map((produit) => produit.name)).toEqual([
+        'Colombie Huila',
+        'Décaféiné Pérou',
         'Espresso maison',
         'Éthiopie Yirgacheffe',
-        'Colombie Huila',
         'Kenya AA',
-        'Décaféiné Pérou',
       ]);
       expect(page.meta.total).toBe(5);
       expect(await slugs({ q: 'e', category: 'cafes' })).toEqual(

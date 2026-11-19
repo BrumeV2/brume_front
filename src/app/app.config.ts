@@ -47,19 +47,15 @@ export const appConfig: ApplicationConfig = {
     },
     {
       provide: ProductsService,
-      useClass:
-        environment.useMocks || environment.useCatalogMocks
-          ? ProductsMockService
-          : ProductsHttpService,
+      // Drapeau à part : le catalogue est la seule ressource que l'API sert
+      // vraiment, donc il se branche sans attendre le panier ni les comptes.
+      useClass: environment.useCatalogMocks ? ProductsMockService : ProductsHttpService,
     },
     // Même bascule que le catalogue : les UUID d'ingrédients choisis doivent
     // exister dans le catalogue interrogé, simulé ou réel.
     {
       provide: IngredientsService,
-      useClass:
-        environment.useMocks || environment.useCatalogMocks
-          ? IngredientsMockService
-          : IngredientsHttpService,
+      useClass: environment.useCatalogMocks ? IngredientsMockService : IngredientsHttpService,
     },
     {
       provide: CartService,

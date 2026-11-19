@@ -153,10 +153,18 @@ export class ProductList {
   );
   protected readonly resteDesProduits = computed(() => this.produits().length < this.total());
 
+  /*
+   * Produits par univers. Un produit sans univers n'est compté nulle part :
+   * l'API ne renvoie pas de catégorie, donc la vue par univers se vide d'elle
+   * -même plutôt que de ranger tout le catalogue sous un rayon inventé.
+   */
   protected readonly comptes = computed<Readonly<Record<string, number>>>(() => {
     const comptes: Record<string, number> = {};
     for (const produit of this.catalogue()) {
-      comptes[produit.category.slug] = (comptes[produit.category.slug] ?? 0) + 1;
+      const univers = produit.category?.slug;
+      if (univers !== undefined) {
+        comptes[univers] = (comptes[univers] ?? 0) + 1;
+      }
     }
     return comptes;
   });
@@ -171,7 +179,7 @@ export class ProductList {
     this.universPeuples().map((categorie) => ({
       categorie,
       produits: this.catalogue()
-        .filter((p) => p.category.slug === categorie.slug)
+        .filter((p) => p.category?.slug === categorie.slug)
         .slice(0, APERCU_PAR_UNIVERS),
     })),
   );
@@ -463,7 +471,18 @@ function bornesDeTranche(id: string | null): Record<string, string | null> {
   };
 }
 
+/**
+ * Vrai dès que l'écran doit montrer une liste plutôt que les univers.
+ *
+ * Un tri explicite en fait partie (US-017) : la vue par univers présente
+ * quatre produits par rayon, dans l'ordre du catalogue. Demander « prix
+ * croissant » et ne rien voir changer n'aurait aucun sens — choisir un ordre,
+ * c'est demander une liste ordonnée.
+ *
+ * Revenir au tri par défaut retire le paramètre, donc ramène aux univers :
+ * l'ordre par défaut et la présentation par défaut vont ensemble.
+ */
 function aDesCriteres(filtres: CatalogQuery): boolean {
-  const { sort: _sort, page: _page, limit: _limit, ...criteres } = filtres;
+  const { page: _page, limit: _limit, ...criteres } = filtres;
   return Object.values(criteres).some((valeur) => valeur !== undefined && valeur !== '');
 }
