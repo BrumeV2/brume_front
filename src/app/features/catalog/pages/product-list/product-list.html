@@ -10,12 +10,66 @@
   (filtre)="appliquer($event)"
   (tri)="trier($event)"
   (reinitialisation)="reinitialiser()"
-/>
+>
+  <form
+    rechercheCatalogue
+    class="recherche"
+    role="search"
+    (submit)="$event.preventDefault(); requete.value = rechercher(requete.value)"
+  >
+    <div class="recherche__saisie">
+      <input
+        #requete
+        id="recherche-produit"
+        name="q"
+        type="search"
+        [value]="q() ?? ''"
+        aria-label="Rechercher un produit"
+        placeholder="Rechercher…"
+        (input)="saisirRecherche(requete.value)"
+        [attr.aria-invalid]="erreur()?.fieldErrors?.['q'] ? 'true' : null"
+        aria-controls="resultats-recherche"
+      />
+      <svg
+        class="recherche__loupe"
+        aria-hidden="true"
+        focusable="false"
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.8"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+      >
+        <circle cx="10.5" cy="10.5" r="6.5" />
+        <path d="m16 16 4.5 4.5" />
+      </svg>
+    </div>
+  </form>
+</app-catalog-filters>
 
-<section class="resultats">
+<section id="resultats-recherche" class="resultats" [attr.aria-busy]="statut() === 'chargement'">
+  @if (q()) {
+    <p class="compte">Recherche : « {{ q() }} »</p>
+  }
   @switch (statut()) {
     @case ('chargement') {
-      <p class="message" role="status">Chargement du catalogue…</p>
+      <p class="visuellement-masque" role="status">Chargement du catalogue…</p>
+      <div class="grille grille--chargement" aria-hidden="true">
+        @for (carte of cartesEnChargement; track carte) {
+          <div class="fantome">
+            <div class="fantome__bloc fantome__photo"></div>
+            <div class="fantome__entete">
+              <div class="fantome__bloc fantome__nom"></div>
+              <div class="fantome__bloc fantome__prix"></div>
+            </div>
+            <div class="fantome__bloc fantome__origine"></div>
+            <div class="fantome__bloc fantome__notes"></div>
+          </div>
+        }
+      </div>
     }
 
     @case ('echec') {
@@ -45,7 +99,7 @@
 
     @default {
       @if (estVide()) {
-        <div class="message bloc">
+        <div class="message bloc" role="status">
           <p class="bloc__titre titre-carte">Rien ne correspond.</p>
           <p>Aucun produit ne réunit tous ces critères. Retire-en un, ou repars de zéro.</p>
           <app-ui-button libelle="Effacer les filtres" (presse)="reinitialiser()" />
@@ -70,6 +124,14 @@
             />
           }
         </div>
+
+        @if (erreur()) {
+          <div class="message bloc" role="alert">
+            <p>Les produits suivants n’ont pas pu être chargés.</p>
+            <p>{{ erreur()?.message }}</p>
+            <app-ui-button libelle="Réessayer" (presse)="voirPlus()" />
+          </div>
+        }
 
         @if (resteDesProduits()) {
           <div class="voir-plus">

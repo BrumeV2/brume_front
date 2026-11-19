@@ -68,6 +68,8 @@
   >
     <app-ui-chip libelle="En stock" [actif]="filtres().inStock === true" />
   </button>
+
+  <ng-content select="[rechercheCatalogue]" />
 </div>
 
 @if (criteresActifs().length > 0) {

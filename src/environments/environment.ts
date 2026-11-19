@@ -5,6 +5,8 @@
  * Aucun secret ici : tout ce qui est compilé est public.
  */
 export const environment = {
+  /** Catalogue US-014 simulé indépendamment des autres ressources. */
+  useCatalogMocks: true,
   production: false,
   /**
    * Préfixe de toutes les requêtes vers l'API. `proxy.conf.json` renvoie `/api`

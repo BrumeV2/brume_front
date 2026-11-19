@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, InjectionToken, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import type {
@@ -17,14 +17,25 @@ import {
   SORTS,
   type Sort,
 } from '../catalog-rules';
+import { nomCorrespond } from '../product-search';
 import { ProductsService } from '../products.service';
 import {
   CATEGORIES_FIXTURE,
   PRODUCTS_FIXTURE,
   PRODUITS_NON_PUBLIES,
 } from './fixtures/catalog.fixture';
+import { MOCK_DELAY_MS, mockFail, mockOk } from './mock-delay';
 import { variantesDuProduit } from './fixtures/variants.fixture';
-import { mockFail, mockOk } from './mock-delay';
+
+/** Scénarios déterministes, configurables par injection sans mot-clé dans la recherche. */
+export const PRODUCTS_MOCK_OPTIONS = new InjectionToken<{
+  delayMs: number;
+  failFirstSearches: number;
+}>('PRODUCTS_MOCK_OPTIONS', {
+  providedIn: 'root',
+  factory: () => ({ delayMs: MOCK_DELAY_MS, failFirstSearches: 0 }),
+});
+
 
 const CHEMIN = '/api/products';
 
@@ -36,12 +47,15 @@ type Contrainte = { field: string; constraints: string[] };
  * Imite le back plutôt que de rendre service : il valide **avant** de filtrer et
  * renvoie une `VALIDATION_ERROR` au format du contrat sur une valeur non
  * autorisée, comme le `ValidationPipe` de NestJS le ferait sur `GET /products`.
- * Un écran qui marche ici marchera donc aussi contre la vraie API.
+ * La conformité au backend réel reste à vérifier lors de son intégration.
  */
 @Injectable()
 export class ProductsMockService extends ProductsService {
+  private readonly options = inject(PRODUCTS_MOCK_OPTIONS);
+  private echecsRestants = this.options.failFirstSearches;
+
   override categories(): Observable<Category[]> {
-    return mockOk([...CATEGORIES_FIXTURE]);
+    return mockOk([...CATEGORIES_FIXTURE], this.options.delayMs);
   }
 
   override getBySlug(slug: string): Observable<CatalogProductDetail> {
@@ -63,6 +77,19 @@ export class ProductsMockService extends ProductsService {
         'Certains champs sont invalides.',
         problemes as unknown as ApiErrorBody['details'],
         CHEMIN,
+        this.options.delayMs,
+      );
+    }
+
+    if (query.q?.trim() && this.echecsRestants > 0) {
+      this.echecsRestants -= 1;
+      return mockFail(
+        500,
+        'INTERNAL_ERROR',
+        'La recherche a échoué. Merci de réessayer.',
+        undefined,
+        CHEMIN,
+        this.options.delayMs,
       );
     }
 
@@ -72,15 +99,18 @@ export class ProductsMockService extends ProductsService {
     const page = query.page ?? CATALOG_RULES.page.default;
     const debut = (page - 1) * limit;
 
-    return mockOk({
-      data: trouves.slice(debut, debut + limit).map((produit) => ({ ...produit })),
-      meta: {
-        page,
-        limit,
-        total: trouves.length,
-        totalPages: Math.max(1, Math.ceil(trouves.length / limit)),
+    return mockOk(
+      {
+        data: trouves.slice(debut, debut + limit).map((produit) => ({ ...produit })),
+        meta: {
+          page,
+          limit,
+          total: trouves.length,
+          totalPages: Math.max(1, Math.ceil(trouves.length / limit)),
+        },
       },
-    });
+      this.options.delayMs,
+    );
   }
 }
 
@@ -165,20 +195,11 @@ function correspond(query: CatalogQuery): (produit: CatalogProduct) => boolean {
 
     if (query.inStock === true && produit.availability === 'OUT_OF_STOCK') return false;
 
-    if (query.q !== undefined && query.q !== '' && !contient(produit.name, query.q)) return false;
+    if (query.q !== undefined && query.q !== '' && !nomCorrespond(produit.name, query.q))
+      return false;
 
     return true;
   };
-}
-
-/** Recherche insensible à la casse et aux accents, comme une collation Postgres. */
-function contient(valeur: string, recherche: string): boolean {
-  const normaliser = (texte: string): string =>
-    texte
-      .normalize('NFD')
-      .replace(/\p{Diacritic}/gu, '')
-      .toLowerCase();
-  return normaliser(valeur).includes(normaliser(recherche));
 }
 
 function trier(produits: CatalogProduct[], sort: Sort | undefined): CatalogProduct[] {

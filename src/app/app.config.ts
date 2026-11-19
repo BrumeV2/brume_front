@@ -45,7 +45,10 @@ export const appConfig: ApplicationConfig = {
     },
     {
       provide: ProductsService,
-      useClass: environment.useMocks ? ProductsMockService : ProductsHttpService,
+      useClass:
+        environment.useMocks || environment.useCatalogMocks
+          ? ProductsMockService
+          : ProductsHttpService,
     },
     {
       provide: CartService,

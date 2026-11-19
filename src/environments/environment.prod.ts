@@ -3,6 +3,8 @@
  * (`fileReplacements` dans `angular.json`).
  */
 export const environment = {
+  /** Catalogue US-014 simulé indépendamment des autres ressources. */
+  useCatalogMocks: true,
   production: true,
   /**
    * API servie par Caddy sur la VM (voir brume_infra). URL absolue : l'API vit

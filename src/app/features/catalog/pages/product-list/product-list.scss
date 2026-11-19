@@ -35,6 +35,8 @@
  * l'écran dépasse 1440 px.
  */
 .resultats {
+  // Le chargement ou une liste courte ne doit pas rabattre la page vers le haut.
+  min-height: 100vh;
   padding: var(--espace-8) var(--espace-5) var(--espace-10);
 
   @include m.a-partir-de-ordinateur {
@@ -94,4 +96,109 @@
   margin: 0;
   padding-left: var(--espace-5);
   font-size: var(--texte-petit-taille);
+}
+
+.recherche {
+  flex: 0 1 14rem;
+  width: 14rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.recherche__saisie {
+  position: relative;
+}
+
+.recherche__loupe {
+  color: var(--couleur-encre);
+  position: absolute;
+  top: 50%;
+  right: var(--espace-4);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.recherche__saisie input {
+  width: 100%;
+  min-width: 0;
+  height: var(--hauteur-pastille);
+  padding-inline: var(--espace-4) var(--espace-10);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  background: var(--couleur-fond);
+  color: var(--couleur-encre);
+  font-family: inherit;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+
+  &::placeholder {
+    color: var(--couleur-encre);
+    opacity: 1;
+  }
+}
+
+/* Même grille et même ratio photo que les cartes, sans faux contenu interactif. */
+.fantome {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-3);
+}
+
+.fantome__bloc {
+  position: relative;
+  overflow: hidden;
+  background: var(--couleur-photo);
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(100deg, transparent 20%, var(--couleur-blanc) 50%, transparent 80%);
+    opacity: 0.65;
+    transform: translateX(-100%);
+    animation: reflet-chargement 1.4s ease-in-out infinite;
+  }
+}
+
+.fantome__photo {
+  aspect-ratio: 4 / 5;
+}
+
+.fantome__entete {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--espace-3);
+}
+
+.fantome__nom {
+  width: 70%;
+  height: var(--titre-carte-taille);
+}
+
+.fantome__prix {
+  width: 18%;
+  height: var(--texte-taille);
+}
+
+.fantome__origine {
+  width: 50%;
+  height: var(--surtitre-taille);
+}
+
+.fantome__notes {
+  width: 85%;
+  height: var(--texte-petit-taille);
+}
+
+@keyframes reflet-chargement {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fantome__bloc::after {
+    animation: none;
+    content: none;
+  }
 }
