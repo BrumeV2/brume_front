@@ -83,13 +83,11 @@ export type UpdateProfileDraft = UpdateProfileRequest;
  * pas. `origin` existe sur `ProductDetail` seulement ; les notes de
  * dégustation et la mention éditoriale n'existent nulle part.
  *
- * `averageRating` et `ratingCount` sont le cas le plus gênant : le tri
- * `rating_desc` est au contrat et `CATALOGUE-SORT.md` annonce les deux champs
- * sur chaque produit du catalogue, mais `ProductSummary` ne les déclare pas.
- * Le tri marche donc côté API sans que la liste puisse montrer la note.
+ * `averageRating` et `ratingCount` manquent au contrat, mais l'API les sert
+ * bel et bien — mesuré sur la pile locale. C'est le contrat qui est en
+ * retard sur l'implémentation, pas l'inverse : à corriger côté back.
  *
- * À faire ajouter au contrat : ces champs sur `ProductSummary`. Tant que ce
- * n'est pas fait, seule l'implémentation simulée les connaît.
+ * Le détail de l'écart, dans l'autre sens, est dans `catalogue-api.types.ts`.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /**
