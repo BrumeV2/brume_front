@@ -3,7 +3,7 @@ import { TestBed } from '@angular/core/testing';
 import { Title } from '@angular/platform-browser';
 import { provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, map, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import type {
@@ -23,8 +23,36 @@ import { CartStore } from '../../../../core/state/cart.store';
 import { provideCartForTests } from '../../../../core/state/cart.testing';
 import { catalogRoutes } from '../../catalog.routes';
 
-/** Catalogue normal, mais le format s'est vidé depuis l'affichage de la fiche. */
-class ApiEpuisee extends ProductsMockService {
+/**
+ * Rupture entre la consultation et l'ajout (validation 2 d'US-004).
+ *
+ * La fiche se charge normalement ; le format se vide ensuite. La seconde
+ * lecture — celle que déclenche le conflit — le renvoie épuisé.
+ */
+class ApiRupture extends ProductsMockService {
+  private lectures = 0;
+
+  override getBySlug(slug: string): Observable<CatalogProductDetail> {
+    this.lectures += 1;
+    const premiere = this.lectures === 1;
+    return super.getBySlug(slug).pipe(
+      map((produit) =>
+        premiere
+          ? produit
+          : {
+              ...produit,
+              availability: 'OUT_OF_STOCK' as const,
+              variants: produit.variants.map((variante) => ({
+                ...variante,
+                availability: 'OUT_OF_STOCK' as const,
+                isOrderable: false,
+                stock: 0,
+              })),
+            },
+      ),
+    );
+  }
+
   override checkAvailability(
     productId: string,
     formatId: string,
@@ -208,6 +236,24 @@ describe('ProductDetail', () => {
       expect(texte(page, '.confirmation')).toContain('Ce format n’est plus dans ton panier.');
     });
 
+    // Validation 1 d'US-004 : deux formats du même produit, deux états.
+    it('distingue la disponibilité de deux formats d’un même produit', async () => {
+      const page = await afficher('/boutique/matcha-ceremonie');
+      const formats = page.querySelectorAll<HTMLElement>('.format');
+
+      // Boîte 50 g : 40 en stock, aucune mention. Recharge 100 g : 3.
+      expect(formats[0]?.textContent).not.toContain('stock faible');
+      expect(formats[2]?.textContent).toContain('stock faible');
+
+      formats[0]?.querySelector('input')?.click();
+      harness.detectChanges();
+      expect(texte(page, '.reperes dd')).toBe('En stock');
+
+      formats[2]?.querySelector('input')?.click();
+      harness.detectChanges();
+      expect(texte(page, '.reperes dd')).toBe('Derniers exemplaires');
+    });
+
     // US-004 : on n'attend pas l'ajout pour dire qu'il n'y en a pas assez.
     it('ne laisse pas demander plus d’exemplaires que le format n’en a', async () => {
       const page = await afficher('/boutique/matcha-ceremonie');
@@ -232,7 +278,7 @@ describe('ProductDetail', () => {
     // Le stock affiché date du chargement : le contrôle d'US-004, lui, est
     // daté de l'ajout. Ici, le format s'est vidé entre les deux.
     it('restitue le refus du contrôle de disponibilité', async () => {
-      TestBed.overrideProvider(ProductsService, { useFactory: () => new ApiEpuisee() });
+      TestBed.overrideProvider(ProductsService, { useFactory: () => new ApiRupture() });
       const page = await afficher('/boutique/matcha-ceremonie');
 
       await cliquer(page, '.ajout__bouton button');
@@ -241,6 +287,13 @@ describe('ProductDetail', () => {
       expect(page.querySelector('.refus')?.getAttribute('role')).toBe('alert');
       expect(page.querySelector('.confirmation')).toBeNull();
       expect(TestBed.inject(CartStore).itemsCount()).toBe(0);
+
+      // Livrable 2 : la fiche est relue, donc elle ne propose plus l'ajout
+      // qui vient d'être refusé.
+      const bouton = page.querySelector<HTMLButtonElement>('.ajout__bouton button');
+      expect(bouton?.disabled).toBe(true);
+      expect(bouton?.textContent).toContain('Épuisé pour le moment');
+      expect(texte(page, '.reperes dd')).toBe('Épuisé pour le moment');
     });
 
     it('ne propose pas d’ajouter un produit épuisé', async () => {

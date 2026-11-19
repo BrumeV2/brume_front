@@ -19,13 +19,25 @@ import { toApiError, type ApiError } from '../../../../core/api/api-error';
 import type { CatalogProductDetail, Variant } from '../../../../core/api/api.types';
 import { CART_RULES } from '../../../../core/api/cart-rules';
 import { ProductsService } from '../../../../core/api/products.service';
-import { CartStore, type AddRefusal, type CartLine } from '../../../../core/state/cart.store';
+import {
+  CartStore,
+  type AddRefusal,
+  type AddRefusalCode,
+  type CartLine,
+} from '../../../../core/state/cart.store';
 import { PricePipe } from '../../../../shared/pipes/price-pipe';
 import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
 import { UiQuantity } from '../../../../shared/ui/ui-quantity/ui-quantity';
 import { libelleDisponibilite, momentDe } from '../../catalog-presentation';
 
 type Statut = 'chargement' | 'pret' | 'introuvable' | 'echec';
+
+/** Refus qui signifient « ce qui est affiché n'est plus vrai » (US-004). */
+const CONFLITS_DE_STOCK: readonly AddRefusalCode[] = [
+  'OUT_OF_STOCK',
+  'PRODUCT_UNAVAILABLE',
+  'STOCK_UNAVAILABLE',
+];
 
 /** Où en est le dernier ajout au panier. */
 type Ajout =
@@ -179,6 +191,7 @@ export class ProductDetail {
     const refus = await this.controler(produit.id, variante.id, quantite);
     if (refus !== null) {
       this.ajout.set({ etat: 'refuse', refus });
+      await this.rafraichir();
       return;
     }
 
@@ -188,7 +201,32 @@ export class ProductDetail {
         ? { etat: 'ajoute', ligne: resultat.line, quantite }
         : { etat: 'refuse', refus: resultat.refusal },
     );
-    if (resultat.ok) this.quantite.set(1);
+    if (resultat.ok) {
+      this.quantite.set(1);
+    } else if (CONFLITS_DE_STOCK.includes(resultat.refusal.code)) {
+      await this.rafraichir();
+    }
+  }
+
+  /**
+   * Relit la fiche après un conflit de disponibilité (US-004).
+   *
+   * Un refus pour cause de stock veut dire que ce qui est à l'écran est
+   * périmé : les mentions de disponibilité, le plafond du sélecteur et
+   * l'état du bouton doivent suivre, sinon le visiteur retente exactement
+   * le même ajout. Le message du refus, lui, reste affiché — c'est lui qui
+   * explique ce qui vient de se passer.
+   */
+  private async rafraichir(): Promise<void> {
+    try {
+      const produit = await firstValueFrom(this.productsService.getBySlug(this.slug()));
+      this.produit.set(produit);
+      // Le stock a pu descendre sous la quantité choisie : on la ramène
+      // dans les clous plutôt que de laisser un chiffre impossible.
+      this.quantite.update((quantite) => Math.min(quantite, this.quantiteMax()));
+    } catch {
+      // La fiche reste telle quelle : le refus est déjà expliqué à l'écran.
+    }
   }
 
   /**
