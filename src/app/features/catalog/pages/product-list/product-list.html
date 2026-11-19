@@ -7,10 +7,18 @@
   class="barre"
   [filtres]="filtres()"
   [categories]="universPeuples()"
+  [nomsIngredients]="nomsIngredients()"
   (filtre)="appliquer($event)"
   (tri)="trier($event)"
   (reinitialisation)="reinitialiser()"
+  (retraitIngredient)="retirerIngredient($event)"
+  (combinaison)="combiner($event)"
 >
+  <app-ingredient-picker
+    rechercheIngredient
+    [choisis]="idsIngredientsChoisis()"
+    (choix)="ajouterIngredient($event)"
+  />
   <form
     rechercheCatalogue
     class="recherche"
@@ -54,6 +62,9 @@
   @if (q()) {
     <p class="compte">Recherche : « {{ q() }} »</p>
   }
+  @if (ingredientsEnClair()) {
+    <p class="compte">Produits contenant {{ ingredientsEnClair() }}</p>
+  }
   @switch (statut()) {
     @case ('chargement') {
       <p class="visuellement-masque" role="status">Chargement du catalogue…</p>
@@ -81,24 +92,49 @@
     }
 
     @case ('filtres-invalides') {
-      <div class="message bloc" role="alert">
-        <p class="bloc__titre titre-carte">Ces filtres ne sont pas valides.</p>
-        <p>{{ erreur()?.message }}</p>
+      @if (ingredientRefuse()) {
+        <div class="message bloc" role="alert">
+          <p class="bloc__titre titre-carte">Cet ingrédient n’existe pas dans notre catalogue.</p>
+          <p>
+            Le lien suivi désigne un ingrédient inconnu, peut-être retiré depuis. Retire-le, puis
+            cherche un ingrédient par son nom.
+          </p>
+          <app-ui-button
+            libelle="Retirer l’ingrédient inconnu"
+            (presse)="retirerIngredientsInconnus()"
+          />
+        </div>
+      } @else {
+        <div class="message bloc" role="alert">
+          <p class="bloc__titre titre-carte">Ces filtres ne sont pas valides.</p>
+          <p>{{ erreur()?.message }}</p>
 
-        @if (erreur()?.fieldErrors; as champs) {
-          <ul class="bloc__champs">
-            @for (champ of champs | keyvalue; track champ.key) {
-              <li>{{ champ.key }}</li>
-            }
-          </ul>
-        }
+          @if (erreur()?.fieldErrors; as champs) {
+            <ul class="bloc__champs">
+              @for (champ of champs | keyvalue; track champ.key) {
+                <li>{{ champ.key }}</li>
+              }
+            </ul>
+          }
 
-        <app-ui-button libelle="Repartir du catalogue complet" (presse)="reinitialiser()" />
-      </div>
+          <app-ui-button libelle="Repartir du catalogue complet" (presse)="reinitialiser()" />
+        </div>
+      }
     }
 
     @default {
-      @if (estVide()) {
+      @if (estVide() && ingredientsEnClair()) {
+        <div class="message bloc" role="status">
+          <p class="bloc__titre titre-carte">
+            Aucun produit ne contient {{ ingredientsEnClair() }}.
+          </p>
+          <p>
+            L’ingrédient existe, mais aucune de nos références ne le contient pour le moment, ou pas
+            avec les autres critères posés.
+          </p>
+          <app-ui-button libelle="Effacer les filtres" (presse)="reinitialiser()" />
+        </div>
+      } @else if (estVide()) {
         <div class="message bloc" role="status">
           <p class="bloc__titre titre-carte">Rien ne correspond.</p>
           <p>Aucun produit ne réunit tous ces critères. Retire-en un, ou repars de zéro.</p>

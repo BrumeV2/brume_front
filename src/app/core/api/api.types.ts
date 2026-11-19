@@ -43,6 +43,35 @@ export type ProductQuery = NonNullable<operations['listProducts']['parameters'][
 export type Sort = NonNullable<ProductQuery['sort']>;
 
 /* ─────────────────────────────────────────────────────────────────────────
+ * CONTRAT 1.5.0 PAS ENCORE GÉNÉRÉ : recherche par ingrédient (US-015).
+ *
+ * Recopié à l'identique d'`openapi.yaml` 1.5.0, branche
+ * `feat/scrum-65/recherche-par-ingredients` de brume_back (doc :
+ * `docs/CATALOGUE-INGREDIENTS.md`). `schema.d.ts` suit `develop` (1.4.0), qui
+ * connaît déjà `ingredients` sur `GET /products` mais ni `ingredientsMatch` ni
+ * `GET /ingredients`. Une fois le back fusionné, `schema.d.ts` est régénéré et
+ * ce bloc devient deux alias :
+ *   components['schemas']['IngredientListItem'] et ProductQuery['ingredientsMatch'].
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Combinaison des ingrédients choisis dans `GET /products`. */
+export type IngredientsMatch = 'any' | 'all';
+
+/** Nature d'un ingrédient du référentiel. */
+export type IngredientType = 'base' | 'dried_ingredient' | 'liquid_flavoring' | 'essential_oil';
+
+/** Une entrée de `GET /ingredients`. */
+export interface IngredientListItem {
+  id: string;
+  name: string;
+  type: IngredientType;
+  /** Synonymes reconnus par les recherches : « badiane » pour l'anis étoilé. */
+  aliases: string[];
+  /** Produits publiés qui le contiennent. 0 : le filtre renverra une liste vide. */
+  productCount: number;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du profil montre et que `openapi.yaml`
  * (branche `develop` de brume_back) ne porte pas, au 17/11/2026.
  *
@@ -162,6 +191,10 @@ export interface CatalogQuery {
   sort?: Sort;
   page?: number;
   limit?: number;
+  /** UUID du référentiel (`GET /ingredients`), 20 au plus. Même nom au contrat (US-015). */
+  ingredients?: readonly string[];
+  /** `any` (défaut) : au moins un ingrédient ; `all` : tous. Sans effet sans `ingredients`. */
+  ingredientsMatch?: IngredientsMatch;
 
   /** Onglets d'univers de la maquette. Sans filtre équivalent au contrat. */
   category?: string;

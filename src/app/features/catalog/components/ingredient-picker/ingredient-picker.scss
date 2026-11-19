@@ -1,0 +1,125 @@
+@use '../../../../../styles/mixins' as m;
+
+:host {
+  position: relative;
+  display: block;
+  flex: 0 1 14rem;
+  width: 14rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.hors-ecran {
+  @include m.hors-ecran;
+}
+
+.champ {
+  width: 100%;
+  min-width: 0;
+  height: var(--hauteur-pastille);
+  padding-inline: var(--espace-4);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  background: var(--couleur-fond);
+  color: var(--couleur-encre);
+  font-family: inherit;
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+
+  &::placeholder {
+    color: var(--couleur-encre);
+    opacity: 1;
+  }
+
+  &:disabled::placeholder {
+    color: var(--couleur-texte-doux);
+  }
+}
+
+.panneau {
+  position: absolute;
+  top: calc(var(--hauteur-pastille) + var(--espace-2));
+  left: 0;
+  z-index: 20;
+  width: max(100%, 18rem);
+  max-width: calc(100vw - 2 * var(--espace-5));
+  padding: var(--espace-1);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-carte);
+  background-color: var(--couleur-papier);
+}
+
+.aide {
+  margin: 0;
+  padding: var(--espace-2) var(--espace-3);
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+
+  p {
+    margin: 0;
+  }
+}
+
+.lien {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--couleur-encre);
+  font-size: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.liste {
+  max-height: 18rem;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.option {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: var(--espace-3);
+  padding: var(--espace-2) var(--espace-3);
+  border-radius: var(--rayon-saisie);
+  color: var(--couleur-encre);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  cursor: pointer;
+  transition: background-color 0.2s var(--courbe-brume);
+
+  &:hover,
+  &.est-active {
+    background-color: var(--couleur-fond);
+  }
+
+  &.est-vide .option__nom,
+  &[aria-disabled='true'] {
+    color: var(--couleur-texte-doux);
+  }
+
+  &[aria-disabled='true'] {
+    cursor: default;
+  }
+}
+
+.option__nom {
+  font-weight: 500;
+}
+
+.option__alias {
+  grid-row: 2;
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-aide-taille);
+}
+
+.option__compte {
+  grid-row: 1;
+  grid-column: 2;
+  color: var(--couleur-texte-doux);
+  font-size: var(--texte-aide-taille);
+  white-space: nowrap;
+}

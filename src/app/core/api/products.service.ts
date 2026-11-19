@@ -258,6 +258,16 @@ function versParams(query: CatalogQuery): HttpParams {
     params = params.append('howMuchCaffeine', CAFFEINES_API[query.caffeine]);
   }
 
+  // US-015 : plusieurs ingrédients à la fois, donc vraiment répétés. Une liste
+  // vide est retirée plutôt qu'envoyée, le back la refuserait (`ArrayNotEmpty`).
+  // `ingredientsMatch` n'a de sens qu'avec des ingrédients.
+  for (const ingredient of query.ingredients ?? []) {
+    params = params.append('ingredients', ingredient);
+  }
+  if (query.ingredients?.length) {
+    poser('ingredientsMatch', query.ingredientsMatch);
+  }
+
   poser('minPrice', query.minPriceCents);
   poser('maxPrice', query.maxPriceCents);
   poser('sort', query.sort);

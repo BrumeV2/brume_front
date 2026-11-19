@@ -18,15 +18,20 @@ export interface OptionFiltre {
  * (`minPriceCents` et `maxPriceCents`) : c'est le seul endroit où l'affichage
  * et le contrat ne se superposent pas exactement.
  */
-export type ChampFiltre = 'category' | 'type' | 'moment' | 'caffeine' | 'prix' | 'inStock' | 'q';
+export type ChampFiltre =
+  'category' | 'type' | 'moment' | 'caffeine' | 'prix' | 'inStock' | 'q' | 'ingredients';
 
 /**
  * Critère posé, tel que l'indicateur l'affiche : un libellé lisible et de quoi
  * le retirer sans toucher aux autres.
+ *
+ * `valeur` ne sert qu'aux critères à plusieurs valeurs (les ingrédients) : elle
+ * désigne celle que la croix retire, les autres restant posées.
  */
 export interface CritereActif {
   readonly champ: ChampFiltre;
   readonly libelle: string;
+  readonly valeur?: string;
 }
 
 /** Un univers et ses premiers produits, pour la vue sans filtre. */

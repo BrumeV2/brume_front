@@ -11,6 +11,8 @@ import { CartHttpService, CartService } from './core/api/cart.service';
 import { HomeService } from './core/api/home.service';
 import { CartMockService } from './core/api/mocks/cart.mock.service';
 import { HomeMockService } from './core/api/mocks/home.mock.service';
+import { IngredientsHttpService, IngredientsService } from './core/api/ingredients.service';
+import { IngredientsMockService } from './core/api/mocks/ingredients.mock.service';
 import { SessionHttpService, SessionService } from './core/api/session.service';
 import { SessionMockService } from './core/api/mocks/session.mock.service';
 import { ProductsHttpService, ProductsService } from './core/api/products.service';
@@ -48,6 +50,12 @@ export const appConfig: ApplicationConfig = {
       // Drapeau à part : le catalogue est la seule ressource que l'API sert
       // vraiment, donc il se branche sans attendre le panier ni les comptes.
       useClass: environment.useCatalogMocks ? ProductsMockService : ProductsHttpService,
+    },
+    // Même bascule que le catalogue : les UUID d'ingrédients choisis doivent
+    // exister dans le catalogue interrogé, simulé ou réel.
+    {
+      provide: IngredientsService,
+      useClass: environment.useCatalogMocks ? IngredientsMockService : IngredientsHttpService,
     },
     {
       provide: CartService,

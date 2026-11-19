@@ -1,0 +1,75 @@
+<label class="hors-ecran" [for]="id">Rechercher par ingrédient</label>
+<input
+  #champ
+  class="champ"
+  type="text"
+  enterkeyhint="search"
+  role="combobox"
+  autocomplete="off"
+  aria-autocomplete="list"
+  [id]="id"
+  [attr.aria-expanded]="ouvert()"
+  [attr.aria-controls]="id + '-liste'"
+  [attr.aria-activedescendant]="idActive()"
+  [value]="saisie()"
+  [disabled]="complet()"
+  [attr.maxlength]="longueurMax"
+  [placeholder]="complet() ? maximum + ' ingrédients au plus' : 'Un ingrédient…'"
+  (input)="saisir(champ.value)"
+  (keydown)="clavier($event)"
+  (focus)="rouvrir()"
+/>
+
+@if (ouvert()) {
+  <div class="panneau">
+    @switch (etat()) {
+      @case ('trop-court') {
+        <p class="aide" role="status">Tape au moins deux lettres.</p>
+      }
+      @case ('recherche') {
+        <p class="aide" role="status">Recherche des ingrédients…</p>
+      }
+      @case ('echec') {
+        <div class="aide" role="alert">
+          <p>La recherche d’ingrédients n’a pas abouti.</p>
+          <button class="lien" type="button" (click)="relancer()">Réessayer</button>
+        </div>
+      }
+      @case ('aucun') {
+        <p class="aide" role="status">
+          Aucun ingrédient ne correspond à « {{ texteCherche() }} ». Vérifie l’orthographe ou essaie
+          un autre nom.
+        </p>
+      }
+      @case ('resultats') {
+        <p class="hors-ecran" role="status">
+          {{ suggestions().length }}
+          {{ suggestions().length > 1 ? 'ingrédients proposés' : 'ingrédient proposé' }}
+        </p>
+        <ul class="liste" role="listbox" aria-label="Ingrédients" [id]="id + '-liste'">
+          @for (ingredient of suggestions(); track ingredient.id; let i = $index) {
+            <li
+              class="option"
+              role="option"
+              [id]="id + '-option-' + i"
+              [class.est-active]="i === active()"
+              [class.est-vide]="ingredient.productCount === 0"
+              [attr.aria-selected]="i === active()"
+              [attr.aria-disabled]="dejaChoisi(ingredient) ? 'true' : null"
+              (mousedown)="$event.preventDefault()"
+              (click)="choisir(ingredient)"
+            >
+              <span class="option__nom">{{ ingredient.name }}</span>
+              @if (synonymes(ingredient); as alias) {
+                <span class="option__alias">aussi appelé {{ alias }}</span>
+              }
+              <span class="option__compte">
+                {{ dejaChoisi(ingredient) ? 'Déjà choisi' : nombreDeProduits(ingredient) }}
+              </span>
+            </li>
+          }
+        </ul>
+      }
+    }
+  </div>
+}

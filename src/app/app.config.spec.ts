@@ -8,6 +8,7 @@ import { environment as production } from '../environments/environment.prod';
 import { appConfig } from './app.config';
 import { PRODUCTS_MOCK_OPTIONS, ProductsMockService } from './core/api/mocks/products.mock.service';
 import { ProductsHttpService, ProductsService } from './core/api/products.service';
+import { IngredientsHttpService, IngredientsService } from './core/api/ingredients.service';
 
 describe('Catalogue : configuration applicative', () => {
   /**
@@ -24,6 +25,15 @@ describe('Catalogue : configuration applicative', () => {
 
     expect(environment.useCatalogMocks).toBe(false);
     expect(TestBed.inject(ProductsService)).toBeInstanceOf(ProductsHttpService);
+  });
+
+  // Les UUID d'ingrédients choisis doivent exister dans le catalogue interrogé.
+  it('branche le référentiel d’ingrédients sur la même source que le catalogue', () => {
+    TestBed.configureTestingModule({
+      providers: [...appConfig.providers, provideHttpClientTesting()],
+    });
+
+    expect(TestBed.inject(IngredientsService)).toBeInstanceOf(IngredientsHttpService);
   });
 
   /**

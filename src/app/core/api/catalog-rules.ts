@@ -1,4 +1,4 @@
-import type { Caffeine, Moment, ProductType, Sort } from './api.types';
+import type { Caffeine, IngredientsMatch, Moment, ProductType, Sort } from './api.types';
 
 /** Réexporté ici : le tri se lit avec les autres règles du catalogue. */
 export type { Sort };
@@ -54,7 +54,13 @@ export const CATALOG_RULES = {
   limit: { min: 1, max: 100, default: 8 },
   price: { min: 0 },
   q: { maxLength: 100 },
+  /** `GET /products` : 20 ingrédients au plus, combinés en OU par défaut (US-015). */
+  ingredients: { max: 20, defaultMatch: 'any' satisfies IngredientsMatch },
+  /** `GET /ingredients?q=` : 2 à 100 caractères une fois les espaces nettoyés. */
+  ingredientSearch: { minLength: 2, maxLength: 100 },
 } as const;
+
+export const INGREDIENTS_MATCHES = ['any', 'all'] as const satisfies readonly IngredientsMatch[];
 
 /** Libellés français, pour n'avoir qu'un seul endroit à traduire. */
 export const LIBELLES_TYPE: Readonly<Record<ProductType, string>> = {

@@ -12,11 +12,13 @@ import type { ApiErrorBody } from '../api-error';
 import {
   CAFFEINES,
   CATALOG_RULES,
+  INGREDIENTS_MATCHES,
   MOMENTS,
   PRODUCT_TYPES,
   SORTS,
   type Sort,
 } from '../catalog-rules';
+import { INGREDIENTS_FIXTURE, ingredientsDuProduit } from './fixtures/ingredients.fixture';
 import { nomCorrespond } from '../product-search';
 import { ProductsService } from '../products.service';
 import {
@@ -168,6 +170,22 @@ function valider(query: CatalogQuery): Contrainte[] {
     });
   }
 
+  // US-015 : un UUID du référentiel est accepté même s'il n'est dans aucun
+  // produit (la liste revient vide) ; seul un UUID inconnu du référentiel est
+  // refusé, avec la contrainte `isAllowed` du back.
+  if (query.ingredients !== undefined) {
+    const ingredients = query.ingredients.map((id) => id.trim().toLowerCase());
+    if (ingredients.length === 0 || ingredients.length > CATALOG_RULES.ingredients.max) {
+      problemes.push({
+        field: 'ingredients',
+        constraints: [`ingredients must contain 1 to ${CATALOG_RULES.ingredients.max} elements`],
+      });
+    } else if (!ingredients.every((id) => INGREDIENTS_FIXTURE.some((i) => i.id === id))) {
+      problemes.push({ field: 'ingredients', constraints: ['isAllowed'] });
+    }
+  }
+  verifierEnum('ingredientsMatch', query.ingredientsMatch, INGREDIENTS_MATCHES);
+
   if (query.q !== undefined && query.q.length > CATALOG_RULES.q.maxLength) {
     problemes.push({
       field: 'q',
@@ -199,6 +217,16 @@ function correspond(query: CatalogQuery): (produit: CatalogProduct) => boolean {
 
     if (query.q !== undefined && query.q !== '' && !nomCorrespond(produit.name, query.q))
       return false;
+
+    // La composition est portée par le produit : tous ses formats ont les mêmes
+    // ingrédients, et le produit n'est renvoyé qu'une fois.
+    if (query.ingredients !== undefined) {
+      const contenus = ingredientsDuProduit(produit.slug);
+      const voulus = [...new Set(query.ingredients.map((id) => id.trim().toLowerCase()))];
+      const tous = (query.ingredientsMatch ?? CATALOG_RULES.ingredients.defaultMatch) === 'all';
+      const present = (id: string): boolean => contenus.includes(id);
+      if (tous ? !voulus.every(present) : !voulus.some(present)) return false;
+    }
 
     return true;
   };
