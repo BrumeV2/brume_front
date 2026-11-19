@@ -11,8 +11,8 @@ import type { ApiErrorBody, ApiErrorCode } from '../api-error';
 export const MOCK_DELAY_MS = 350;
 
 /** Réponse simulée en succès. */
-export function mockOk<T>(value: T): Observable<T> {
-  return of(value).pipe(delay(MOCK_DELAY_MS));
+export function mockOk<T>(value: T, delayMs = MOCK_DELAY_MS): Observable<T> {
+  return of(value).pipe(delay(delayMs));
 }
 
 /**
@@ -25,6 +25,7 @@ export function mockFail(
   message: string,
   details?: ApiErrorBody['details'],
   path = '/api',
+  delayMs = MOCK_DELAY_MS,
 ): Observable<never> {
   const body: ApiErrorBody = {
     statusCode,
@@ -35,7 +36,7 @@ export function mockFail(
     ...(details === undefined ? {} : { details }),
   };
 
-  return timer(MOCK_DELAY_MS).pipe(
+  return timer(delayMs).pipe(
     switchMap(() =>
       throwError(
         () =>

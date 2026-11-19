@@ -2,11 +2,14 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter, withComponentInputBinding } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
-import { Observable, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { Observable, Subject, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { CatalogPage, CatalogProduct, Category } from '../../../../core/api/api.types';
-import { ProductsMockService } from '../../../../core/api/mocks/products.mock.service';
+import {
+  PRODUCTS_MOCK_OPTIONS,
+  ProductsMockService,
+} from '../../../../core/api/mocks/products.mock.service';
 import { ProductsService } from '../../../../core/api/products.service';
 import { catalogRoutes } from '../../catalog.routes';
 
@@ -42,6 +45,7 @@ describe('ProductList', () => {
         // requête n'arrivent pas aux entrées de l'écran.
         provideRouter([{ path: 'boutique', children: catalogRoutes }], withComponentInputBinding()),
         { provide: ProductsService, useClass: service },
+        { provide: PRODUCTS_MOCK_OPTIONS, useValue: { delayMs: 0, failFirstSearches: 0 } },
       ],
     });
   };
@@ -49,8 +53,8 @@ describe('ProductList', () => {
   beforeEach(() => configurer(ProductsMockService));
 
   const stabiliser = async (): Promise<void> => {
-    // Les réponses simulées sont temporisées : on laisse passer la latence.
-    await new Promise((resoudre) => setTimeout(resoudre, 500));
+    // Laisse émettre les réponses simulées à latence nulle.
+    await new Promise((resoudre) => setTimeout(resoudre, 10));
     await harness.fixture.whenStable();
     harness.detectChanges();
   };
@@ -244,6 +248,198 @@ describe('ProductList', () => {
       const page = await afficher('/boutique');
 
       expect(page.querySelector('.tout-effacer')).toBeNull();
+    });
+  });
+  describe('rechercher un produit (US-014)', () => {
+    const saisir = (texte: string): void => {
+      const champ = ecran().querySelector<HTMLInputElement>('input[type="search"]')!;
+      champ.value = texte;
+      champ.dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const soumettre = (): void => {
+      ecran()
+        .querySelector('form[role="search"]')!
+        .dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    };
+
+    it('présente la recherche accessible à côté des filtres, sans bouton de recherche', async () => {
+      const page = await afficher('/boutique');
+      expect(page.querySelector('input[type="search"]')?.getAttribute('aria-label')).toBe(
+        'Rechercher un produit',
+      );
+      expect(page.querySelector('.bandeau form')).toBeNull();
+      expect(
+        page.querySelector('app-catalog-filters .pastilles form[role="search"]'),
+      ).not.toBeNull();
+      expect(page.querySelector('form[role="search"] button')).toBeNull();
+      expect(page.querySelector('label[for="recherche-produit"]')).toBeNull();
+      expect(page.textContent).not.toContain('Par nom, avec ou sans accents.');
+      expect(page.querySelector<HTMLInputElement>('input[type="search"]')?.value).toBe('');
+      expect(page.querySelectorAll('app-universe-section').length).toBeGreaterThan(0);
+    });
+
+    it('recherche pendant la saisie après une courte pause, sans soumission', async () => {
+      await afficher('/boutique');
+      const service = TestBed.inject(ProductsService);
+      const appels = vi.spyOn(service, 'list');
+      saisir('m');
+      saisir('mai');
+      saisir('maison');
+      await stabiliser();
+      expect(appels).not.toHaveBeenCalled();
+      await vi.waitFor(() => {
+        harness.detectChanges();
+        expect(noms(ecran())).toEqual(['Chaï maison', 'Espresso maison']);
+      });
+      expect(router.url).toBe('/boutique?q=maison');
+      expect(appels).toHaveBeenCalledTimes(1);
+    });
+
+    it('efface dynamiquement la recherche tout en conservant la catégorie', async () => {
+      await afficher('/boutique?q=maison&category=thes');
+      saisir('');
+      await vi.waitFor(() => expect(router.url).toBe('/boutique?category=thes'));
+      await stabiliser();
+      expect(noms(ecran()).length).toBeGreaterThan(1);
+    });
+
+    it('annule une saisie en attente quand les filtres sont réinitialisés', async () => {
+      await afficher('/boutique?q=maison');
+      saisir('matcha');
+      ecran().querySelector<HTMLButtonElement>('.tout-effacer')!.click();
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await stabiliser();
+      expect(router.url).toBe('/boutique');
+      expect(ecran().querySelector<HTMLInputElement>('input')?.value).toBe('');
+    });
+
+    it('soumet la saisie, restitue la requête et affiche plusieurs produits', async () => {
+      await afficher('/boutique');
+      saisir('  MAISON  ');
+      soumettre();
+      await stabiliser();
+      expect(router.url).toBe('/boutique?q=MAISON');
+      expect(ecran().querySelector<HTMLInputElement>('input')?.value).toBe('MAISON');
+      expect(ecran().textContent).toContain('Recherche : « MAISON »');
+      expect(noms(ecran())).toEqual(['Chaï maison', 'Espresso maison']);
+      expect(textes(ecran(), '.carte__prix').every((prix) => prix.includes('€'))).toBe(true);
+    });
+
+    it('normalise aussi la saisie quand la requête soumise ne change pas', async () => {
+      await afficher('/boutique?q=maison');
+      saisir('  maison  ');
+      soumettre();
+      await stabiliser();
+      expect(router.url).toBe('/boutique?q=maison');
+      expect(ecran().querySelector<HTMLInputElement>('input')?.value).toBe('maison');
+      expect(noms(ecran())).toEqual(['Chaï maison', 'Espresso maison']);
+    });
+
+    it('restaure une recherche par URL puis suit les navigations', async () => {
+      await afficher('/boutique?q=deCAFE');
+      expect(noms(ecran())).toEqual(['Décaféiné Pérou']);
+      await harness.navigateByUrl('/boutique?q=chai');
+      await stabiliser();
+      expect(ecran().querySelector<HTMLInputElement>('input')?.value).toBe('chai');
+      expect(noms(ecran())).toEqual(['Chaï maison']);
+    });
+
+    it('retire une recherche vide en conservant les autres filtres', async () => {
+      await afficher('/boutique?q=maison&category=thes');
+      saisir('   ');
+      soumettre();
+      await stabiliser();
+      expect(router.url).toBe('/boutique?category=thes');
+      expect(noms(ecran()).length).toBeGreaterThan(1);
+    });
+
+    it('annonce une recherche sans résultat en conservant la saisie', async () => {
+      await afficher('/boutique?q=introuvable');
+      expect(noms(ecran())).toEqual([]);
+      expect(ecran().querySelector('[role="status"]')?.textContent).toContain('Rien ne correspond');
+      expect(ecran().querySelector<HTMLInputElement>('input')?.value).toBe('introuvable');
+    });
+
+    it('signale une requête trop longue et permet de la corriger', async () => {
+      await afficher('/boutique');
+      saisir('x'.repeat(101));
+      soumettre();
+      await stabiliser();
+      expect(ecran().querySelector('input')?.getAttribute('aria-invalid')).toBe('true');
+      expect(ecran().querySelector('[role="alert"]')?.textContent).toContain('q');
+      expect(noms(ecran())).toEqual([]);
+      saisir('matcha');
+      soumettre();
+      await stabiliser();
+      expect(noms(ecran())).toEqual(['Matcha cérémonie']);
+      expect(ecran().querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('réussit après une erreur simulée et un clic sur Réessayer', async () => {
+      TestBed.overrideProvider(PRODUCTS_MOCK_OPTIONS, {
+        useValue: { delayMs: 0, failFirstSearches: 1 },
+      });
+      await afficher('/boutique?q=maison');
+      expect(ecran().querySelector('[role="alert"]')?.textContent).toContain(
+        'La recherche a échoué',
+      );
+      expect(noms(ecran())).toEqual([]);
+      ecran().querySelector<HTMLButtonElement>('[role="alert"] button')!.click();
+      await stabiliser();
+      expect(noms(ecran())).toEqual(['Chaï maison', 'Espresso maison']);
+      expect(ecran().querySelector('[role="alert"]')).toBeNull();
+      expect(router.url).toBe('/boutique?q=maison');
+    });
+
+    it('affiche le chargement et ignore une ancienne réponse après une nouvelle recherche', async () => {
+      await afficher('/boutique?q=maison');
+      const service = TestBed.inject(ProductsService);
+      const reponse = await new Promise<CatalogPage>((resolve) =>
+        service.list({ q: 'matcha' }).subscribe(resolve),
+      );
+      const ancienne = new Subject<CatalogPage>();
+      const recente = new Subject<CatalogPage>();
+      vi.spyOn(service, 'list').mockImplementation((query) =>
+        query.q === 'chai' ? ancienne : recente,
+      );
+      await harness.navigateByUrl('/boutique?q=chai');
+      harness.detectChanges();
+      expect(ecran().querySelector('[aria-busy="true"]')).not.toBeNull();
+      expect(ecran().querySelector('[role="status"]')?.textContent).toContain('Chargement');
+      expect(ecran().querySelectorAll('.fantome')).toHaveLength(8);
+      expect(ecran().querySelector('.grille--chargement')?.getAttribute('aria-hidden')).toBe(
+        'true',
+      );
+      expect(ecran().querySelector('.grille--chargement a, .grille--chargement button')).toBeNull();
+      expect(noms(ecran())).toEqual([]);
+      await harness.navigateByUrl('/boutique?q=matcha');
+      recente.next(reponse);
+      harness.detectChanges();
+      ancienne.next({ data: [], meta: { page: 1, limit: 8, total: 0, totalPages: 1 } });
+      ancienne.complete();
+      harness.detectChanges();
+      expect(noms(ecran())).toEqual(['Matcha cérémonie']);
+      expect(ecran().querySelector('[aria-busy="true"]')).toBeNull();
+      expect(ecran().querySelector('.grille--chargement')).toBeNull();
+      recente.complete();
+    });
+
+    it('annule aussi un lot en cours quand la recherche change', async () => {
+      await afficher('/boutique?inStock=true');
+      const service = TestBed.inject(ProductsService);
+      const original = service.list.bind(service);
+      const lot = new Subject<CatalogPage>();
+      vi.spyOn(service, 'list').mockImplementation((query) =>
+        query.page === 2 ? lot : original(query),
+      );
+      ecran().querySelector<HTMLButtonElement>('.voir-plus button')!.click();
+      await harness.navigateByUrl('/boutique?q=matcha');
+      await stabiliser();
+      lot.next({ data: [], meta: { page: 2, limit: 8, total: 99, totalPages: 13 } });
+      lot.complete();
+      harness.detectChanges();
+      expect(noms(ecran())).toEqual(['Matcha cérémonie']);
+      expect(ecran().querySelector('.voir-plus')).toBeNull();
     });
   });
 });

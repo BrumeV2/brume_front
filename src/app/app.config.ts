@@ -43,7 +43,10 @@ export const appConfig: ApplicationConfig = {
     },
     {
       provide: ProductsService,
-      useClass: environment.useMocks ? ProductsMockService : ProductsHttpService,
+      useClass:
+        environment.useMocks || environment.useCatalogMocks
+          ? ProductsMockService
+          : ProductsHttpService,
     },
     // Pas encore de route au contrat pour la vitrine de l'accueil : simulée dans tous les cas.
     { provide: HomeService, useClass: HomeMockService },

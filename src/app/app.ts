@@ -44,15 +44,20 @@ function donneesDe(racine: ActivatedRouteSnapshot): Data {
 })
 export class App {
   private readonly router = inject(Router);
+  private cheminPrecedent?: string;
   private readonly contenu = viewChild.required<ElementRef<HTMLElement>>('contenu');
 
   private readonly donnees = toSignal(
     this.router.events.pipe(
       filter((evenement) => evenement instanceof NavigationEnd),
-      map((_, index) => {
-        // Après une navigation (pas au premier affichage), le focus clavier
-        // repart du début du contenu, comme lors d'un chargement de page.
-        if (index > 0) this.contenu().nativeElement.focus({ preventScroll: true });
+      map((evenement) => {
+        const chemin = evenement.urlAfterRedirects.split(/[?#]/)[0];
+        // Une nouvelle page reprend le focus ; une recherche ou un filtre
+        // sur la page courante laisse le focus dans le champ utilisé.
+        if (this.cheminPrecedent !== undefined && chemin !== this.cheminPrecedent) {
+          this.contenu().nativeElement.focus({ preventScroll: true });
+        }
+        this.cheminPrecedent = chemin;
         return donneesDe(this.router.routerState.snapshot.root) as DonneesCadre;
       }),
     ),

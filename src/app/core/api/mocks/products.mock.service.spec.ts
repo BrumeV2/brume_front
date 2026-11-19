@@ -1,17 +1,22 @@
 import { TestBed } from '@angular/core/testing';
 import { firstValueFrom } from 'rxjs';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { ApiError } from '../api-error';
 import { toApiError } from '../api-error';
 import type { CatalogPage, CatalogQuery } from '../api.types';
-import { ProductsMockService } from './products.mock.service';
+import { PRODUCTS_MOCK_OPTIONS, ProductsMockService } from './products.mock.service';
 
 describe('ProductsMockService', () => {
   let service: ProductsMockService;
 
   beforeEach(() => {
-    TestBed.configureTestingModule({ providers: [ProductsMockService] });
+    TestBed.configureTestingModule({
+      providers: [
+        ProductsMockService,
+        { provide: PRODUCTS_MOCK_OPTIONS, useValue: { delayMs: 0, failFirstSearches: 0 } },
+      ],
+    });
     service = TestBed.inject(ProductsMockService);
   });
 
@@ -258,5 +263,84 @@ describe('ProductsMockService', () => {
       expect(erreur.code).toBe('VALIDATION_ERROR');
       expect(Object.keys(erreur.fieldErrors)).toEqual(['type']);
     });
+  });
+  describe('recherche US-014', () => {
+    it.each(['ÉTHIOPIE', 'ethiopie', 'E\u0301thiopie', '  Éthiopie   Yirgacheffe  '])(
+      'retrouve le nom pour %s',
+      async (q) => {
+        expect(await slugs({ q })).toEqual(['ethiopie-yirgacheffe']);
+      },
+    );
+
+    it('renvoie plusieurs correspondances sur le nom uniquement', async () => {
+      expect(await slugs({ q: 'maison' })).toEqual(['chai-maison', 'espresso-maison']);
+      expect(await slugs({ q: 'bergamote' })).toEqual([]);
+    });
+
+    it('renvoie plusieurs noms pour une même requête accentuée (validation US-014)', async () => {
+      const page = await lister({ q: 'É', category: 'cafes' });
+      expect(page.data.map((produit) => produit.name)).toEqual([
+        'Espresso maison',
+        'Éthiopie Yirgacheffe',
+        'Colombie Huila',
+        'Kenya AA',
+        'Décaféiné Pérou',
+      ]);
+      expect(page.meta.total).toBe(5);
+      expect(await slugs({ q: 'e', category: 'cafes' })).toEqual(
+        page.data.map((produit) => produit.slug),
+      );
+    });
+
+    it('renvoie une page vide pour une recherche inconnue', async () => {
+      const page = await lister({ q: 'introuvable' });
+      expect(page.data).toEqual([]);
+      expect(page.meta.total).toBe(0);
+    });
+
+    it.each(['', '   ', ' \t\n '])('ne filtre pas une requête vide %j', async (q) => {
+      expect(await slugs({ q, limit: 100 })).toEqual(await slugs({ limit: 100 }));
+    });
+
+    it('conserve les autres filtres et écarte les produits non publiés', async () => {
+      expect(await slugs({ q: 'maison', category: 'cafes' })).toEqual(['espresso-maison']);
+      expect(await slugs({ q: 'Oolong' })).toEqual([]);
+    });
+
+    it('respecte la limite de 100 caractères du contrat', async () => {
+      expect((await echec({ q: 'x'.repeat(101) })).fieldErrors['q']).toBeDefined();
+      expect((await lister({ q: 'x'.repeat(100) })).data).toEqual([]);
+    });
+  });
+
+  it('applique la latence configurée aux succès et aux erreurs, sans aléatoire', async () => {
+    const options = TestBed.inject(PRODUCTS_MOCK_OPTIONS);
+    options.delayMs = 80;
+    options.failFirstSearches = 1;
+    const scenario = TestBed.runInInjectionContext(() => new ProductsMockService());
+    vi.useFakeTimers();
+    try {
+      let erreur: ApiError | undefined;
+      scenario.list({ q: 'maison' }).subscribe({
+        error: (e: unknown) => {
+          erreur = toApiError(e);
+        },
+      });
+      await vi.advanceTimersByTimeAsync(79);
+      expect(erreur).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(erreur?.code).toBe('INTERNAL_ERROR');
+
+      let reponse: CatalogPage | undefined;
+      scenario.list({ q: 'maison' }).subscribe((page) => {
+        reponse = page;
+      });
+      await vi.advanceTimersByTimeAsync(79);
+      expect(reponse).toBeUndefined();
+      await vi.advanceTimersByTimeAsync(1);
+      expect(reponse?.data.map((p) => p.slug)).toEqual(['chai-maison', 'espresso-maison']);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
