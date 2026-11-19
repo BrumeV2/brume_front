@@ -124,8 +124,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Catalogue paginé avec filtres combinés (US-016)
-         * @description ET entre filtres, OU entre valeurs d'un filtre. Prix appliqué à un format existant, pas au seul prix minimum affiché. Tous les formats du produit restent retournés. Tri stable par nom puis UUID. Les valeurs origin, typeTea et ingredients doivent être présentes dans le catalogue complet.
+         * Catalogue paginé avec filtres combinés et tri (US-016, US-017)
+         * @description ET entre filtres, OU entre valeurs d'un filtre. Prix appliqué à un format existant, pas au seul prix minimum affiché. Tous les formats du produit restent retournés. Tri global via sort (défaut name_asc), stable par nom puis UUID. Les valeurs origin, typeTea et ingredients doivent être présentes dans le catalogue complet.
          */
         get: operations["listProducts"];
         put?: never;
@@ -818,6 +818,12 @@ export interface components {
             moment: "morning" | "noon" | "snack" | "evening";
             /** @description Image encodée en base64 */
             image: string | null;
+            /** @description Prix du format le moins cher, en centimes. null si aucun format. */
+            lowestPrice: number | null;
+            /** @description Note moyenne des avis sur 5, arrondie à une décimale. null si aucune note. */
+            averageRating: number | null;
+            /** @description Nombre d'avis notés. */
+            ratingCount: number;
         };
         CataloguePage: {
             data: components["schemas"]["CatalogueProduct"][];
@@ -2005,6 +2011,8 @@ export interface operations {
                 minPrice?: number;
                 /** @description Prix inclus en centimes, sur un même format. minPrice doit être inférieur ou égal à maxPrice. */
                 maxPrice?: number;
+                /** @description Tri global appliqué après les filtres et avant la pagination (US-017). Égalités départagées par le nom puis l'UUID. price_asc / price_desc : prix du format le moins cher (lowestPrice). rating_desc : note moyenne puis nombre de notes. newest : date d'ajout décroissante. Produits sans prix ou sans note toujours en dernier. Valeur unique. */
+                sort?: "name_asc" | "name_desc" | "price_asc" | "price_desc" | "newest" | "rating_desc";
                 page?: components["parameters"]["Page"];
                 limit?: components["parameters"]["Limit"];
             };

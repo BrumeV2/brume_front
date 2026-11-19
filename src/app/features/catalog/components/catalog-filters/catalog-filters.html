@@ -26,10 +26,10 @@
   <div class="tri">
     <span class="tri__libelle">Trier par</span>
     <app-filter-menu
-      nom="Les préférés"
+      nom="Trier par"
       [options]="optionsTri"
       [valeur]="triChoisi()"
-      (choix)="tri.emit($event ?? 'relevance')"
+      (choix)="tri.emit($event ?? triParDefaut)"
     />
   </div>
 </div>

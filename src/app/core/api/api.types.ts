@@ -9,7 +9,7 @@
  *
  * On n'écrit jamais un type d'API à la main : on l'extrait d'ici.
  */
-import type { components } from './schema';
+import type { components, operations } from './schema';
 
 export type User = components['schemas']['User'];
 export type Role = components['schemas']['Role'];
@@ -32,29 +32,14 @@ export type CartWarning = components['schemas']['CartWarning'];
 /** Corps de `POST /cart/items` : une variante et une quantité, jamais un prix. */
 export type AddCartItemRequest = components['schemas']['AddCartItemRequest'];
 
-/*
- * Filtres de `GET /products` tels que le catalogue les envoie aujourd'hui.
- *
- * Seul type d'API écrit à la main, et seulement parce qu'il est **gelé** : le
- * contrat de `GET /products` a changé avec US-016 côté back (`ingredients`,
- * `origin`, `typeTea`, `howMuchCaffeine`, `moment`, `minPrice`, `maxPrice`, et
- * plus de `category`, `type`, `q`, `inStock` ni `sort`). Réaligner le catalogue
- * est une story à part entière ; en attendant, ce gel garde l'écran en marche
- * et rend la dette visible à la lecture.
- *
- * À supprimer en reprenant le catalogue sur le contrat courant.
- */
-export interface ProductQuery {
-  q?: string;
-  category?: string;
-  type?: ProductType;
-  minPriceCents?: number;
-  maxPriceCents?: number;
-  inStock?: boolean;
-  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'name_asc';
-  page?: number;
-  limit?: number;
-}
+/** Choix de filtres présents dans le catalogue, et bornes de prix (US-016). */
+export type CatalogueFilters = components['schemas']['CatalogueFilters'];
+
+/** Paramètres acceptés par `GET /products`, tels que le contrat les déclare. */
+export type ProductQuery = NonNullable<operations['listProducts']['parameters']['query']>;
+
+/** Tris proposés par `GET /products` (US-017). */
+export type Sort = NonNullable<ProductQuery['sort']>;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du profil montre et que `openapi.yaml`
@@ -89,22 +74,21 @@ export type UpdateProfileDraft = UpdateProfileRequest;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du catalogue montre et que
- * `openapi.yaml` (branche `develop` de brume_back) ne porte pas, au 29/10/2026.
+ * `openapi.yaml` (contrat 1.3.0) ne porte pas, au 19/11/2026.
  *
- * La carte produit affiche une origine, des notes de dégustation, un moment de
- * la journée et une mention éditoriale ; la barre de filtres ajoute aux filtres
- * du contrat une pastille « Moment » et une pastille « Caféine ».
+ * `moment` et `caffeine` sont **arrivés** au contrat en paramètres de
+ * `GET /products` : ils ne sont plus hors contrat comme filtres, seulement
+ * comme champs de la carte produit, que `ProductSummary` ne renvoie toujours
+ * pas. `origin` existe sur `ProductDetail` seulement ; les notes de
+ * dégustation et la mention éditoriale n'existent nulle part.
  *
- * `origin` existe bien au contrat, mais sur `ProductDetail` seulement : la
- * liste ne le renvoie pas, alors que la carte l'affiche. `attributes.caffeine`
- * est dans le seed et dans `ProductDetail`, sans être interrogeable. Les deux
- * autres n'existent nulle part.
+ * `averageRating` et `ratingCount` sont le cas le plus gênant : le tri
+ * `rating_desc` est au contrat et `CATALOGUE-SORT.md` annonce les deux champs
+ * sur chaque produit du catalogue, mais `ProductSummary` ne les déclare pas.
+ * Le tri marche donc côté API sans que la liste puisse montrer la note.
  *
- * À faire ajouter au contrat : `moment` et `caffeine` en paramètres de
- * `GET /products`, et les quatre champs sur `ProductSummary`. Tant que ce
- * n'est pas fait, seule l'implémentation simulée les connaît, et
- * `ProductsHttpService` laisse les deux filtres de côté plutôt que d'envoyer
- * au back des paramètres qu'il rejetterait.
+ * À faire ajouter au contrat : ces champs sur `ProductSummary`. Tant que ce
+ * n'est pas fait, seule l'implémentation simulée les connaît.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -126,6 +110,10 @@ export interface ProductExtensions {
   tastingNotes: string | null;
   /** Mention éditoriale sur la photo : « Préféré », « Nouveau », « Rare ». */
   badge: string | null;
+  /** Note moyenne sur 5, `null` sans aucun avis noté. Sert au tri `rating_desc`. */
+  averageRating: number | null;
+  /** Nombre d'avis notés. Départage deux produits de même moyenne. */
+  ratingCount: number;
 }
 
 /** Produit tel que la grille du catalogue l'affiche. */
@@ -138,14 +126,36 @@ export type CatalogProduct = ProductSummary & ProductExtensions;
  */
 export type CatalogProductDetail = CatalogProduct & Pick<ProductDetail, 'variants'>;
 
-/** Filtres hors contrat, ajoutés à ceux de `GET /products`. */
-export interface ProductQueryExtensions {
-  moment: Moment;
-  caffeine: Caffeine;
-}
+/**
+ * Filtres tels que **l'écran** les manipule, et tels que l'URL les porte.
+ *
+ * Ce n'est pas un type d'API : c'est le vocabulaire de la maquette, que
+ * `ProductsHttpService` traduit en `ProductQuery` au moment de l'appel. Les
+ * deux ne se superposent plus depuis le contrat 1.3.0, et mélanger les deux
+ * reviendrait à envoyer au back des paramètres qu'il ne connaît pas.
+ *
+ * Les quatre derniers champs n'ont **aucun équivalent au contrat** : la barre
+ * de filtres les propose encore, l'implémentation simulée les honore, et
+ * `ProductsHttpService` les laisse de côté plutôt que de renvoyer une liste
+ * qui ne correspondrait pas à ce que l'écran affiche. À faire ajouter au
+ * contrat, ou à retirer de la maquette.
+ */
+export interface CatalogQuery {
+  moment?: Moment;
+  caffeine?: Caffeine;
+  /** Bornes de la tranche choisie, en centimes. `minPrice` / `maxPrice` au contrat. */
+  minPriceCents?: number;
+  maxPriceCents?: number;
+  sort?: Sort;
+  page?: number;
+  limit?: number;
 
-/** Jeu complet de filtres manipulé par l'écran. */
-export type CatalogQuery = ProductQuery & Partial<ProductQueryExtensions>;
+  /** Onglets d'univers de la maquette. Sans filtre équivalent au contrat. */
+  category?: string;
+  type?: ProductType;
+  inStock?: boolean;
+  q?: string;
+}
 
 /** Page de produits renvoyée au catalogue. */
 export interface CatalogPage {

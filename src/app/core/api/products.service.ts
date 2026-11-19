@@ -3,7 +3,14 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import type { CatalogPage, CatalogProductDetail, CatalogQuery, Category } from './api.types';
+import type {
+  Caffeine,
+  CatalogPage,
+  CatalogProductDetail,
+  CatalogQuery,
+  Category,
+  Moment,
+} from './api.types';
 
 /**
  * Catalogue : liste filtrée des produits et catégories (US-001, US-016).
@@ -50,21 +57,57 @@ export class ProductsHttpService extends ProductsService {
 }
 
 /**
- * Traduit les filtres en paramètres de requête.
+ * Traduit les filtres de l'écran en paramètres de `GET /products`.
  *
- * `moment` et `caffeine` sont volontairement laissés de côté : ils n'existent
- * pas dans `GET /products` (voir le bloc « HORS CONTRAT » de `api.types.ts`),
- * et le `ValidationPipe` du back rejetterait la requête entière. Les envoyer
- * casserait la page au lieu de dégrader le filtre.
+ * Depuis le contrat 1.3.0, le vocabulaire de la maquette et celui de l'API ne
+ * se superposent plus : les bornes de prix changent de nom, les moments et la
+ * caféine changent de valeurs, et quatre filtres n'ont plus d'équivalent.
+ *
+ * `category`, `type`, `inStock` et `q` sont donc **laissés de côté**. Les
+ * envoyer ferait rejeter la requête entière par le `ValidationPipe` du back,
+ * et les envoyer sous un autre nom afficherait une liste qui ne correspond pas
+ * à ce que l'écran annonce. Tant que le contrat ne les porte pas, mieux vaut
+ * un filtre sans effet qu'une liste fausse — et l'implémentation simulée, elle,
+ * les honore, pour que la maquette reste démontrable.
  */
-function versParams(query: CatalogQuery): HttpParams {
-  const { moment: _moment, caffeine: _caffeine, ...duContrat } = query;
+const MOMENTS_API: Readonly<Record<Moment, 'morning' | 'noon' | 'snack' | 'evening'>> = {
+  MORNING: 'morning',
+  NOON: 'noon',
+  // « Goûter » côté maquette, `snack` au contrat : le seul qui ne se devine pas.
+  AFTERNOON: 'snack',
+  EVENING: 'evening',
+};
 
+const CAFFEINES_API: Readonly<Record<Caffeine, 'none' | 'low' | 'medium' | 'high'>> = {
+  NONE: 'none',
+  LOW: 'low',
+  MEDIUM: 'medium',
+  HIGH: 'high',
+};
+
+function versParams(query: CatalogQuery): HttpParams {
   let params = new HttpParams();
-  for (const [cle, valeur] of Object.entries(duContrat)) {
-    if (valeur !== undefined && valeur !== null && valeur !== '') {
+
+  const poser = (cle: string, valeur: string | number | undefined): void => {
+    if (valeur !== undefined && valeur !== '') {
       params = params.set(cle, String(valeur));
     }
+  };
+
+  // Les filtres à choix multiples se répètent dans l'URL (`style: form`,
+  // `explode: true`) : l'écran n'en pose qu'un à la fois, donc une occurrence.
+  if (query.moment !== undefined) {
+    params = params.append('moment', MOMENTS_API[query.moment]);
   }
+  if (query.caffeine !== undefined) {
+    params = params.append('howMuchCaffeine', CAFFEINES_API[query.caffeine]);
+  }
+
+  poser('minPrice', query.minPriceCents);
+  poser('maxPrice', query.maxPriceCents);
+  poser('sort', query.sort);
+  poser('page', query.page);
+  poser('limit', query.limit);
+
   return params;
 }

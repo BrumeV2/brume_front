@@ -279,12 +279,14 @@ describe('ProductsMockService', () => {
 
     it('renvoie plusieurs noms pour une même requête accentuée (validation US-014)', async () => {
       const page = await lister({ q: 'É', category: 'cafes' });
+      // Sans `sort`, le contrat trie par `name_asc` (US-017) : les résultats
+      // reviennent dans l'ordre alphabétique, et non dans celui du jeu simulé.
       expect(page.data.map((produit) => produit.name)).toEqual([
+        'Colombie Huila',
+        'Décaféiné Pérou',
         'Espresso maison',
         'Éthiopie Yirgacheffe',
-        'Colombie Huila',
         'Kenya AA',
-        'Décaféiné Pérou',
       ]);
       expect(page.meta.total).toBe(5);
       expect(await slugs({ q: 'e', category: 'cafes' })).toEqual(
