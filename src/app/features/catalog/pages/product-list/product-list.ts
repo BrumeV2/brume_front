@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { KeyValuePipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { EMPTY, Subject, map, switchMap, timer, type Subscription } from 'rxjs';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { toApiError, type ApiError } from '../../../../core/api/api-error';
@@ -23,6 +24,7 @@ import type {
   ProductType,
 } from '../../../../core/api/api.types';
 import { CATALOG_RULES, TRANCHES_PRIX, type Sort } from '../../../../core/api/catalog-rules';
+import { nettoyerRecherche } from '../../../../core/api/product-search';
 import { ProductsService } from '../../../../core/api/products.service';
 import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
 import { UiProductCard } from '../../../../shared/ui/ui-product-card/ui-product-card';
@@ -65,6 +67,10 @@ export class ProductList {
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductsService);
 
+  private readonly rechercheSaisie = new Subject<string | null>();
+  private requete?: Subscription;
+  private lotSuivant?: Subscription;
+
   /*
    * Les filtres arrivent par `withComponentInputBinding()` : un paramètre de
    * requête, une entrée. C'est la règle du dépôt (docs/ARCHITECTURE.md), et ça
@@ -96,6 +102,10 @@ export class ProductList {
     ...(this.inStock() === 'true' ? { inStock: true } : {}),
   }));
 
+  protected readonly cartesEnChargement = Array.from(
+    { length: CATALOG_RULES.limit.default },
+    (_, index) => index,
+  );
   protected readonly produits = signal<readonly CatalogProduct[]>([]);
   protected readonly statut = signal<Statut>('chargement');
   protected readonly erreur = signal<ApiError | null>(null);
@@ -142,20 +152,49 @@ export class ProductList {
   constructor() {
     this.chargerCatalogue();
 
+    this.rechercheSaisie
+      .pipe(
+        switchMap((texte) => (texte === null ? EMPTY : timer(250).pipe(map(() => texte)))),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((texte) => this.rechercher(texte, true));
+
     effect(() => {
-      // Dépend des filtres : toute modification de l'URL relance la requête.
+      // Une navigation ou un filtre annule aussi une saisie encore en attente.
+      this.rechercheSaisie.next(null);
       this.charger(this.filtres());
     });
   }
 
+  protected saisirRecherche(texte: string): void {
+    this.rechercheSaisie.next(texte);
+  }
+
+  protected rechercher(texte: string, dynamique = false): string {
+    this.rechercheSaisie.next(null);
+    const recherche = nettoyerRecherche(texte);
+    if (recherche === (this.q() ?? '')) {
+      if (!dynamique) this.charger(this.filtres());
+    } else {
+      this.appliquer({ champ: 'q', valeur: recherche || null }, dynamique);
+    }
+    return recherche;
+  }
+
   /** Pose ou retire un critère. Les autres sont conservés, et on repart du premier lot. */
-  protected appliquer({ champ, valeur }: { champ: ChampFiltre; valeur: string | null }): void {
+  protected appliquer(
+    { champ, valeur }: { champ: ChampFiltre; valeur: string | null },
+    replaceUrl = false,
+  ): void {
     const modifications: Record<string, string | null> =
       champ === 'prix' ? bornesDeTranche(valeur) : { [champ]: valeur };
 
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { ...modifications, page: null },
+      replaceUrl,
+      // La recherche met à jour l'URL sans déplacer la personne qui saisit.
+      scroll: champ === 'q' ? 'manual' : 'after-transition',
       queryParamsHandling: 'merge',
     });
   }
@@ -186,8 +225,9 @@ export class ProductList {
     const limit = this.filtres().limit ?? CATALOG_RULES.limit.default;
     const dejaVus = this.produits().length;
     this.chargeDavantage.set(true);
+    this.erreur.set(null);
 
-    this.productsService
+    this.lotSuivant = this.productsService
       .list({ ...this.filtres(), page: Math.floor(dejaVus / limit) + 1, limit })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -214,10 +254,15 @@ export class ProductList {
   }
 
   private charger(query: CatalogQuery): void {
+    this.requete?.unsubscribe();
+    this.lotSuivant?.unsubscribe();
+    this.chargeDavantage.set(false);
+    this.produits.set([]);
+    this.total.set(0);
     this.statut.set('chargement');
     this.erreur.set(null);
 
-    this.productsService
+    this.requete = this.productsService
       .list({ ...query, limit: query.limit ?? CATALOG_RULES.limit.default })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
