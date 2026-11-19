@@ -292,7 +292,18 @@ function bornesDeTranche(id: string | null): Record<string, string | null> {
   };
 }
 
+/**
+ * Vrai dès que l'écran doit montrer une liste plutôt que les univers.
+ *
+ * Un tri explicite en fait partie (US-017) : la vue par univers présente
+ * quatre produits par rayon, dans l'ordre du catalogue. Demander « prix
+ * croissant » et ne rien voir changer n'aurait aucun sens — choisir un ordre,
+ * c'est demander une liste ordonnée.
+ *
+ * Revenir au tri par défaut retire le paramètre, donc ramène aux univers :
+ * l'ordre par défaut et la présentation par défaut vont ensemble.
+ */
 function aDesCriteres(filtres: CatalogQuery): boolean {
-  const { sort: _sort, page: _page, limit: _limit, ...criteres } = filtres;
+  const { page: _page, limit: _limit, ...criteres } = filtres;
   return Object.values(criteres).some((valeur) => valeur !== undefined && valeur !== '');
 }

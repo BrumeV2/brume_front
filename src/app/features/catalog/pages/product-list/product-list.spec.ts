@@ -229,6 +229,99 @@ describe('ProductList', () => {
     });
   });
 
+  // US-017. Le tri est posé par l'API : ce qui se vérifie ici, c'est que
+  // l'écran le demande, l'affiche comme actif, et ne perd rien en chemin.
+  describe('choisir l’ordre des résultats (US-017)', () => {
+    /** Les libellés du menu de tri, avec celui marqué actif. */
+    const optionsDeTri = (racine: HTMLElement) =>
+      [...racine.querySelectorAll('.tri .option')].map((option) => ({
+        libelle: (option.textContent ?? '').trim(),
+        actif: option.getAttribute('aria-selected') === 'true',
+      }));
+
+    const ouvrirLeMenu = (racine: HTMLElement): void => {
+      racine.querySelector<HTMLButtonElement>('.tri .declencheur')?.click();
+      harness.detectChanges();
+    };
+
+    it('propose les six tris du contrat et marque celui en vigueur', async () => {
+      // Aucun `sort` dans l'URL : c'est le tri par défaut qui s'applique, et
+      // c'est donc lui que le sélecteur doit montrer comme actif.
+      const page = await afficher('/boutique?category=thes');
+      ouvrirLeMenu(page);
+
+      const options = optionsDeTri(page);
+      expect(options.map((option) => option.libelle)).toEqual([
+        'A → Z',
+        'Z → A',
+        'Prix croissant',
+        'Prix décroissant',
+        'Nouveautés',
+        'Les mieux notés',
+      ]);
+      expect(options.filter((option) => option.actif)).toEqual([{ libelle: 'A → Z', actif: true }]);
+    });
+
+    it('garde les filtres posés quand on change de tri', async () => {
+      const page = await afficher('/boutique?category=thes&caffeine=HIGH');
+      ouvrirLeMenu(page);
+
+      const prixDecroissant = [...page.querySelectorAll<HTMLButtonElement>('.tri .option')].find(
+        (option) => option.textContent?.includes('Prix décroissant'),
+      );
+      prixDecroissant?.click();
+      await stabiliser();
+
+      expect(router.url).toBe('/boutique?category=thes&caffeine=HIGH&sort=price_desc');
+      expect(textes(ecran(), '.critere')).toEqual(['Thés ×', 'Corsé ×']);
+    });
+
+    it('revient au tri par défaut sans laisser de paramètre dans l’URL', async () => {
+      const page = await afficher('/boutique?category=thes&sort=price_desc');
+      ouvrirLeMenu(page);
+
+      // Re-choisir le tri en vigueur le retire : l'URL doit redevenir propre.
+      page.querySelector<HTMLButtonElement>('.tri .option[aria-selected="true"]')?.click();
+      await stabiliser();
+
+      expect(router.url).toBe('/boutique?category=thes');
+    });
+
+    // Critère de validation 1 du PO.
+    it('range des prix égaux dans un ordre stable d’un lot à l’autre', async () => {
+      const page = await afficher('/boutique?sort=price_asc');
+
+      const premierLot = noms(page);
+      expect(premierLot).toHaveLength(8);
+
+      page.querySelector<HTMLButtonElement>('.voir-plus button')?.click();
+      await stabiliser();
+
+      const tout = noms(ecran());
+      // Le lot suivant s'ajoute à la suite, sans rejouer ni sauter un produit :
+      // c'est ce que garantit le départage par le nom puis l'identifiant.
+      expect(tout.slice(0, premierLot.length)).toEqual(premierLot);
+      expect(new Set(tout).size).toBe(tout.length);
+
+      const prix = textes(ecran(), '.carte__prix').map((texte) =>
+        Number(texte.replace(/[^\d]/g, '')),
+      );
+      expect(prix).toEqual([...prix].sort((a, b) => a - b));
+      // Le jeu contient bien des prix égaux, sinon le test ne prouverait rien.
+      expect(new Set(prix).size).toBeLessThan(prix.length);
+    });
+
+    // Critère de validation 2 du PO.
+    it('place les produits sans avis en dernier, trié par note', async () => {
+      const page = await afficher('/boutique?category=thes&sort=rating_desc');
+
+      // « Darjeeling first flush » est le seul thé sans avis du jeu simulé.
+      expect(noms(page).at(-1)).toBe('Darjeeling first flush');
+      // À note égale, le plus commenté passe devant.
+      expect(noms(page).slice(0, 2)).toEqual(['Matcha cérémonie', 'Long Jing']);
+    });
+  });
+
   describe('réinitialisation', () => {
     it('efface tous les critères d’un coup, tri compris', async () => {
       const page = await afficher('/boutique?category=thes&caffeine=HIGH&sort=price_desc');

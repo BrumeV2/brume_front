@@ -1,4 +1,7 @@
-import type { Caffeine, Moment, ProductType } from './api.types';
+import type { Caffeine, Moment, ProductType, Sort } from './api.types';
+
+/** Réexporté ici : le tri se lit avec les autres règles du catalogue. */
+export type { Sort };
 
 /**
  * Valeurs acceptées par les filtres du catalogue, au même endroit pour tout le
@@ -19,9 +22,20 @@ export const PRODUCT_TYPES = [
   'ACCESSORY',
 ] as const satisfies readonly ProductType[];
 
-export const SORTS = ['relevance', 'price_asc', 'price_desc', 'newest', 'name_asc'] as const;
-
-export type Sort = (typeof SORTS)[number];
+/**
+ * Tris de `GET /products` (US-017), dans l'ordre où le sélecteur les propose.
+ *
+ * La liste est vérifiée contre le contrat par `satisfies` : un tri ajouté ou
+ * retiré côté back fait échouer la compilation ici plutôt qu'en production.
+ */
+export const SORTS = [
+  'name_asc',
+  'name_desc',
+  'price_asc',
+  'price_desc',
+  'newest',
+  'rating_desc',
+] as const satisfies readonly Sort[];
 
 export const MOMENTS = [
   'MORNING',
@@ -33,8 +47,8 @@ export const MOMENTS = [
 export const CAFFEINES = ['NONE', 'LOW', 'MEDIUM', 'HIGH'] as const satisfies readonly Caffeine[];
 
 export const CATALOG_RULES = {
-  /** `sort` vaut `relevance` par défaut, comme le déclare le contrat. */
-  defaultSort: 'relevance' satisfies Sort,
+  /** `sort` vaut `name_asc` par défaut, comme le déclare le contrat. */
+  defaultSort: 'name_asc' satisfies Sort,
   page: { min: 1, default: 1 },
   // 8 par lot : deux rangées de quatre sur ordinateur, quatre de deux sur mobile.
   limit: { min: 1, max: 100, default: 8 },
@@ -53,11 +67,12 @@ export const LIBELLES_TYPE: Readonly<Record<ProductType, string>> = {
 };
 
 export const LIBELLES_SORT: Readonly<Record<Sort, string>> = {
-  relevance: 'Les préférés',
+  name_asc: 'A → Z',
+  name_desc: 'Z → A',
   price_asc: 'Prix croissant',
   price_desc: 'Prix décroissant',
   newest: 'Nouveautés',
-  name_asc: 'Ordre alphabétique',
+  rating_desc: 'Les mieux notés',
 };
 
 /** Libellés de la maquette, déjà employés par la vitrine de l'accueil. */

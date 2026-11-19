@@ -4,6 +4,7 @@ import { TestBed } from '@angular/core/testing';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { environment } from '../../../environments/environment';
+import { SORTS } from './catalog-rules';
 import { ProductsHttpService, ProductsService } from './products.service';
 
 const PRODUCTS_URL = `${environment.apiBaseUrl}/products`;
@@ -35,26 +36,43 @@ describe('ProductsHttpService', () => {
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
   });
 
-  it('transmet les filtres du contrat', () => {
-    service
-      .list({ category: 'thes', type: 'TEA', minPriceCents: 500, sort: 'price_asc' })
-      .subscribe();
+  it('transmet le tri et les bornes de prix sous les noms du contrat', () => {
+    service.list({ minPriceCents: 500, maxPriceCents: 2500, sort: 'price_asc' }).subscribe();
 
     const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
-    expect(requete.request.params.get('category')).toBe('thes');
-    expect(requete.request.params.get('type')).toBe('TEA');
-    expect(requete.request.params.get('minPriceCents')).toBe('500');
+    expect(requete.request.params.get('minPrice')).toBe('500');
+    expect(requete.request.params.get('maxPrice')).toBe('2500');
     expect(requete.request.params.get('sort')).toBe('price_asc');
+    // Les anciens noms ne doivent plus partir : le back les refuserait.
+    expect(requete.request.params.has('minPriceCents')).toBe(false);
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
   });
 
-  it('n’envoie PAS les filtres hors contrat, que le back rejetterait', () => {
-    service.list({ category: 'thes', moment: 'MORNING', caffeine: 'HIGH' }).subscribe();
+  it('transmet chacun des tris du sélecteur', () => {
+    for (const sort of SORTS) {
+      service.list({ sort }).subscribe();
+      const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
+      expect(requete.request.params.get('sort')).toBe(sort);
+      requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+    }
+  });
+
+  it('traduit le moment et la caféine dans les valeurs du contrat', () => {
+    service.list({ moment: 'AFTERNOON', caffeine: 'HIGH' }).subscribe();
 
     const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
-    expect(requete.request.params.get('category')).toBe('thes');
-    expect(requete.request.params.has('moment')).toBe(false);
+    // « Goûter » dans la maquette, `snack` au contrat.
+    expect(requete.request.params.get('moment')).toBe('snack');
+    expect(requete.request.params.get('howMuchCaffeine')).toBe('high');
     expect(requete.request.params.has('caffeine')).toBe(false);
+    requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+  });
+
+  it('n’envoie PAS les filtres absents du contrat, que le back rejetterait', () => {
+    service.list({ category: 'thes', type: 'TEA', inStock: true, q: 'matcha' }).subscribe();
+
+    const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
+    expect(requete.request.params.keys()).toEqual([]);
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
   });
 
