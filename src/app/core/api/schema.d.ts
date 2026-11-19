@@ -21,51 +21,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/auth/register": {
+    "/auth/google": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Inscription ou connexion Google (US-045, US-046)
+         * @description Crée une transaction de dix minutes liée au navigateur, avec state, nonce et PKCE S256.
+         */
+        get: operations["startGoogleLogin"];
         put?: never;
-        /** Créer un compte (US-045) */
-        post: operations["register"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
         trace?: never;
     };
-    "/auth/login": {
+    "/auth/google/callback": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /**
+         * Vérifier Google et créer la session applicative
+         * @description Vérifie la transaction à usage unique, le jeton Google et le compte. Aucun jeton dans la réponse ou la redirection.
+         */
+        get: operations["finishGoogleLogin"];
         put?: never;
-        /** Se connecter (US-046) */
-        post: operations["login"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/auth/refresh": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Renouveler l'access token (rotation du refresh token) */
-        post: operations["refresh"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -81,7 +70,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Se déconnecter (révoque le refresh token) */
+        /**
+         * Révoquer uniquement la session courante (ADD-087)
+         * @description Exige Origin autorisée et X-CSRF-Protection à 1. Idempotent pour une session absente ou déjà révoquée. Aucun 204 si la révocation en base échoue.
+         */
         post: operations["logout"];
         delete?: never;
         options?: never;
@@ -105,44 +97,6 @@ export interface paths {
         head?: never;
         /** Modifier mon profil (US-047) */
         patch: operations["updateMe"];
-        trace?: never;
-    };
-    "/users/me/addresses": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        /** Mes adresses (US-048, P1) */
-        get: operations["listMyAddresses"];
-        put?: never;
-        /** Ajouter une adresse (US-048, P1) */
-        post: operations["createMyAddress"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/users/me/addresses/{id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["IdPath"];
-            };
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        post?: never;
-        /** Supprimer une adresse (US-048, P1) */
-        delete: operations["deleteMyAddress"];
-        options?: never;
-        head?: never;
-        /** Modifier une adresse (US-048, P1) */
-        patch: operations["updateMyAddress"];
         trace?: never;
     };
     "/categories": {
@@ -170,10 +124,30 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Catalogue, recherche, filtres et tri (US-001, 014, 016, 017)
-         * @description Les produits archivés sont exclus.
+         * Catalogue paginé avec filtres combinés (US-016)
+         * @description ET entre filtres, OU entre valeurs d'un filtre. Prix appliqué à un format existant, pas au seul prix minimum affiché. Tous les formats du produit restent retournés. Tri stable par nom puis UUID. Les valeurs origin, typeTea et ingredients doivent être présentes dans le catalogue complet.
          */
         get: operations["listProducts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/products/filters": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Choix de filtres présents dans le catalogue complet
+         * @description Public, sans paramètres. Les choix ne dépendent pas des filtres actifs. Seuls les ingrédients liés à un produit sont proposés. Catalogue vide : listes vides et bornes de prix nulles.
+         */
+        get: operations["getCatalogueFilters"];
         put?: never;
         post?: never;
         delete?: never;
@@ -646,7 +620,7 @@ export interface components {
             /** @example 409 */
             statusCode: number;
             /** @enum {string} */
-            code: "VALIDATION_ERROR" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "TOKEN_EXPIRED" | "INVALID_CREDENTIALS" | "FORBIDDEN" | "NOT_FOUND" | "EMAIL_ALREADY_USED" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
+            code: "VALIDATION_ERROR" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "FORBIDDEN" | "NOT_FOUND" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
             /** @description Texte lisible en français (peut changer, ne pas s'en servir comme clé) */
             message: string;
             /** @description Contexte propre au code (voir docs/API.md) */
@@ -692,51 +666,61 @@ export interface components {
         User: {
             /**
              * Format: uuid
+             * @description Identifiant du profil
              * @example e0000000-0000-4000-8000-000000000001
              */
             id: string;
+            /**
+             * Format: uuid
+             * @description Identifiant du compte utilisateur
+             * @example e0000000-0000-4000-8000-000000000002
+             */
+            userId: string;
             /**
              * Format: email
              * @example camille.martin@example.com
              */
             email: string;
             /** @example Camille */
-            firstName: string;
+            firstName: string | null;
             /** @example Martin */
-            lastName: string;
+            lastName: string | null;
             /** @example 0612345678 */
-            phone?: string | null;
+            phone: string | null;
+            /** @example 12 rue des Lilas */
+            address: string | null;
+            /** @example 69003 */
+            postalCode: string | null;
+            /** @example Lyon */
+            city: string | null;
+            /**
+             * @description Points de fidélité
+             * @example 0
+             */
+            loyaltyPoints: number;
+            /**
+             * @description Inscription newsletter
+             * @example false
+             */
+            doNewsletter: boolean;
             role: components["schemas"]["Role"];
+            /** @enum {string} */
+            status: "ACTIVE" | "BLOCKED";
+            /** Format: date-time */
+            emailVerifiedAt: string;
             /** Format: date-time */
             createdAt: string;
-        };
-        RegisterRequest: {
-            /** Format: email */
-            email: string;
-            /** @description Au moins 10 caractères (72 max : limite bcrypt) */
-            password: string;
-            firstName: string;
-            lastName: string;
-        };
-        LoginRequest: {
-            /** Format: email */
-            email: string;
-            password: string;
-        };
-        AuthResponse: {
-            /** @example eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.mock.signature */
-            accessToken: string;
-            /**
-             * @description Secondes
-             * @example 900
-             */
-            expiresIn: number;
-            user: components["schemas"]["User"];
+            /** Format: date-time */
+            updatedAt: string;
         };
         UpdateProfileRequest: {
             firstName?: string;
             lastName?: string;
             phone?: string | null;
+            address?: string | null;
+            postalCode?: string | null;
+            city?: string | null;
+            doNewsletter?: boolean;
         };
         /** @description France métropolitaine continentale uniquement (D-003) */
         ShippingAddress: {
@@ -759,15 +743,105 @@ export interface components {
             /** @example 0612345678 */
             phone: string;
         };
-        AddressInput: components["schemas"]["ShippingAddress"] & {
+        /** @description France métropolitaine continentale, hors Corse et territoires ultramarins. Sans isDefault, la nouvelle adresse n'est pas définie par défaut. */
+        AddressInput: {
+            firstName: string;
+            lastName: string;
+            line1: string;
+            line2?: string | null;
+            /** @example 69003 */
+            postalCode: string;
+            city: string;
+            /** @enum {string} */
+            country: "FR";
+            phone: string;
             /** @example Maison */
             label?: string | null;
-            /** @default false */
-            isDefault: boolean;
+            isDefault?: boolean;
         };
-        Address: components["schemas"]["AddressInput"] & {
+        /** @description Champs absents conservés. Seuls label et line2 acceptent null. */
+        UpdateAddressInput: {
+            firstName?: string;
+            lastName?: string;
+            line1?: string;
+            line2?: string | null;
+            /** @example 69003 */
+            postalCode?: string;
+            city?: string;
+            /** @enum {string} */
+            country?: "FR";
+            phone?: string;
+            /** @example Maison */
+            label?: string | null;
+            isDefault?: boolean;
+        };
+        Address: {
+            firstName: string;
+            lastName: string;
+            line1: string;
+            line2: string | null;
+            /** @example 69003 */
+            postalCode: string;
+            city: string;
+            /** @enum {string} */
+            country: "FR";
+            phone: string;
+            /** @example Maison */
+            label: string | null;
+            isDefault: boolean;
             /** Format: uuid */
             id: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        CatalogueFormat: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            packaging: "bag" | "box" | "tin";
+            /** @description Grammage */
+            quantity: number;
+            /** @description Centimes */
+            price: number;
+            stock: number;
+        };
+        CatalogueProduct: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            typeTea: string | null;
+            origin: string | null;
+            ingredients: string[];
+            /** @enum {string} */
+            moment: "morning" | "noon" | "snack" | "evening";
+            /** @description Image encodée en base64 */
+            image: string | null;
+        };
+        CataloguePage: {
+            data: components["schemas"]["CatalogueProduct"][];
+            meta: {
+                page: number;
+                limit: number;
+                total: number;
+                totalPages: number;
+            };
+        };
+        CatalogueFilters: {
+            ingredients: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            }[];
+            origin: string[];
+            typeTea: string[];
+            howMuchCaffeine: ("none" | "low" | "medium" | "high")[];
+            moment: ("morning" | "noon" | "snack" | "evening")[];
+            price: {
+                min: number | null;
+                max: number | null;
+            };
         };
         /** @enum {string} */
         ProductType: "TEA" | "COFFEE" | "CBD" | "BOX" | "ADVENT_CALENDAR" | "ACCESSORY";
@@ -1528,6 +1602,15 @@ export interface components {
         };
     };
     responses: {
+        /** @description `AUTH_UNAVAILABLE` — service indisponible, aucune donnée sensible. */
+        AuthUnavailable: {
+            headers: {
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Error"];
+            };
+        };
         /** @description `VALIDATION_ERROR` */
         ValidationError: {
             headers: {
@@ -1554,7 +1637,7 @@ export interface components {
                 "application/json": components["schemas"]["Error"];
             };
         };
-        /** @description `UNAUTHENTICATED` ou `TOKEN_EXPIRED` */
+        /** @description `UNAUTHENTICATED` */
         Unauthenticated: {
             headers: {
                 [name: string]: unknown;
@@ -1563,8 +1646,8 @@ export interface components {
                 /**
                  * @example {
                  *       "statusCode": 401,
-                 *       "code": "TOKEN_EXPIRED",
-                 *       "message": "Session expirée.",
+                 *       "code": "UNAUTHENTICATED",
+                 *       "message": "Authentification impossible.",
                  *       "path": "/api/cart",
                  *       "timestamp": "2026-10-09T14:30:00.000Z"
                  *     }
@@ -1730,8 +1813,8 @@ export interface components {
     };
     requestBodies: never;
     headers: {
-        /** @description `refresh_token=…; HttpOnly; Secure; SameSite=Strict; Path=/api/auth; Max-Age=2592000` */
-        SetRefreshCookie: string;
+        /** @description brume_session=…; HttpOnly; Secure; SameSite=Lax; Path=/api; Max-Age=86400 (Secure désactivable uniquement en développement local) */
+        SetSessionCookie: string;
     };
     pathItems: never;
 }
@@ -1760,97 +1843,7 @@ export interface operations {
             };
         };
     };
-    register: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["RegisterRequest"];
-            };
-        };
-        responses: {
-            /** @description Compte créé, utilisateur connecté. Pose le cookie `refresh_token`. */
-            201: {
-                headers: {
-                    "Set-Cookie": components["headers"]["SetRefreshCookie"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthResponse"];
-                };
-            };
-            400: components["responses"]["ValidationError"];
-            /** @description `EMAIL_ALREADY_USED` */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "statusCode": 409,
-                     *       "code": "EMAIL_ALREADY_USED",
-                     *       "message": "Un compte existe déjà avec cet email.",
-                     *       "path": "/api/auth/register",
-                     *       "timestamp": "2026-10-09T14:30:00.000Z"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            429: components["responses"]["RateLimited"];
-        };
-    };
-    login: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["LoginRequest"];
-            };
-        };
-        responses: {
-            /** @description Connecté. Pose le cookie `refresh_token`. */
-            200: {
-                headers: {
-                    "Set-Cookie": components["headers"]["SetRefreshCookie"];
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["AuthResponse"];
-                };
-            };
-            400: components["responses"]["ValidationError"];
-            /** @description `INVALID_CREDENTIALS` */
-            401: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    /**
-                     * @example {
-                     *       "statusCode": 401,
-                     *       "code": "INVALID_CREDENTIALS",
-                     *       "message": "Email ou mot de passe incorrect.",
-                     *       "path": "/api/auth/login",
-                     *       "timestamp": "2026-10-09T14:30:00.000Z"
-                     *     }
-                     */
-                    "application/json": components["schemas"]["Error"];
-                };
-            };
-            429: components["responses"]["RateLimited"];
-        };
-    };
-    refresh: {
+    startGoogleLogin: {
         parameters: {
             query?: never;
             header?: never;
@@ -1859,35 +1852,67 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Nouveau jeton. Le cookie est remplacé. */
-            200: {
+            /** @description Redirection vers Google. Cookie temporaire brume_oauth HttpOnly, SameSite=Lax, Path=/api/auth. */
+            302: {
                 headers: {
-                    "Set-Cookie": components["headers"]["SetRefreshCookie"];
+                    Location?: string;
+                    "Set-Cookie"?: string;
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["AuthResponse"];
+                content?: never;
+            };
+            429: components["responses"]["RateLimited"];
+            503: components["responses"]["AuthUnavailable"];
+        };
+    };
+    finishGoogleLogin: {
+        parameters: {
+            query?: {
+                state?: string;
+                code?: string;
+                error?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Session créée. Redirection vers AUTH_SUCCESS_URL configurée côté serveur, identique pour un nouveau compte et un compte existant. */
+            302: {
+                headers: {
+                    Location?: string;
+                    "Set-Cookie": components["headers"]["SetSessionCookie"];
+                    [name: string]: unknown;
                 };
+                content?: never;
             };
             401: components["responses"]["Unauthenticated"];
+            429: components["responses"]["RateLimited"];
+            503: components["responses"]["AuthUnavailable"];
         };
     };
     logout: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description Déconnecté, cookie effacé */
+            /** @description Session révoquée ou déjà absente, cookie effacé. */
             204: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content?: never;
             };
+            403: components["responses"]["Forbidden"];
+            503: components["responses"]["AuthUnavailable"];
         };
     };
     getMe: {
@@ -1909,12 +1934,16 @@ export interface operations {
                 };
             };
             401: components["responses"]["Unauthenticated"];
+            503: components["responses"]["AuthUnavailable"];
         };
     };
     updateMe: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
             path?: never;
             cookie?: never;
         };
@@ -1935,106 +1964,8 @@ export interface operations {
             };
             400: components["responses"]["ValidationError"];
             401: components["responses"]["Unauthenticated"];
-        };
-    };
-    listMyAddresses: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Liste */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"][];
-                };
-            };
-            401: components["responses"]["Unauthenticated"];
-        };
-    };
-    createMyAddress: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddressInput"];
-            };
-        };
-        responses: {
-            /** @description Créée */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"];
-                };
-            };
-            400: components["responses"]["ValidationError"];
-            401: components["responses"]["Unauthenticated"];
-            422: components["responses"]["ShippingZoneNotServed"];
-        };
-    };
-    deleteMyAddress: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["IdPath"];
-            };
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description Supprimée */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            401: components["responses"]["Unauthenticated"];
-            404: components["responses"]["NotFound"];
-        };
-    };
-    updateMyAddress: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                id: components["parameters"]["IdPath"];
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["AddressInput"];
-            };
-        };
-        responses: {
-            /** @description Modifiée */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["Address"];
-                };
-            };
-            400: components["responses"]["ValidationError"];
-            401: components["responses"]["Unauthenticated"];
-            404: components["responses"]["NotFound"];
-            422: components["responses"]["ShippingZoneNotServed"];
+            403: components["responses"]["Forbidden"];
+            503: components["responses"]["AuthUnavailable"];
         };
     };
     listCategories: {
@@ -2060,16 +1991,20 @@ export interface operations {
     listProducts: {
         parameters: {
             query?: {
-                /** @description Recherche plein texte sur le nom (US-014) */
-                q?: string;
-                /** @description Slug de catégorie (inclut les sous-catégories) */
-                category?: string;
-                type?: components["schemas"]["ProductType"];
-                minPriceCents?: number;
-                maxPriceCents?: number;
-                /** @description `true` = uniquement les produits dont au moins une variante est disponible */
-                inStock?: boolean;
-                sort?: "relevance" | "price_asc" | "price_desc" | "newest" | "name_asc";
+                /** @description Identifiants des ingrédients liés au catalogue. Répéter le paramètre pour plusieurs valeurs (OU). */
+                ingredients?: string[];
+                /** @description Origines exactes présentes dans le catalogue. Répéter le paramètre pour plusieurs valeurs (OU). */
+                origin?: string[];
+                /** @description Types de thé exacts présents dans le catalogue. Répéter le paramètre pour plusieurs valeurs (OU). */
+                typeTea?: string[];
+                /** @description Niveaux de caféine. Répéter le paramètre pour plusieurs valeurs (OU). */
+                howMuchCaffeine?: ("none" | "low" | "medium" | "high")[];
+                /** @description Moments de consommation. Répéter le paramètre pour plusieurs valeurs (OU). */
+                moment?: ("morning" | "noon" | "snack" | "evening")[];
+                /** @description Prix inclus en centimes, sur un même format. minPrice doit être inférieur ou égal à maxPrice. */
+                minPrice?: number;
+                /** @description Prix inclus en centimes, sur un même format. minPrice doit être inférieur ou égal à maxPrice. */
+                maxPrice?: number;
                 page?: components["parameters"]["Page"];
                 limit?: components["parameters"]["Limit"];
             };
@@ -2079,16 +2014,36 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Page de produits */
+            /** @description Produits correspondants et total après filtrage. Combinaison vide ou page dépassée : liste vide. */
             200: {
                 headers: {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ProductSummaryPage"];
+                    "application/json": components["schemas"]["CataloguePage"];
                 };
             };
             400: components["responses"]["ValidationError"];
+        };
+    };
+    getCatalogueFilters: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Choix disponibles et bornes de prix en centimes. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogueFilters"];
+                };
+            };
         };
     };
     getProduct: {

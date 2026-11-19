@@ -66,6 +66,15 @@
   opacity: 0.45;
 }
 
+:host(.est-pleine-largeur) {
+  display: flex;
+}
+
+:host(.est-pleine-largeur) .bouton {
+  width: 100%;
+  min-width: 0;
+}
+
 :host(.variante-plein) {
   --bouton-fond: var(--couleur-encre);
   --bouton-contour: var(--couleur-encre);

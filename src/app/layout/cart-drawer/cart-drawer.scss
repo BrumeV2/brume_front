@@ -1,0 +1,267 @@
+@use '../../../styles/mixins' as m;
+
+/* Tiroir de 480 px collé à droite, sur un voile sombre (maquette). */
+.tiroir {
+  inset: 0 0 0 auto;
+  width: min(100%, 30rem);
+  max-width: none;
+  height: 100dvh;
+  max-height: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background-color: var(--couleur-fond);
+  color: var(--couleur-encre);
+
+  &::backdrop {
+    background-color: rgba(20, 20, 20, 0.5);
+  }
+
+  &[open] {
+    animation: glissement 0.4s var(--courbe-brume);
+  }
+}
+
+.tiroir__contenu {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-5);
+  height: 100%;
+  padding: 1.75rem var(--espace-5);
+
+  @include m.a-partir-de-tablette {
+    padding-inline: var(--espace-8);
+  }
+}
+
+.tiroir__haut,
+.ligne__entete,
+.montants__ligne {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--espace-4);
+}
+
+.tiroir__titre {
+  font-size: 1.75rem; /* 28px */
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: -0.025em;
+}
+
+.tiroir__fermer,
+.tiroir__continuer {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.tiroir__fermer {
+  font-size: var(--texte-petit-taille);
+}
+
+.tiroir__continuer {
+  align-self: center;
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+}
+
+/* Avertissements de l'API et écarts relevés avant la commande. */
+.encadre {
+  margin: 0;
+  padding: 0.875rem var(--espace-4);
+  border-left: 3px solid var(--couleur-erreur);
+  background-color: var(--couleur-papier);
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+
+  ul {
+    margin: var(--espace-1) 0 0;
+    padding-left: var(--espace-4);
+  }
+}
+
+ul.encadre {
+  list-style: none;
+}
+
+.encadre__titre {
+  font-weight: 500;
+}
+
+.tiroir__message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--espace-3);
+  color: var(--couleur-texte-doux);
+}
+
+.lignes {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.ligne {
+  display: flex;
+  gap: var(--espace-4);
+  padding-block: 1.125rem;
+  border-bottom: 1px solid var(--couleur-filet);
+}
+
+.ligne__photo {
+  flex: none;
+  width: 72px;
+  height: 90px;
+  background-color: var(--couleur-photo);
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.ligne__infos {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.ligne__nom {
+  font-family: var(--police-titre);
+  font-size: 1.125rem; /* 18px */
+  font-weight: 800;
+  line-height: var(--titre-carte-interligne);
+  letter-spacing: -0.02em;
+}
+
+.ligne__prix {
+  white-space: nowrap;
+}
+
+.ligne__detail {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}
+
+/* Montant en attente de la réponse de l'API : estompé, jamais caché. */
+.est-en-cours :is(.ligne__prix, dd) {
+  opacity: 0.45;
+  transition: opacity 0.2s ease;
+}
+
+.ligne__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+}
+
+.ligne__retirer {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-size: var(--texte-petit-taille);
+  color: var(--couleur-texte-doux);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    color: var(--couleur-encre);
+  }
+}
+
+.ligne__erreur,
+.tiroir__refus,
+.tiroir__note.est-a-confirmer {
+  font-size: var(--texte-petit-taille);
+  color: var(--couleur-erreur);
+}
+
+.ligne__nouvelle {
+  @include m.surtitre;
+
+  color: var(--couleur-accent);
+}
+
+.vide {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.125rem;
+}
+
+.vide__photo {
+  width: 100%;
+  height: 240px;
+  border-radius: var(--rayon-carte);
+  object-fit: cover;
+}
+
+.vide__titre {
+  font-family: var(--police-titre);
+  font-size: var(--mobile-titre-m-taille);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: var(--titre-m-interlettre);
+
+  span {
+    display: block;
+    color: var(--couleur-accent);
+  }
+
+  @include m.a-partir-de-tablette {
+    font-size: var(--titre-m-taille);
+  }
+}
+
+.vide__texte {
+  color: var(--couleur-texte-doux);
+}
+
+.tiroir__bas {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  margin-top: auto;
+  padding-top: 1.125rem;
+  border-top: 1px solid var(--couleur-encre);
+}
+
+.montants {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-2);
+  margin: 0;
+
+  dd {
+    margin: 0;
+  }
+}
+
+.montants__sous-total dd {
+  font-family: var(--police-titre);
+  font-size: var(--titre-bloc-taille);
+  font-weight: 800;
+  letter-spacing: var(--titre-bloc-interlettre);
+}
+
+.tiroir__note {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}
+
+@keyframes glissement {
+  from {
+    transform: translateX(100%);
+  }
+}

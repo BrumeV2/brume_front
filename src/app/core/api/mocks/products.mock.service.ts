@@ -1,7 +1,13 @@
 import { Injectable, InjectionToken, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
-import type { CatalogPage, CatalogProduct, CatalogQuery, Category } from '../api.types';
+import type {
+  CatalogPage,
+  CatalogProduct,
+  CatalogProductDetail,
+  CatalogQuery,
+  Category,
+} from '../api.types';
 import type { ApiErrorBody } from '../api-error';
 import {
   CAFFEINES,
@@ -19,6 +25,7 @@ import {
   PRODUITS_NON_PUBLIES,
 } from './fixtures/catalog.fixture';
 import { MOCK_DELAY_MS, mockFail, mockOk } from './mock-delay';
+import { variantesDuProduit } from './fixtures/variants.fixture';
 
 /** Scénarios déterministes, configurables par injection sans mot-clé dans la recherche. */
 export const PRODUCTS_MOCK_OPTIONS = new InjectionToken<{
@@ -28,6 +35,7 @@ export const PRODUCTS_MOCK_OPTIONS = new InjectionToken<{
   providedIn: 'root',
   factory: () => ({ delayMs: MOCK_DELAY_MS, failFirstSearches: 0 }),
 });
+
 
 const CHEMIN = '/api/products';
 
@@ -50,21 +58,14 @@ export class ProductsMockService extends ProductsService {
     return mockOk([...CATEGORIES_FIXTURE], this.options.delayMs);
   }
 
-  override getBySlug(slug: string): Observable<CatalogProduct> {
+  override getBySlug(slug: string): Observable<CatalogProductDetail> {
     const produit = PRODUCTS_FIXTURE.filter(publie).find((p) => p.slug === slug);
 
     // Un produit non publié répond 404 comme un slug inconnu : son existence
     // n'a pas à transparaître.
     return produit === undefined
-      ? mockFail(
-          404,
-          'NOT_FOUND',
-          'Ressource introuvable.',
-          undefined,
-          `/api/products/${slug}`,
-          this.options.delayMs,
-        )
-      : mockOk({ ...produit }, this.options.delayMs);
+      ? mockFail(404, 'NOT_FOUND', 'Ressource introuvable.', undefined, `/api/products/${slug}`)
+      : mockOk({ ...produit, variants: variantesDuProduit(produit.id) });
   }
 
   override list(query: CatalogQuery): Observable<CatalogPage> {

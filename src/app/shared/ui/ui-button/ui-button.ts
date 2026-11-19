@@ -19,7 +19,10 @@ export type UiButtonVariant = 'plein' | 'contour' | 'clair';
   imports: [NgTemplateOutlet, RouterLink],
   templateUrl: './ui-button.html',
   styleUrl: './ui-button.scss',
-  host: { '[class]': '"variante-" + variante()' },
+  host: {
+    '[class]': '"variante-" + variante()',
+    '[class.est-pleine-largeur]': 'pleineLargeur()',
+  },
 })
 export class UiButton {
   readonly libelle = input.required<string>();
@@ -27,8 +30,12 @@ export class UiButton {
   readonly type = input<'button' | 'submit'>('button');
   readonly fleche = input(false);
   readonly disabled = input(false);
+  /** Occupe toute la largeur disponible (ligne d'ajout au panier, tiroir). */
+  readonly pleineLargeur = input(false);
   /** Remplace le libellé par un état d'attente et bloque le bouton. */
   readonly occupe = input(false);
+  /** Libellé affiché pendant l'attente. */
+  readonly libelleOccupe = input('Enregistrement…');
   /** Route cible : rend un `<a routerLink>` au lieu d'un `<button>`. */
   readonly lien = input<string | null>(null);
   readonly params = input<Params | null>(null);

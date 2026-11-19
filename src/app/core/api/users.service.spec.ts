@@ -6,19 +6,13 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { environment } from '../../../environments/environment';
 
 import type { User } from './api.types';
+import { mockUsers } from './mocks/fixtures/users.fixture';
 import { UsersHttpService, UsersService } from './users.service';
 
 const PROFILE_URL = `${environment.apiBaseUrl}/users/me`;
 
-const user: User = {
-  id: 'e0000000-0000-4000-8000-000000000001',
-  email: 'camille.martin@example.com',
-  firstName: 'Camille',
-  lastName: 'Martin',
-  phone: '0612345678',
-  role: 'CUSTOMER',
-  createdAt: '2026-01-15T09:12:00.000Z',
-};
+/** Le compte du seed : un seul endroit à corriger quand le contrat change. */
+const user: User = mockUsers[0];
 
 describe('UsersHttpService', () => {
   let service: UsersService;

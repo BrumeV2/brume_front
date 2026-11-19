@@ -1,0 +1,25 @@
+<div
+  class="quantite"
+  role="group"
+  [attr.aria-label]="objet() ? 'Quantité de ' + objet() : 'Quantité'"
+>
+  <button
+    class="quantite__bouton"
+    type="button"
+    aria-label="Retirer un exemplaire"
+    [disabled]="!peutRetirer()"
+    (click)="retirer()"
+  >
+    −
+  </button>
+  <output class="quantite__valeur" aria-live="polite">{{ valeur() }}</output>
+  <button
+    class="quantite__bouton"
+    type="button"
+    aria-label="Ajouter un exemplaire"
+    [disabled]="!peutAjouter()"
+    (click)="ajouter()"
+  >
+    +
+  </button>
+</div>

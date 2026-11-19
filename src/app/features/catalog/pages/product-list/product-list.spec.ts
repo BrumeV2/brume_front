@@ -4,12 +4,11 @@ import { Router, provideRouter, withComponentInputBinding } from '@angular/route
 import { RouterTestingHarness } from '@angular/router/testing';
 import { Observable, Subject, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { CatalogPage, CatalogProduct, Category } from '../../../../core/api/api.types';
 import {
   PRODUCTS_MOCK_OPTIONS,
   ProductsMockService,
 } from '../../../../core/api/mocks/products.mock.service';
+import type { CatalogPage, CatalogProductDetail, Category } from '../../../../core/api/api.types';
 import { ProductsService } from '../../../../core/api/products.service';
 import { catalogRoutes } from '../../catalog.routes';
 
@@ -24,7 +23,7 @@ class ApiMuette extends ProductsService {
   override categories(): Observable<Category[]> {
     return this.panne();
   }
-  override getBySlug(): Observable<CatalogProduct> {
+  override getBySlug(): Observable<CatalogProductDetail> {
     return this.panne();
   }
 }

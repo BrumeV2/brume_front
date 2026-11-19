@@ -14,6 +14,7 @@ import {
   FormGroup,
   ReactiveFormsModule,
   ValidationErrors,
+  ValidatorFn,
   Validators,
 } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -27,16 +28,22 @@ import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
 import { UiCard } from '../../../../shared/ui/ui-card/ui-card';
 import { UiField } from '../../../../shared/ui/ui-field/ui-field';
 import { UiStaticField } from '../../../../shared/ui/ui-static-field/ui-static-field';
+import { UiSwitch } from '../../../../shared/ui/ui-switch/ui-switch';
 import { AccountTabs } from '../../components/account-tabs/account-tabs';
 import { LinkedAccounts } from '../../components/linked-accounts/linked-accounts';
 
-/** Les champs que cet écran peut modifier. */
-type ChampProfil = 'firstName' | 'lastName' | 'birthDate';
+/** Les champs que cet écran peut modifier : exactement `UpdateProfileRequest`. */
+type ChampProfil =
+  'firstName' | 'lastName' | 'phone' | 'address' | 'postalCode' | 'city' | 'doNewsletter';
 
 interface ValeursProfil {
   readonly firstName: string;
   readonly lastName: string;
-  readonly birthDate: string;
+  readonly phone: string;
+  readonly address: string;
+  readonly postalCode: string;
+  readonly city: string;
+  readonly doNewsletter: boolean;
 }
 
 const MOIS_ANNEE = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'numeric' });
@@ -44,7 +51,17 @@ const MOIS_ANNEE = new Intl.DateTimeFormat('fr-FR', { month: 'long', year: 'nume
 const MESSAGES_SERVEUR: Record<ChampProfil, string> = {
   firstName: "Ce prénom n'a pas été accepté. Vérifie qu'il est renseigné et pas trop long.",
   lastName: "Ce nom n'a pas été accepté. Vérifie qu'il est renseigné et pas trop long.",
-  birthDate: "Cette date n'a pas été acceptée. Elle doit être valide et dans le passé.",
+  phone: "Ce numéro n'a pas été accepté. Dix chiffres, en commençant par 0.",
+  address: "Cette adresse n'a pas été acceptée. Elle est peut-être trop longue.",
+  postalCode: "Ce code postal n'a pas été accepté. Cinq chiffres attendus.",
+  city: "Cette ville n'a pas été acceptée. Vérifie qu'elle n'est pas trop longue.",
+  doNewsletter: "Ce choix n'a pas été enregistré.",
+};
+
+/** Exemple attendu, quand un champ au motif imposé est mal saisi. */
+const MESSAGES_MOTIF: Partial<Record<ChampProfil, string>> = {
+  phone: 'Dix chiffres, en commençant par 0. Par exemple 0612345678.',
+  postalCode: 'Cinq chiffres. Par exemple 69003.',
 };
 
 /** Un champ facultatif vide vaut `null`, comme attendu par l'API. */
@@ -63,20 +80,15 @@ function texteObligatoire(control: AbstractControl<string>): ValidationErrors | 
   return control.value.trim() === '' ? { required: true } : null;
 }
 
-/** Refuse une date mal formée ou postérieure à aujourd'hui. */
-function dateDeNaissanceValide(control: AbstractControl<string>): ValidationErrors | null {
-  const valeur = control.value.trim();
-  if (valeur === '') {
-    return null;
-  }
-  if (!PROFILE_RULES.birthDate.pattern.test(valeur)) {
-    return { formatDate: true };
-  }
-  const date = new Date(`${valeur}T00:00:00.000Z`);
-  if (Number.isNaN(date.getTime())) {
-    return { formatDate: true };
-  }
-  return date.getTime() > Date.now() ? { dateFuture: true } : null;
+/**
+ * Motif imposé par le contrat, sur un champ facultatif : un champ laissé vide
+ * est accepté, puisqu'il partira à `null`.
+ */
+function motifFacultatif(motif: RegExp): ValidatorFn {
+  return (control: AbstractControl<string>): ValidationErrors | null => {
+    const valeur = control.value.trim();
+    return valeur === '' || motif.test(valeur) ? null : { motif: true };
+  };
 }
 
 @Component({
@@ -89,6 +101,7 @@ function dateDeNaissanceValide(control: AbstractControl<string>): ValidationErro
     UiCard,
     UiField,
     UiStaticField,
+    UiSwitch,
     AccountTabs,
     LinkedAccounts,
   ],
@@ -109,7 +122,23 @@ export class Profile {
       nonNullable: true,
       validators: [texteObligatoire, Validators.maxLength(PROFILE_RULES.lastName.maxLength)],
     }),
-    birthDate: new FormControl('', { nonNullable: true, validators: [dateDeNaissanceValide] }),
+    phone: new FormControl('', {
+      nonNullable: true,
+      validators: [motifFacultatif(PROFILE_RULES.phone.pattern)],
+    }),
+    address: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(PROFILE_RULES.address.maxLength)],
+    }),
+    postalCode: new FormControl('', {
+      nonNullable: true,
+      validators: [motifFacultatif(PROFILE_RULES.postalCode.pattern)],
+    }),
+    city: new FormControl('', {
+      nonNullable: true,
+      validators: [Validators.maxLength(PROFILE_RULES.city.maxLength)],
+    }),
+    doNewsletter: new FormControl(false, { nonNullable: true }),
   });
 
   /** Valeurs saisies, suivies en signal pour alimenter les `computed` du gabarit. */
@@ -130,12 +159,17 @@ export class Profile {
     if (profil === null) {
       return '';
     }
-    return `${profil.firstName.charAt(0)}${profil.lastName.charAt(0)}`.toUpperCase();
+    const lettres = `${profil.firstName?.charAt(0) ?? ''}${profil.lastName?.charAt(0) ?? ''}`;
+    // Un compte Google peut n'avoir ni prénom ni nom : reste l'email.
+    return (lettres === '' ? profil.email.charAt(0) : lettres).toUpperCase();
   });
 
   protected readonly nomComplet = computed(() => {
     const profil = this.profil();
-    return profil === null ? '' : `${profil.firstName} ${profil.lastName}`;
+    if (profil === null) {
+      return '';
+    }
+    return [profil.firstName, profil.lastName].filter((partie) => partie !== null).join(' ');
   });
 
   protected readonly depuis = computed(() => {
@@ -147,6 +181,19 @@ export class Profile {
     return Number.isNaN(date.getTime()) ? '' : MOIS_ANNEE.format(date);
   });
 
+  /**
+   * « Camille Martin · chez Brume depuis mars 2025 ».
+   *
+   * Le séparateur n'apparaît qu'entre deux morceaux présents : sur un compte
+   * qui n'a pas encore de nom, il ne doit rien rester à sa gauche.
+   */
+  protected readonly sousTitre = computed(() => {
+    const depuis = this.depuis();
+    return [this.nomComplet(), depuis === '' ? '' : `chez Brume depuis ${depuis}`]
+      .filter((partie) => partie !== '')
+      .join(' · ');
+  });
+
   /** Champs dont la valeur saisie diffère du profil enregistré. */
   protected readonly champsModifies = computed<readonly ChampProfil[]>(() => {
     const enregistre = this.profil();
@@ -156,14 +203,26 @@ export class Profile {
     const saisi = this.valeurs();
     const modifies: ChampProfil[] = [];
 
-    if (saisi.firstName.trim() !== enregistre.firstName) {
+    if (saisi.firstName.trim() !== (enregistre.firstName ?? '')) {
       modifies.push('firstName');
     }
-    if (saisi.lastName.trim() !== enregistre.lastName) {
+    if (saisi.lastName.trim() !== (enregistre.lastName ?? '')) {
       modifies.push('lastName');
     }
-    if (normaliser(saisi.birthDate) !== enregistre.birthDate) {
-      modifies.push('birthDate');
+    if (normaliser(saisi.phone) !== enregistre.phone) {
+      modifies.push('phone');
+    }
+    if (normaliser(saisi.address) !== enregistre.address) {
+      modifies.push('address');
+    }
+    if (normaliser(saisi.postalCode) !== enregistre.postalCode) {
+      modifies.push('postalCode');
+    }
+    if (normaliser(saisi.city) !== enregistre.city) {
+      modifies.push('city');
+    }
+    if (saisi.doNewsletter !== enregistre.doNewsletter) {
+      modifies.push('doNewsletter');
     }
     return modifies;
   });
@@ -218,13 +277,11 @@ export class Profile {
       return 'Ce champ est obligatoire.';
     }
     if (erreurs['maxlength'] !== undefined) {
-      return `${PROFILE_RULES.firstName.maxLength} caractères au maximum.`;
+      const { requiredLength } = erreurs['maxlength'] as { requiredLength: number };
+      return `${requiredLength} caractères au maximum.`;
     }
-    if (erreurs['dateFuture'] !== undefined) {
-      return 'Cette date est dans le futur.';
-    }
-    if (erreurs['formatDate'] !== undefined) {
-      return 'Cette date est invalide.';
+    if (erreurs['motif'] !== undefined) {
+      return MESSAGES_MOTIF[champ] ?? 'Cette valeur est invalide.';
     }
     return 'Cette valeur est invalide.';
   }
@@ -254,11 +311,19 @@ export class Profile {
     const saisi = this.form.getRawValue();
     const modifies = this.champsModifies();
 
-    // PATCH partiel : on n'envoie que ce qui a changé (`minProperties: 1` du contrat).
+    /*
+     * PATCH partiel : on n'envoie que ce qui a changé (`minProperties: 1` du
+     * contrat). Aucun identifiant n'est joint : l'API prend le compte dans le
+     * cookie de session, donc un profil ne peut pas en viser un autre.
+     */
     const corps: UpdateProfileDraft = {
       ...(modifies.includes('firstName') ? { firstName: saisi.firstName.trim() } : {}),
       ...(modifies.includes('lastName') ? { lastName: saisi.lastName.trim() } : {}),
-      ...(modifies.includes('birthDate') ? { birthDate: normaliser(saisi.birthDate) } : {}),
+      ...(modifies.includes('phone') ? { phone: normaliser(saisi.phone) } : {}),
+      ...(modifies.includes('address') ? { address: normaliser(saisi.address) } : {}),
+      ...(modifies.includes('postalCode') ? { postalCode: normaliser(saisi.postalCode) } : {}),
+      ...(modifies.includes('city') ? { city: normaliser(saisi.city) } : {}),
+      ...(modifies.includes('doNewsletter') ? { doNewsletter: saisi.doNewsletter } : {}),
     };
 
     this.enregistrement.set(true);
@@ -286,9 +351,13 @@ export class Profile {
   private remplirDepuis(profil: UserProfile): void {
     this.form.setValue(
       {
-        firstName: profil.firstName,
-        lastName: profil.lastName,
-        birthDate: profil.birthDate ?? '',
+        firstName: profil.firstName ?? '',
+        lastName: profil.lastName ?? '',
+        phone: profil.phone ?? '',
+        address: profil.address ?? '',
+        postalCode: profil.postalCode ?? '',
+        city: profil.city ?? '',
+        doNewsletter: profil.doNewsletter,
       },
       { emitEvent: false },
     );

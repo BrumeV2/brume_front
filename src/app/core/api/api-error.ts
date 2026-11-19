@@ -25,6 +25,12 @@ export interface ApiError {
   readonly message: string;
   /** Erreurs par champ, extraites de `details` sur une `VALIDATION_ERROR`. */
   readonly fieldErrors: Readonly<Record<string, readonly string[]>>;
+  /**
+   * `details` brut, tel que le contrat le décrit pour chaque code (voir
+   * `docs/API.md`) : `[{ variantId, sku, requested, available }]` sur un
+   * `OUT_OF_STOCK`, par exemple. Absent hors contrat.
+   */
+  readonly details?: ApiErrorBody['details'];
 }
 
 const GENERIC_MESSAGE = 'Une erreur est survenue. Merci de réessayer.';
@@ -75,6 +81,7 @@ export function toApiError(error: unknown): ApiError {
       code: body.code,
       message: body.message,
       fieldErrors: readFieldErrors(body),
+      ...(body.details === undefined ? {} : { details: body.details }),
     };
   }
 
