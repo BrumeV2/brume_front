@@ -23,6 +23,7 @@ export type CategoryRef = components['schemas']['CategoryRef'];
 export type ProductSummary = components['schemas']['ProductSummary'];
 export type ProductType = components['schemas']['ProductType'];
 export type Availability = components['schemas']['Availability'];
+export type Image = components['schemas']['Image'];
 export type Variant = components['schemas']['Variant'];
 export type ProductDetail = components['schemas']['ProductDetail'];
 
@@ -101,23 +102,41 @@ export type Moment = 'MORNING' | 'NOON' | 'AFTERNOON' | 'EVENING';
 /** Teneur en caféine. Reprend les valeurs de `attributes.caffeine` du seed. */
 export type Caffeine = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ProductExtensions {
-  moment: Moment;
-  caffeine: Caffeine;
+/**
+ * Produit tel que la grille du catalogue l'affiche.
+ *
+ * N'est plus dérivé de `ProductSummary` : l'API ne sert pas
+ * `ProductSummary`, quoi qu'en dise le contrat (voir `catalogue-api.types.ts`).
+ * Ce qu'elle ne fournit pas vaut `null` plutôt que d'être inventé : l'écran
+ * tait ce qu'il ne sait pas, au lieu d'afficher du faux.
+ */
+export interface CatalogProduct {
+  readonly id: string;
+  /** Porté par l'URL de la fiche. Faute de slug à l'API, c'est l'UUID. */
+  readonly slug: string;
+  readonly name: string;
+  readonly type: ProductType | null;
+  readonly shortDescription: string | null;
+  /** Univers du produit. `null` : l'API ne le renvoie pas. */
+  readonly category: CategoryRef | null;
+  readonly image: Image | null;
+  /** Prix du format le moins cher, en centimes. `null` si aucun format. */
+  readonly fromPriceCents: number | null;
+  readonly availability: Availability;
+  readonly ageRestricted: boolean;
+  readonly moment: Moment | null;
+  readonly caffeine: Caffeine | null;
   /** Origine, affichée en petites capitales : « Vert · Uji, Japon ». */
-  origin: string | null;
+  readonly origin: string | null;
   /** Notes de dégustation : « Herbacé · crémeux · umami ». */
-  tastingNotes: string | null;
+  readonly tastingNotes: string | null;
   /** Mention éditoriale sur la photo : « Préféré », « Nouveau », « Rare ». */
-  badge: string | null;
+  readonly badge: string | null;
   /** Note moyenne sur 5, `null` sans aucun avis noté. Sert au tri `rating_desc`. */
-  averageRating: number | null;
+  readonly averageRating: number | null;
   /** Nombre d'avis notés. Départage deux produits de même moyenne. */
-  ratingCount: number;
+  readonly ratingCount: number;
 }
-
-/** Produit tel que la grille du catalogue l'affiche. */
-export type CatalogProduct = ProductSummary & ProductExtensions;
 
 /**
  * Produit tel que la fiche l'affiche : la carte du catalogue, plus les

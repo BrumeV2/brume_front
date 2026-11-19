@@ -5,7 +5,13 @@
  * Aucun secret ici : tout ce qui est compilé est public.
  */
 export const environment = {
-  /** Catalogue US-014 simulé indépendamment des autres ressources. */
+  /**
+   * Catalogue simulé, indépendamment des autres ressources.
+   *
+   * À passer à `false` pour parler à l'API locale (`docker compose up` dans
+   * `brume_back`, puis `npm run seed`) : `ProductsHttpService` traduit alors
+   * ce que l'API sert réellement, voir `catalogue-api.types.ts`.
+   */
   useCatalogMocks: true,
   production: false,
   /**

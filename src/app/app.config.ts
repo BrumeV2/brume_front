@@ -45,10 +45,9 @@ export const appConfig: ApplicationConfig = {
     },
     {
       provide: ProductsService,
-      useClass:
-        environment.useMocks || environment.useCatalogMocks
-          ? ProductsMockService
-          : ProductsHttpService,
+      // Drapeau à part : le catalogue est la seule ressource que l'API sert
+      // vraiment, donc il se branche sans attendre le panier ni les comptes.
+      useClass: environment.useCatalogMocks ? ProductsMockService : ProductsHttpService,
     },
     {
       provide: CartService,

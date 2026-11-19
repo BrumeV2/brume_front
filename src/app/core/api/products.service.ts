@@ -1,16 +1,25 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import type { Observable } from 'rxjs';
+import { type Observable, catchError, map, of } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
 import type {
   Caffeine,
   CatalogPage,
+  CatalogProduct,
   CatalogProductDetail,
   CatalogQuery,
   Category,
   Moment,
 } from './api.types';
+import type {
+  CaffeineApi,
+  FicheApi,
+  FormatApi,
+  MomentApi,
+  PageApi,
+  ProduitApi,
+} from './catalogue-api.types';
 
 /**
  * Catalogue : liste filtrée des produits et catégories (US-001, US-016).
@@ -40,20 +49,106 @@ export class ProductsHttpService extends ProductsService {
   private readonly baseUrl = environment.apiBaseUrl;
 
   override list(query: CatalogQuery): Observable<CatalogPage> {
-    return this.http.get<CatalogPage>(`${this.baseUrl}/products`, {
-      params: versParams(query),
-    });
+    return this.http
+      .get<PageApi>(`${this.baseUrl}/products`, { params: versParams(query) })
+      .pipe(map((page) => ({ data: page.data.map(versProduit), meta: page.meta })));
   }
 
+  /**
+   * `GET /categories` n'existe pas (404 mesuré le 19/11/2026).
+   *
+   * Un univers introuvable n'est pas une panne du catalogue : les onglets
+   * disparaissent et la grille continue de fonctionner, plutôt que de montrer
+   * un écran d'erreur pour une route que le back n'a jamais livrée.
+   */
   override categories(): Observable<Category[]> {
-    return this.http.get<Category[]>(`${this.baseUrl}/categories`);
+    return this.http.get<Category[]>(`${this.baseUrl}/categories`).pipe(catchError(() => of([])));
   }
 
+  /** L'API attend un UUID ; `slug` en porte un, faute de slug au catalogue. */
   override getBySlug(slug: string): Observable<CatalogProductDetail> {
-    return this.http.get<CatalogProductDetail>(
-      `${this.baseUrl}/products/${encodeURIComponent(slug)}`,
-    );
+    return this.http
+      .get<FicheApi>(`${this.baseUrl}/products/${encodeURIComponent(slug)}`)
+      .pipe(map(versFiche));
   }
+}
+
+/** Moments de l'API vers ceux de la maquette. */
+const MOMENTS_ECRAN: Readonly<Record<MomentApi, Moment>> = {
+  morning: 'MORNING',
+  noon: 'NOON',
+  snack: 'AFTERNOON',
+  evening: 'EVENING',
+};
+
+const CAFFEINES_ECRAN: Readonly<Record<CaffeineApi, Caffeine>> = {
+  none: 'NONE',
+  low: 'LOW',
+  medium: 'MEDIUM',
+  high: 'HIGH',
+};
+
+/**
+ * Traduit un produit de l'API vers le modèle de l'écran.
+ *
+ * Ce que l'API ne renvoie pas reste `null` : ni univers, ni type, ni notes de
+ * dégustation, ni mention éditoriale. Inventer une valeur afficherait du faux,
+ * et masquerait au passage ce qui manque encore au back.
+ */
+function versProduit(api: ProduitApi): CatalogProduct {
+  return {
+    id: api.id,
+    // Pas de slug au catalogue : l'UUID porte l'URL de la fiche.
+    slug: api.id,
+    name: api.name,
+    type: null,
+    shortDescription: null,
+    category: null,
+    image: api.image === null ? null : { url: api.image, alt: api.name },
+    fromPriceCents: api.lowestPrice,
+    availability: api.availability,
+    // Absent de l'API. Aucun écran ne s'en sert pour autoriser quoi que ce soit.
+    ageRestricted: false,
+    moment: MOMENTS_ECRAN[api.moment] ?? null,
+    // La liste ne porte pas la caféine ; seule la fiche la connaît.
+    caffeine: null,
+    origin: api.origin,
+    tastingNotes: null,
+    badge: null,
+    averageRating: api.averageRating,
+    ratingCount: api.ratingCount,
+  };
+}
+
+/**
+ * Traduit une fiche de l'API.
+ *
+ * Les `formats` de l'API tiennent lieu de `variants` du contrat : c'est sur
+ * eux que l'ajout au panier s'appuie, donc la correspondance doit être exacte
+ * sur l'identifiant et le prix.
+ */
+function versFiche(api: FicheApi): CatalogProductDetail {
+  return {
+    ...versProduit({ ...api, ingredients: [], lowestPrice: prixLePlusBas(api.formats) }),
+    shortDescription: api.description,
+    caffeine: CAFFEINES_ECRAN[api.howMuchCaffeine] ?? null,
+    // Les ingrédients de la fiche tiennent lieu de notes de dégustation : ce
+    // sont les seuls mots que l'API donne sur le goût du produit.
+    tastingNotes: api.ingredients.map((ingredient) => ingredient.name).join(' · ') || null,
+    variants: api.formats.map((format) => ({
+      id: format.id,
+      sku: format.id,
+      label: `${format.quantity} g`,
+      priceCents: format.price,
+      weightGrams: format.quantity,
+      availability: format.availability,
+    })),
+  };
+}
+
+function prixLePlusBas(formats: readonly FormatApi[]): number | null {
+  const prix = formats.map((format) => format.price);
+  return prix.length === 0 ? null : Math.min(...prix);
 }
 
 /**
