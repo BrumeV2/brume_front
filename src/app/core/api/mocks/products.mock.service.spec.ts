@@ -5,6 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ApiError } from '../api-error';
 import { toApiError } from '../api-error';
 import type { CatalogPage, CatalogQuery } from '../api.types';
+import { idIngredient } from './fixtures/ingredients.fixture';
 import { PRODUCTS_MOCK_OPTIONS, ProductsMockService } from './products.mock.service';
 
 describe('ProductsMockService', () => {
@@ -69,7 +70,7 @@ describe('ProductsMockService', () => {
       const page = await lister({ category: 'thes' });
 
       expect(page.data).not.toHaveLength(0);
-      expect(page.data.every((p) => p.category.slug === 'thes')).toBe(true);
+      expect(page.data.every((p) => p.category?.slug === 'thes')).toBe(true);
     });
 
     it('filtre par type', async () => {
@@ -83,9 +84,11 @@ describe('ProductsMockService', () => {
       const page = await lister({ minPriceCents: 1500, maxPriceCents: 2500, limit: 100 });
 
       expect(page.data).not.toHaveLength(0);
-      expect(page.data.every((p) => p.fromPriceCents >= 1500 && p.fromPriceCents <= 2500)).toBe(
-        true,
-      );
+      expect(
+        page.data.every(
+          (p) => p.fromPriceCents !== null && p.fromPriceCents >= 1500 && p.fromPriceCents <= 2500,
+        ),
+      ).toBe(true);
       // La borne basse est bien incluse : un produit à 1500 exactement y figure.
       expect(page.data.map((p) => p.fromPriceCents)).toContain(1500);
     });
@@ -121,10 +124,12 @@ describe('ProductsMockService', () => {
     it('ordonne par prix croissant puis décroissant', async () => {
       // Sur le catalogue entier : comparer deux premières pages ne dirait rien.
       const croissant = (await lister({ sort: 'price_asc', limit: 100 })).data.map(
-        (p) => p.fromPriceCents,
+        (p) => p.fromPriceCents ?? 0,
       );
+      // Le jeu simulé donne un prix à chaque produit : le cas « sans prix »
+      // se teste sur le tri lui-même, pas ici.
       const decroissant = (await lister({ sort: 'price_desc', limit: 100 })).data.map(
-        (p) => p.fromPriceCents,
+        (p) => p.fromPriceCents ?? 0,
       );
 
       expect(croissant).toEqual([...croissant].sort((a, b) => a - b));
@@ -152,6 +157,78 @@ describe('ProductsMockService', () => {
       const corses = await slugs({ caffeine: 'HIGH', limit: 100 });
       expect(corses).toEqual(expect.arrayContaining(thesCorses));
       expect(corses.length).toBeGreaterThan(thesCorses.length);
+    });
+  });
+
+  describe('recherche par ingrédient (US-015)', () => {
+    const THE_VERT = idIngredient('Thé vert');
+    const THE_NOIR = idIngredient('Thé noir');
+    const BERGAMOTE = idIngredient('Huile essentielle de bergamote');
+    const ROBUSTA = idIngredient('Café robusta');
+
+    it('ne renvoie que la partie de la gamme qui contient l’ingrédient', async () => {
+      const page = await lister({ ingredients: [THE_VERT], limit: 100 });
+      const thes = await slugs({ category: 'thes', limit: 100 });
+
+      expect(page.data.map((p) => p.slug).sort()).toEqual(
+        ['genmaicha', 'long-jing', 'matcha-ceremonie', 'sencha-du-matin'].sort(),
+      );
+      expect(page.meta.total).toBe(4);
+      // D'autres thés existent, et sont bien écartés.
+      expect(thes).toContain('darjeeling-first-flush');
+      expect(thes).toContain('hojicha-du-soir');
+    });
+
+    it('renvoie un produit une seule fois, quel que soit son nombre de formats', async () => {
+      const resultat = await slugs({ ingredients: [ROBUSTA], limit: 100 });
+
+      expect(resultat).toEqual(['espresso-maison']);
+    });
+
+    it('combine en OU par défaut, en ET avec `ingredientsMatch=all`', async () => {
+      const ou = await slugs({ ingredients: [THE_NOIR, BERGAMOTE], limit: 100 });
+      const et = await slugs({
+        ingredients: [THE_NOIR, BERGAMOTE],
+        ingredientsMatch: 'all',
+        limit: 100,
+      });
+
+      expect(ou).toEqual(
+        expect.arrayContaining(['darjeeling-first-flush', 'chai-maison', 'earl-grey-au-chanvre']),
+      );
+      expect(et).toEqual(['earl-grey-au-chanvre']);
+    });
+
+    it('se combine aux autres filtres', async () => {
+      const resultat = await slugs({ ingredients: [THE_VERT], maxPriceCents: 1500, limit: 100 });
+
+      expect(resultat.sort()).toEqual(['genmaicha', 'sencha-du-matin']);
+    });
+
+    it('renvoie une page vide, pas une erreur, pour un ingrédient présent dans aucun produit', async () => {
+      const hibiscus = await lister({ ingredients: [idIngredient('Hibiscus')] });
+      const oolong = await lister({ ingredients: [idIngredient('Oolong')] });
+
+      expect(hibiscus.data).toEqual([]);
+      expect(hibiscus.meta.total).toBe(0);
+      // Seul un produit non publié en contient.
+      expect(oolong.meta.total).toBe(0);
+    });
+
+    it('refuse un UUID absent du référentiel avec la contrainte `isAllowed`', async () => {
+      const erreur = await echec({ ingredients: ['d0000000-0000-4000-8000-999999999999'] });
+
+      expect(erreur.code).toBe('VALIDATION_ERROR');
+      expect(erreur.fieldErrors['ingredients']).toEqual(['isAllowed']);
+    });
+
+    it('refuse une combinaison autre que `any` ou `all`', async () => {
+      const erreur = await echec({
+        ingredients: [THE_VERT],
+        ingredientsMatch: 'tous' as unknown as 'all',
+      });
+
+      expect(erreur.fieldErrors['ingredientsMatch']).toBeDefined();
     });
   });
 
@@ -279,12 +356,14 @@ describe('ProductsMockService', () => {
 
     it('renvoie plusieurs noms pour une même requête accentuée (validation US-014)', async () => {
       const page = await lister({ q: 'É', category: 'cafes' });
+      // Sans `sort`, le contrat trie par `name_asc` (US-017) : les résultats
+      // reviennent dans l'ordre alphabétique, et non dans celui du jeu simulé.
       expect(page.data.map((produit) => produit.name)).toEqual([
+        'Colombie Huila',
+        'Décaféiné Pérou',
         'Espresso maison',
         'Éthiopie Yirgacheffe',
-        'Colombie Huila',
         'Kenya AA',
-        'Décaféiné Pérou',
       ]);
       expect(page.meta.total).toBe(5);
       expect(await slugs({ q: 'e', category: 'cafes' })).toEqual(

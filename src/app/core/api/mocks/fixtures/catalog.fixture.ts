@@ -87,6 +87,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Vert · Uji, Japon',
     tastingNotes: 'Herbacé · crémeux · umami',
     badge: 'Préféré',
+    averageRating: 4.8,
+    ratingCount: 126,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000002',
@@ -104,6 +106,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Vert · Shizuoka, Japon',
     tastingNotes: 'Iodé · frais · végétal',
     badge: null,
+    averageRating: 4.2,
+    ratingCount: 38,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000003',
@@ -121,6 +125,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Vert · Hangzhou, Chine',
     tastingNotes: 'Châtaigne · beurré · soyeux',
     badge: null,
+    averageRating: 4.8,
+    ratingCount: 54,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000004',
@@ -138,6 +144,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Vert · Kyoto, Japon',
     tastingNotes: 'Riz soufflé · pain grillé',
     badge: null,
+    averageRating: 3.9,
+    ratingCount: 17,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000005',
@@ -155,6 +163,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Noir · Darjeeling, Inde',
     tastingNotes: 'Muscat · floral · sec',
     badge: null,
+    averageRating: null,
+    ratingCount: 0,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000006',
@@ -172,6 +182,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Noir · Assam, Inde',
     tastingNotes: 'Cannelle · cardamome · gingembre',
     badge: null,
+    averageRating: 4.5,
+    ratingCount: 61,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000007',
@@ -189,6 +201,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Vert · Shizuoka, Japon',
     tastingNotes: 'Torréfié · noisette · caramel',
     badge: 'Peu caféiné',
+    averageRating: 4.1,
+    ratingCount: 23,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000008',
@@ -206,6 +220,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Espresso · Brésil · Éthiopie',
     tastingNotes: 'Praliné · fruits rouges',
     badge: 'Nouveau',
+    averageRating: 4.6,
+    ratingCount: 92,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000009',
@@ -223,6 +239,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Filtre · Yirgacheffe, Éthiopie',
     tastingNotes: 'Jasmin · bergamote · pêche',
     badge: null,
+    averageRating: 4.4,
+    ratingCount: 45,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000010',
@@ -240,6 +258,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Filtre · Huila, Colombie',
     tastingNotes: 'Caramel · pomme rouge · doux',
     badge: null,
+    averageRating: null,
+    ratingCount: 0,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000011',
@@ -257,6 +277,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Filtre · Nyeri, Kenya',
     tastingNotes: 'Cassis · tomate · vif',
     badge: 'Rare',
+    averageRating: 4.0,
+    ratingCount: 12,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000012',
@@ -274,6 +296,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Décaféiné · Cajamarca, Pérou',
     tastingNotes: 'Noisette · miel · sans solvant',
     badge: 'Sans caféine',
+    averageRating: 3.5,
+    ratingCount: 8,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000013',
@@ -291,6 +315,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Thé au CBD · Ceylan',
     tastingNotes: 'Bergamote · boisé · rond',
     badge: null,
+    averageRating: 4.3,
+    ratingCount: 29,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000014',
@@ -308,6 +334,8 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Thé au CBD · Fujian',
     tastingNotes: 'Miel · foin · doux',
     badge: 'Nouveau',
+    averageRating: null,
+    ratingCount: 0,
   },
   {
     id: 'a0000000-0000-4000-8000-000000000015',
@@ -325,5 +353,7 @@ export const PRODUCTS_FIXTURE: readonly CatalogProduct[] = [
     origin: 'Oolong · Dong Ding, Taïwan',
     tastingNotes: 'Orchidée · lacté · long',
     badge: null,
+    averageRating: 4.7,
+    ratingCount: 31,
   },
 ];

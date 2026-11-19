@@ -9,7 +9,7 @@
  *
  * On n'écrit jamais un type d'API à la main : on l'extrait d'ici.
  */
-import type { components } from './schema';
+import type { components, operations } from './schema';
 
 export type User = components['schemas']['User'];
 export type Role = components['schemas']['Role'];
@@ -44,6 +44,7 @@ export interface Variant {
   readonly stock: number | null;
 }
 
+export type Image = components['schemas']['Image'];
 export type ProductDetail = components['schemas']['ProductDetail'];
 
 /** Réponse du contrôle public d'une quantité sur un format (US-004). */
@@ -55,28 +56,42 @@ export type CartWarning = components['schemas']['CartWarning'];
 /** Corps de `POST /cart/items` : une variante et une quantité, jamais un prix. */
 export type AddCartItemRequest = components['schemas']['AddCartItemRequest'];
 
-/*
- * Filtres de `GET /products` tels que le catalogue les envoie aujourd'hui.
+/** Choix de filtres présents dans le catalogue, et bornes de prix (US-016). */
+export type CatalogueFilters = components['schemas']['CatalogueFilters'];
+
+/** Paramètres acceptés par `GET /products`, tels que le contrat les déclare. */
+export type ProductQuery = NonNullable<operations['listProducts']['parameters']['query']>;
+
+/** Tris proposés par `GET /products` (US-017). */
+export type Sort = NonNullable<ProductQuery['sort']>;
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CONTRAT 1.5.0 PAS ENCORE GÉNÉRÉ : recherche par ingrédient (US-015).
  *
- * Seul type d'API écrit à la main, et seulement parce qu'il est **gelé** : le
- * contrat de `GET /products` a changé avec US-016 côté back (`ingredients`,
- * `origin`, `typeTea`, `howMuchCaffeine`, `moment`, `minPrice`, `maxPrice`, et
- * plus de `category`, `type`, `q`, `inStock` ni `sort`). Réaligner le catalogue
- * est une story à part entière ; en attendant, ce gel garde l'écran en marche
- * et rend la dette visible à la lecture.
- *
- * À supprimer en reprenant le catalogue sur le contrat courant.
- */
-export interface ProductQuery {
-  q?: string;
-  category?: string;
-  type?: ProductType;
-  minPriceCents?: number;
-  maxPriceCents?: number;
-  inStock?: boolean;
-  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'name_asc';
-  page?: number;
-  limit?: number;
+ * Recopié à l'identique d'`openapi.yaml` 1.5.0, branche
+ * `feat/scrum-65/recherche-par-ingredients` de brume_back (doc :
+ * `docs/CATALOGUE-INGREDIENTS.md`). `schema.d.ts` suit `develop` (1.4.0), qui
+ * connaît déjà `ingredients` sur `GET /products` mais ni `ingredientsMatch` ni
+ * `GET /ingredients`. Une fois le back fusionné, `schema.d.ts` est régénéré et
+ * ce bloc devient deux alias :
+ *   components['schemas']['IngredientListItem'] et ProductQuery['ingredientsMatch'].
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Combinaison des ingrédients choisis dans `GET /products`. */
+export type IngredientsMatch = 'any' | 'all';
+
+/** Nature d'un ingrédient du référentiel. */
+export type IngredientType = 'base' | 'dried_ingredient' | 'liquid_flavoring' | 'essential_oil';
+
+/** Une entrée de `GET /ingredients`. */
+export interface IngredientListItem {
+  id: string;
+  name: string;
+  type: IngredientType;
+  /** Synonymes reconnus par les recherches : « badiane » pour l'anis étoilé. */
+  aliases: string[];
+  /** Produits publiés qui le contiennent. 0 : le filtre renverra une liste vide. */
+  productCount: number;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -112,22 +127,15 @@ export type UpdateProfileDraft = UpdateProfileRequest;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du catalogue montre et que
- * `openapi.yaml` (branche `develop` de brume_back) ne porte pas, au 29/10/2026.
+ * `CatalogueProduct` ne porte pas, au 19/11/2026.
  *
- * La carte produit affiche une origine, des notes de dégustation, un moment de
- * la journée et une mention éditoriale ; la barre de filtres ajoute aux filtres
- * du contrat une pastille « Moment » et une pastille « Caféine ».
+ * L'univers (`category`) et le type de produit attendent la story qui
+ * introduira l'enum thé / café / CBD côté back : le modèle ne connaît
+ * aujourd'hui que des thés, distingués par `typeTea`. Le slug, la mention
+ * éditoriale et les notes de dégustation n'existent nulle part.
  *
- * `origin` existe bien au contrat, mais sur `ProductDetail` seulement : la
- * liste ne le renvoie pas, alors que la carte l'affiche. `attributes.caffeine`
- * est dans le seed et dans `ProductDetail`, sans être interrogeable. Les deux
- * autres n'existent nulle part.
- *
- * À faire ajouter au contrat : `moment` et `caffeine` en paramètres de
- * `GET /products`, et les quatre champs sur `ProductSummary`. Tant que ce
- * n'est pas fait, seule l'implémentation simulée les connaît, et
- * `ProductsHttpService` laisse les deux filtres de côté plutôt que d'envoyer
- * au back des paramètres qu'il rejetterait.
+ * `moment`, `caffeine`, `averageRating` et `ratingCount`, eux, sont bien au
+ * contrat : ils ne sont plus hors contrat du tout.
  * ───────────────────────────────────────────────────────────────────────── */
 
 /**
@@ -140,19 +148,41 @@ export type Moment = 'MORNING' | 'NOON' | 'AFTERNOON' | 'EVENING';
 /** Teneur en caféine. Reprend les valeurs de `attributes.caffeine` du seed. */
 export type Caffeine = 'NONE' | 'LOW' | 'MEDIUM' | 'HIGH';
 
-export interface ProductExtensions {
-  moment: Moment;
-  caffeine: Caffeine;
+/**
+ * Produit tel que la grille du catalogue l'affiche.
+ *
+ * N'est plus dérivé de `ProductSummary`, qui vient du cadrage initial et
+ * qu'aucune route ne sert : le catalogue renvoie `CatalogueProduct`.
+ * Ce que l'API ne fournit pas vaut `null` plutôt que d'être inventé : l'écran
+ * tait ce qu'il ne sait pas, au lieu d'afficher du faux.
+ */
+export interface CatalogProduct {
+  readonly id: string;
+  /** Porté par l'URL de la fiche. Faute de slug à l'API, c'est l'UUID. */
+  readonly slug: string;
+  readonly name: string;
+  readonly type: ProductType | null;
+  readonly shortDescription: string | null;
+  /** Univers du produit. `null` : l'API ne le renvoie pas. */
+  readonly category: CategoryRef | null;
+  readonly image: Image | null;
+  /** Prix du format le moins cher, en centimes. `null` si aucun format. */
+  readonly fromPriceCents: number | null;
+  readonly availability: Availability;
+  readonly ageRestricted: boolean;
+  readonly moment: Moment | null;
+  readonly caffeine: Caffeine | null;
   /** Origine, affichée en petites capitales : « Vert · Uji, Japon ». */
-  origin: string | null;
+  readonly origin: string | null;
   /** Notes de dégustation : « Herbacé · crémeux · umami ». */
-  tastingNotes: string | null;
+  readonly tastingNotes: string | null;
   /** Mention éditoriale sur la photo : « Préféré », « Nouveau », « Rare ». */
-  badge: string | null;
+  readonly badge: string | null;
+  /** Note moyenne sur 5, `null` sans aucun avis noté. Sert au tri `rating_desc`. */
+  readonly averageRating: number | null;
+  /** Nombre d'avis notés. Départage deux produits de même moyenne. */
+  readonly ratingCount: number;
 }
-
-/** Produit tel que la grille du catalogue l'affiche. */
-export type CatalogProduct = ProductSummary & ProductExtensions;
 
 /**
  * Produit tel que la fiche l'affiche : la carte du catalogue, plus ses
@@ -160,14 +190,40 @@ export type CatalogProduct = ProductSummary & ProductExtensions;
  */
 export type CatalogProductDetail = CatalogProduct & { readonly variants: readonly Variant[] };
 
-/** Filtres hors contrat, ajoutés à ceux de `GET /products`. */
-export interface ProductQueryExtensions {
-  moment: Moment;
-  caffeine: Caffeine;
-}
+/**
+ * Filtres tels que **l'écran** les manipule, et tels que l'URL les porte.
+ *
+ * Ce n'est pas un type d'API : c'est le vocabulaire de la maquette, que
+ * `ProductsHttpService` traduit en `ProductQuery` au moment de l'appel. Les
+ * deux ne se superposent plus depuis le contrat 1.3.0, et mélanger les deux
+ * reviendrait à envoyer au back des paramètres qu'il ne connaît pas.
+ *
+ * Les quatre derniers champs n'ont **aucun équivalent au contrat** : la barre
+ * de filtres les propose encore, l'implémentation simulée les honore, et
+ * `ProductsHttpService` les laisse de côté plutôt que de renvoyer une liste
+ * qui ne correspondrait pas à ce que l'écran affiche. À faire ajouter au
+ * contrat, ou à retirer de la maquette.
+ */
+export interface CatalogQuery {
+  moment?: Moment;
+  caffeine?: Caffeine;
+  /** Bornes de la tranche choisie, en centimes. `minPrice` / `maxPrice` au contrat. */
+  minPriceCents?: number;
+  maxPriceCents?: number;
+  sort?: Sort;
+  page?: number;
+  limit?: number;
+  /** UUID du référentiel (`GET /ingredients`), 20 au plus. Même nom au contrat (US-015). */
+  ingredients?: readonly string[];
+  /** `any` (défaut) : au moins un ingrédient ; `all` : tous. Sans effet sans `ingredients`. */
+  ingredientsMatch?: IngredientsMatch;
 
-/** Jeu complet de filtres manipulé par l'écran. */
-export type CatalogQuery = ProductQuery & Partial<ProductQueryExtensions>;
+  /** Onglets d'univers de la maquette. Sans filtre équivalent au contrat. */
+  category?: string;
+  type?: ProductType;
+  inStock?: boolean;
+  q?: string;
+}
 
 /** Page de produits renvoyée au catalogue. */
 export interface CatalogPage {

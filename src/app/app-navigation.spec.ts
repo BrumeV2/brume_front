@@ -15,8 +15,10 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { App } from './app';
 import { routes } from './app.routes';
-import { CartMockService } from './core/api/mocks/cart.mock.service';
 import { CartService } from './core/api/cart.service';
+import { IngredientsService } from './core/api/ingredients.service';
+import { CartMockService } from './core/api/mocks/cart.mock.service';
+import { IngredientsMockService } from './core/api/mocks/ingredients.mock.service';
 import { PRODUCTS_MOCK_OPTIONS, ProductsMockService } from './core/api/mocks/products.mock.service';
 import { UsersMockService } from './core/api/mocks/users.mock.service';
 import { ProductsService } from './core/api/products.service';
@@ -42,10 +44,13 @@ describe('Navigation : recherche et défilement', () => {
             anchorScrolling: 'enabled',
           }),
         ),
+        // `App` monte le tiroir du panier (US-021) : sans ce service, le
+        // composant racine ne peut pas être construit.
+        { provide: CartService, useClass: CartMockService },
         { provide: ProductsService, useClass: ProductsMockService },
+        { provide: IngredientsService, useClass: IngredientsMockService },
         { provide: PRODUCTS_MOCK_OPTIONS, useValue: { delayMs: 0, failFirstSearches: 0 } },
         { provide: UsersService, useClass: UsersMockService },
-        { provide: CartService, useClass: CartMockService },
         { provide: SessionService, useValue: { logout: () => of(undefined) } },
       ],
     }).compileComponents();

@@ -20,10 +20,13 @@ import type {
   CatalogProduct,
   CatalogQuery,
   Category,
+  IngredientListItem,
+  IngredientsMatch,
   Moment,
   ProductType,
 } from '../../../../core/api/api.types';
 import { CATALOG_RULES, TRANCHES_PRIX, type Sort } from '../../../../core/api/catalog-rules';
+import { IngredientsService } from '../../../../core/api/ingredients.service';
 import { nettoyerRecherche } from '../../../../core/api/product-search';
 import { ProductsService } from '../../../../core/api/products.service';
 import { UiButton } from '../../../../shared/ui/ui-button/ui-button';
@@ -31,6 +34,7 @@ import { UiProductCard } from '../../../../shared/ui/ui-product-card/ui-product-
 import { badgeDe, momentDe } from '../../catalog-presentation';
 import type { ChampFiltre, SectionUnivers } from '../../catalog.types';
 import { CatalogFilters } from '../../components/catalog-filters/catalog-filters';
+import { IngredientPicker } from '../../components/ingredient-picker/ingredient-picker';
 import { UniverseSection } from '../../components/universe-section/universe-section';
 
 /** Produits montrés par univers dans la vue sans filtre, comme la maquette. */
@@ -57,7 +61,14 @@ type Statut = 'chargement' | 'pret' | 'filtres-invalides' | 'echec';
 @Component({
   selector: 'app-product-list',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [KeyValuePipe, CatalogFilters, UiButton, UiProductCard, UniverseSection],
+  imports: [
+    KeyValuePipe,
+    CatalogFilters,
+    IngredientPicker,
+    UiButton,
+    UiProductCard,
+    UniverseSection,
+  ],
   templateUrl: './product-list.html',
   styleUrl: './product-list.scss',
 })
@@ -66,6 +77,7 @@ export class ProductList {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductsService);
+  private readonly ingredientsService = inject(IngredientsService);
 
   private readonly rechercheSaisie = new Subject<string | null>();
   private requete?: Subscription;
@@ -88,9 +100,27 @@ export class ProductList {
   readonly minPriceCents = input<string | undefined>();
   readonly maxPriceCents = input<string | undefined>();
   readonly inStock = input<string | undefined>();
+  /** Un ingrédient : une chaîne ; plusieurs (paramètre répété) : un tableau. */
+  readonly ingredients = input<string | readonly string[] | undefined>();
+  readonly ingredientsMatch = input<string | undefined>();
+
+  /** UUID d'ingrédients portés par l'URL, sans doublon ni valeur vide. */
+  private readonly idsIngredients = computed<readonly string[]>(() => {
+    const brut = this.ingredients();
+    const liste = brut === undefined ? [] : typeof brut === 'string' ? [brut] : brut;
+    return [...new Set(liste.filter((id) => id.trim() !== ''))];
+  });
 
   /** Filtres lus dans l'URL, tels qu'ils partiront vers l'API. */
   protected readonly filtres = computed<CatalogQuery>(() => ({
+    ...(this.idsIngredients().length === 0
+      ? {}
+      : {
+          ingredients: this.idsIngredients(),
+          ...(this.ingredientsMatch() === undefined
+            ? {}
+            : { ingredientsMatch: this.ingredientsMatch() as IngredientsMatch }),
+        }),
     ...(this.category() === undefined ? {} : { category: this.category() }),
     ...(this.type() === undefined ? {} : { type: this.type() as ProductType }),
     ...(this.moment() === undefined ? {} : { moment: this.moment() as Moment }),
@@ -123,10 +153,18 @@ export class ProductList {
   );
   protected readonly resteDesProduits = computed(() => this.produits().length < this.total());
 
+  /*
+   * Produits par univers. Un produit sans univers n'est compté nulle part :
+   * l'API ne renvoie pas de catégorie, donc la vue par univers se vide d'elle
+   * -même plutôt que de ranger tout le catalogue sous un rayon inventé.
+   */
   protected readonly comptes = computed<Readonly<Record<string, number>>>(() => {
     const comptes: Record<string, number> = {};
     for (const produit of this.catalogue()) {
-      comptes[produit.category.slug] = (comptes[produit.category.slug] ?? 0) + 1;
+      const univers = produit.category?.slug;
+      if (univers !== undefined) {
+        comptes[univers] = (comptes[univers] ?? 0) + 1;
+      }
     }
     return comptes;
   });
@@ -141,9 +179,47 @@ export class ProductList {
     this.universPeuples().map((categorie) => ({
       categorie,
       produits: this.catalogue()
-        .filter((p) => p.category.slug === categorie.slug)
+        .filter((p) => p.category?.slug === categorie.slug)
         .slice(0, APERCU_PAR_UNIVERS),
     })),
+  );
+
+  /**
+   * Référentiel des ingrédients, pour nommer ceux que l'URL porte. `null` tant
+   * qu'il n'est pas chargé, ou s'il n'a pas pu l'être : les critères restent
+   * alors affichés et retirables, sous un libellé générique.
+   */
+  private readonly referentiel = signal<readonly IngredientListItem[] | null>(null);
+  /** Ingrédients choisis dans le sélecteur, connus avant même le référentiel. */
+  private readonly choisisDansLaSession = signal<readonly IngredientListItem[]>([]);
+
+  protected readonly nomsIngredients = computed<Readonly<Record<string, string>>>(() => {
+    const noms: Record<string, string> = {};
+    for (const ingredient of [...(this.referentiel() ?? []), ...this.choisisDansLaSession()]) {
+      noms[ingredient.id] = ingredient.name;
+    }
+    return noms;
+  });
+
+  protected readonly idsIngredientsChoisis = this.idsIngredients;
+
+  /**
+   * Restitution du critère, en toutes lettres : « Anis étoilé ou Cannelle »,
+   * ou « … et … » quand tous sont exigés. Vide sans ingrédient.
+   */
+  protected readonly ingredientsEnClair = computed(() => {
+    const ids = this.idsIngredients();
+    if (ids.length === 0) return '';
+    const noms = ids.map((id) => this.nomsIngredients()[id] ?? 'un ingrédient inconnu');
+    const type = this.ingredientsMatch() === 'all' ? 'conjunction' : 'disjunction';
+    return new Intl.ListFormat('fr', { style: 'long', type }).format(noms);
+  });
+
+  /** Le back a refusé un UUID d'ingrédient : absent du référentiel. */
+  protected readonly ingredientRefuse = computed(
+    () =>
+      this.statut() === 'filtres-invalides' &&
+      this.erreur()?.fieldErrors['ingredients'] !== undefined,
   );
 
   protected readonly libelleMoment = momentDe;
@@ -203,6 +279,56 @@ export class ProductList {
     void this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { sort: sort === CATALOG_RULES.defaultSort ? null : sort, page: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /** Ajoute un ingrédient à ceux déjà posés (US-015). */
+  protected ajouterIngredient(ingredient: IngredientListItem): void {
+    const ids = this.idsIngredients();
+    if (ids.includes(ingredient.id) || ids.length >= CATALOG_RULES.ingredients.max) return;
+    this.choisisDansLaSession.update((connus) => [...connus, ingredient]);
+    this.poserIngredients([...ids, ingredient.id]);
+  }
+
+  protected retirerIngredient(id: string): void {
+    this.poserIngredients(this.idsIngredients().filter((candidat) => candidat !== id));
+  }
+
+  /**
+   * Après un refus de l'API, ne garde que les ingrédients que le référentiel
+   * connaît. Sans référentiel pour en juger, les retire tous.
+   */
+  protected retirerIngredientsInconnus(): void {
+    const connus = this.referentiel();
+    this.poserIngredients(
+      connus === null
+        ? []
+        : this.idsIngredients().filter((id) => connus.some((ingredient) => ingredient.id === id)),
+    );
+  }
+
+  protected combiner(match: IngredientsMatch): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      // `any` est la valeur par défaut du contrat : inutile de l'écrire dans l'URL.
+      queryParams: { ingredientsMatch: match === 'all' ? 'all' : null, page: null },
+      queryParamsHandling: 'merge',
+    });
+  }
+
+  /**
+   * Écrit la liste dans l'URL en paramètre répété. Le mode de combinaison
+   * disparaît avec le deuxième ingrédient : il n'a plus de sens.
+   */
+  private poserIngredients(ids: readonly string[]): void {
+    void this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        ingredients: ids.length === 0 ? null : ids,
+        ...(ids.length < 2 ? { ingredientsMatch: null } : {}),
+        page: null,
+      },
       queryParamsHandling: 'merge',
     });
   }
@@ -301,6 +427,14 @@ export class ProductList {
         },
       });
 
+    this.ingredientsService
+      .all()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (ingredients) => this.referentiel.set(ingredients),
+        error: () => this.referentiel.set(null),
+      });
+
     this.productsService
       .categories()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -337,7 +471,18 @@ function bornesDeTranche(id: string | null): Record<string, string | null> {
   };
 }
 
+/**
+ * Vrai dès que l'écran doit montrer une liste plutôt que les univers.
+ *
+ * Un tri explicite en fait partie (US-017) : la vue par univers présente
+ * quatre produits par rayon, dans l'ordre du catalogue. Demander « prix
+ * croissant » et ne rien voir changer n'aurait aucun sens — choisir un ordre,
+ * c'est demander une liste ordonnée.
+ *
+ * Revenir au tri par défaut retire le paramètre, donc ramène aux univers :
+ * l'ordre par défaut et la présentation par défaut vont ensemble.
+ */
 function aDesCriteres(filtres: CatalogQuery): boolean {
-  const { sort: _sort, page: _page, limit: _limit, ...criteres } = filtres;
+  const { page: _page, limit: _limit, ...criteres } = filtres;
   return Object.values(criteres).some((valeur) => valeur !== undefined && valeur !== '');
 }

@@ -5,8 +5,19 @@
  * Aucun secret ici : tout ce qui est compilé est public.
  */
 export const environment = {
-  /** Catalogue US-014 simulé indépendamment des autres ressources. */
-  useCatalogMocks: true,
+  /**
+   * Catalogue branché sur l'API locale, indépendamment des autres ressources.
+   *
+   * Demande la pile du back : `docker compose up -d --build` dans
+   * `brume_back`, puis `migration:run`, `seed` et `seed:reviews`. Le front
+   * parle alors à `localhost:3000` via `proxy.conf.json`, et
+   * `ProductsHttpService` traduit les formes du contrat vers le modèle de
+   * l'écran — voir `catalogue-api.types.ts`.
+   *
+   * À repasser à `true` pour travailler sans Docker : seul le catalogue
+   * retombe sur les données simulées, le reste ne bouge pas.
+   */
+  useCatalogMocks: false,
   production: false,
   /**
    * Préfixe de toutes les requêtes vers l'API. `proxy.conf.json` renvoie `/api`

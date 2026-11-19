@@ -9,8 +9,8 @@ import { LIBELLES_MOMENT } from '../../core/api/catalog-rules';
  * pour la grille filtrée.
  */
 
-export function momentDe(produit: CatalogProduct): string {
-  return LIBELLES_MOMENT[produit.moment];
+export function momentDe(produit: CatalogProduct): string | null {
+  return produit.moment === null ? null : LIBELLES_MOMENT[produit.moment];
 }
 
 /**
