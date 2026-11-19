@@ -15,5 +15,5 @@ export const environment = {
    */
   apiBaseUrl: '/api',
   /** `true` = les services d'API sont remplacés par leurs implémentations simulées. */
-  useMocks: true,
+  useMocks: false,
 };
