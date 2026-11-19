@@ -21,12 +21,13 @@ export abstract class UsersService {
   /**
    * `PATCH /users/me` — modification du profil (US-047).
    *
-   * L'email et le rôle ne sont jamais modifiables : ils n'existent pas dans
-   * `UpdateProfileRequest`. Le corps doit porter au moins un champ
-   * (`minProperties: 1` dans le contrat).
+   * L'email, le rôle et les points de fidélité ne sont jamais modifiables :
+   * ils n'existent pas dans `UpdateProfileRequest`, que le back refuse
+   * d'étendre (`additionalProperties: false`). Le corps doit porter au moins
+   * un champ (`minProperties: 1`).
    *
-   * `birthDate` n'est pas encore au contrat : voir la note « HORS CONTRAT »
-   * dans `api.types.ts`.
+   * Aucun identifiant n'est transmis : le compte modifié est celui du cookie
+   * de session, donc une requête ne peut pas en viser un autre.
    */
   abstract updateMe(payload: UpdateProfileDraft): Observable<UserProfile>;
 }

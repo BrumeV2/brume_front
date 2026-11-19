@@ -9,7 +9,7 @@
  *
  * On n'écrit jamais un type d'API à la main : on l'extrait d'ici.
  */
-import type { components, operations } from './schema';
+import type { components } from './schema';
 
 export type User = components['schemas']['User'];
 export type Role = components['schemas']['Role'];
@@ -24,37 +24,60 @@ export type ProductSummary = components['schemas']['ProductSummary'];
 export type ProductType = components['schemas']['ProductType'];
 export type Availability = components['schemas']['Availability'];
 
-/** Paramètres acceptés par `GET /products`, tels que le contrat les déclare. */
-export type ProductQuery = NonNullable<operations['listProducts']['parameters']['query']>;
+/*
+ * Filtres de `GET /products` tels que le catalogue les envoie aujourd'hui.
+ *
+ * Seul type d'API écrit à la main, et seulement parce qu'il est **gelé** : le
+ * contrat de `GET /products` a changé avec US-016 côté back (`ingredients`,
+ * `origin`, `typeTea`, `howMuchCaffeine`, `moment`, `minPrice`, `maxPrice`, et
+ * plus de `category`, `type`, `q`, `inStock` ni `sort`). Réaligner le catalogue
+ * est une story à part entière ; en attendant, ce gel garde l'écran en marche
+ * et rend la dette visible à la lecture.
+ *
+ * À supprimer en reprenant le catalogue sur le contrat courant.
+ */
+export interface ProductQuery {
+  q?: string;
+  category?: string;
+  type?: ProductType;
+  minPriceCents?: number;
+  maxPriceCents?: number;
+  inStock?: boolean;
+  sort?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'name_asc';
+  page?: number;
+  limit?: number;
+}
 
 /* ─────────────────────────────────────────────────────────────────────────
- * HORS CONTRAT — champs présents dans la maquette mais absents de
- * `openapi.yaml` (branche `develop` de brume_back) au 27/10/2026.
+ * HORS CONTRAT — ce que la maquette du profil montre et que `openapi.yaml`
+ * (branche `develop` de brume_back) ne porte pas, au 17/11/2026.
  *
- * La connexion passe par Google, seul fournisseur d'identité.
- * L'email et la photo viennent du fournisseur et ne se modifient pas depuis
- * Brume ; le prénom et le nom en viennent aussi mais restent corrigeables,
- * puisqu'ils servent de destinataire des colis (écran « Profil client — mobile »).
+ * Une seule chose, et facultative : la photo du compte. Elle vient du
+ * fournisseur d'identité quand il y en a un, et l'écran retombe sur les
+ * initiales puis sur l'email quand l'API n'en renvoie pas — ce qui est le cas
+ * aujourd'hui. Rien dans l'écran ne suppose donc un fournisseur en
+ * particulier : l'authentification par email et mot de passe est en cours
+ * d'écriture, et Google n'est plus le seul chemin prévu.
  *
- * Seule la date de naissance est propre à Brume et absente du contrat.
- *
- * À faire ajouter au contrat côté back. Tant que ce n'est pas fait, seule
- * l'implémentation simulée connaît ces champs.
+ * La date de naissance de la maquette a été retirée : `UpdateProfileRequest`
+ * déclare `additionalProperties: false`, donc l'envoyer ferait répondre 400 à
+ * toute modification. À faire ajouter au contrat avant de la remettre.
  * ───────────────────────────────────────────────────────────────────────── */
 
 export interface ProfileExtensions {
-  /** Date de naissance au format `YYYY-MM-DD`. Facultative (majorité CBD, D-002). */
-  birthDate: string | null;
   /** Photo de profil fournie par le fournisseur d'identité. */
-  avatarUrl: string | null;
+  avatarUrl?: string | null;
 }
 
 /** Profil tel que l'écran « Mon profil » l'affiche. */
 export type UserProfile = User & ProfileExtensions;
 
-/** Corps d'une modification de profil : champs du contrat + extensions. */
-export type UpdateProfileDraft = UpdateProfileRequest &
-  Partial<Omit<ProfileExtensions, 'avatarUrl'>>;
+/**
+ * Corps d'une modification de profil.
+ *
+ * Rien à ajouter au contrat : tout ce que l'écran sait modifier y figure.
+ */
+export type UpdateProfileDraft = UpdateProfileRequest;
 
 /* ─────────────────────────────────────────────────────────────────────────
  * HORS CONTRAT — ce que la maquette du catalogue montre et que

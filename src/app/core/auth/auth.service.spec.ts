@@ -5,23 +5,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { environment } from '../../../environments/environment';
 import type { UpdateProfileDraft, UserProfile } from '../api/api.types';
+import { mockUsers } from '../api/mocks/fixtures/users.fixture';
 import { SessionService } from '../api/session.service';
 import { UsersService } from '../api/users.service';
 
 import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 
-const client: UserProfile = {
-  id: 'e0000000-0000-4000-8000-000000000001',
-  email: 'camille.martin@example.com',
-  firstName: 'Camille',
-  lastName: 'Martin',
-  phone: null,
-  role: 'CUSTOMER',
-  createdAt: '2025-03-12T09:12:00.000Z',
-  birthDate: null,
-  avatarUrl: null,
-};
+/** Le compte du seed : un seul endroit à corriger quand le contrat change. */
+const client: UserProfile = mockUsers[0];
 
 function erreur(status: number): HttpErrorResponse {
   return new HttpErrorResponse({ status, url: `${environment.apiBaseUrl}/users/me` });

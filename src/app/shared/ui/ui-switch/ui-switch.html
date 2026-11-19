@@ -1,0 +1,13 @@
+<label class="interrupteur">
+  <span class="interrupteur__textes">
+    <span class="interrupteur__titre">{{ libelle() }}</span>
+    @if (aide(); as texte) {
+      <span class="interrupteur__aide">{{ texte }}</span>
+    }
+  </span>
+
+  <span class="interrupteur__piste">
+    <input class="interrupteur__case" type="checkbox" role="switch" [formControl]="control()" />
+    <span class="interrupteur__pastille" aria-hidden="true"></span>
+  </span>
+</label>

@@ -69,16 +69,29 @@ describe('UsersMockService', () => {
     expect(updated.phone).toBeNull();
   });
 
-  it('vide la date de naissance quand le champ est effacé', async () => {
-    const updated = await firstValueFrom(service.updateMe({ birthDate: '' }));
+  it('efface un champ facultatif envoyé à null', async () => {
+    const updated = await firstValueFrom(service.updateMe({ address: null }));
 
-    expect(updated.birthDate).toBeNull();
+    expect(updated.address).toBeNull();
   });
 
-  it('enregistre une date de naissance valide', async () => {
-    const updated = await firstValueFrom(service.updateMe({ birthDate: '1990-01-31' }));
+  it("enregistre l'adresse de livraison en trois champs", async () => {
+    const updated = await firstValueFrom(
+      service.updateMe({ address: '8 quai de Serbie', postalCode: '69006', city: 'Lyon' }),
+    );
 
-    expect(updated.birthDate).toBe('1990-01-31');
+    expect(updated.address).toBe('8 quai de Serbie');
+    expect(updated.postalCode).toBe('69006');
+    expect(updated.city).toBe('Lyon');
+  });
+
+  it('enregistre le choix de la lettre', async () => {
+    const updated = await firstValueFrom(service.updateMe({ doNewsletter: false }));
+
+    expect(updated.doNewsletter).toBe(false);
+
+    const reloaded = await firstValueFrom(afterReload().getMe());
+    expect(reloaded.doNewsletter).toBe(false);
   });
 
   it('ne modifie pas les champs absents du corps', async () => {
@@ -119,21 +132,32 @@ describe('UsersMockService', () => {
       expect(error.fieldErrors['lastName']).toBeDefined();
     });
 
-    it('refuse une date de naissance dans le futur', async () => {
-      const error = await expectFailure(
-        firstValueFrom(service.updateMe({ birthDate: '2099-01-01' })),
-      );
+    it('refuse un code postal au mauvais format', async () => {
+      const before = await firstValueFrom(service.getMe());
+
+      const error = await expectFailure(firstValueFrom(service.updateMe({ postalCode: '6900' })));
 
       expect(error.code).toBe('VALIDATION_ERROR');
-      expect(error.fieldErrors['birthDate']).toBeDefined();
+      expect(error.fieldErrors['postalCode']).toBeDefined();
+
+      const after = await firstValueFrom(service.getMe());
+      expect(after).toEqual(before);
     });
 
-    it('refuse une date de naissance mal formée', async () => {
+    it('refuse une adresse de plus de 255 caractères', async () => {
       const error = await expectFailure(
-        firstValueFrom(service.updateMe({ birthDate: '14/05/1996' })),
+        firstValueFrom(service.updateMe({ address: 'a'.repeat(256) })),
       );
 
-      expect(error.fieldErrors['birthDate']).toBeDefined();
+      expect(error.fieldErrors['address']).toBeDefined();
+    });
+
+    it('refuse une ville de plus de 100 caractères', async () => {
+      const error = await expectFailure(
+        firstValueFrom(service.updateMe({ city: 'L'.repeat(101) })),
+      );
+
+      expect(error.fieldErrors['city']).toBeDefined();
     });
 
     it('refuse un corps vide (minProperties du contrat)', async () => {

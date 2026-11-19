@@ -1,0 +1,91 @@
+.interrupteur {
+  display: flex;
+  align-items: center;
+  gap: var(--espace-3);
+  padding-block: var(--espace-2);
+  cursor: pointer;
+}
+
+.interrupteur__textes {
+  display: flex;
+  flex: 1 0 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.interrupteur__titre {
+  font-size: var(--bouton-taille);
+  font-weight: 500;
+  line-height: 1;
+}
+
+.interrupteur__aide {
+  font-size: var(--texte-petit-taille);
+  line-height: var(--texte-petit-interligne);
+  color: var(--couleur-texte-doux);
+}
+
+.interrupteur__piste {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 22px;
+  border-radius: var(--rayon-pilule);
+  background-color: var(--couleur-filet);
+  transition: background-color 0.2s var(--courbe-brume);
+}
+
+/*
+ * La case à cocher reste là, étalée sur la piste : elle garde le clavier, le
+ * focus et l'état annoncé. Seule son apparence est remplacée.
+ */
+.interrupteur__case {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: inherit;
+}
+
+/* La pastille : 16 px de diamètre, 3 px de marge, comme dans la maquette. */
+.interrupteur__pastille {
+  position: absolute;
+  inset-block-start: 3px;
+  inset-inline-start: 3px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: var(--couleur-blanc);
+  transition: transform 0.2s var(--courbe-brume);
+}
+
+.interrupteur__piste:has(.interrupteur__case:checked) {
+  background-color: var(--couleur-accent);
+}
+
+.interrupteur__case:checked ~ .interrupteur__pastille {
+  transform: translateX(18px);
+}
+
+.interrupteur__piste:has(.interrupteur__case:focus-visible) {
+  outline: 2px solid var(--couleur-encre);
+  outline-offset: 2px;
+}
+
+.interrupteur:has(.interrupteur__case:disabled) {
+  cursor: not-allowed;
+}
+
+.interrupteur__piste:has(.interrupteur__case:disabled) {
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .interrupteur__piste,
+  .interrupteur__pastille {
+    transition: none;
+  }
+}
