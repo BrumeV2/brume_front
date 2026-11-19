@@ -18,6 +18,7 @@ import {
 } from '@angular/router';
 import { filter } from 'rxjs';
 
+import { CartStore } from '../../core/state/cart.store';
 import { COMPTE, UNIVERS } from '../navigation';
 import { SideSwitch } from '../side-switch/side-switch';
 
@@ -47,6 +48,7 @@ export class SiteHeader {
   /** Vrai sur les pages à grande photo ou bandeau sombre en haut. */
   readonly transparent = input(false);
 
+  protected readonly panier = inject(CartStore);
   protected readonly univers = UNIVERS;
   protected readonly compte = COMPTE;
   /** Un univers est actif sur son filtre, quels que soient les autres filtres posés. */
@@ -63,6 +65,10 @@ export class SiteHeader {
   private readonly panneau = viewChild.required<ElementRef<HTMLDialogElement>>('panneau');
 
   constructor() {
+    // Le menu est sur toutes les pages : c'est lui qui démarre le panier, pour
+    // que le compteur soit juste dès l'arrivée.
+    this.panier.start();
+
     // Une navigation depuis le panneau le referme.
     inject(Router)
       .events.pipe(

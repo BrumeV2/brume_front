@@ -3,6 +3,12 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
+import { ProductsMockService } from '../../core/api/mocks/products.mock.service';
+import { UsersMockService } from '../../core/api/mocks/users.mock.service';
+import { ProductsService } from '../../core/api/products.service';
+import { UsersService } from '../../core/api/users.service';
+import { CartStore } from '../../core/state/cart.store';
+import { provideCartForTests } from '../../core/state/cart.testing';
 import { SiteHeader } from './site-header';
 
 @Component({ template: '' })
@@ -48,6 +54,9 @@ describe('SiteHeader', () => {
           { path: 'boutique', component: Page },
           { path: 'compte', component: Page },
         ]),
+        { provide: UsersService, useClass: UsersMockService },
+        { provide: ProductsService, useClass: ProductsMockService },
+        provideCartForTests(),
       ],
     }).compileComponents();
 
@@ -58,9 +67,30 @@ describe('SiteHeader', () => {
 
   afterEach(() => defilerA(0));
 
-  it('ne propose que des pages livrées : les univers du catalogue et le compte', () => {
+  it('ne propose que des pages livrées : les univers du catalogue, le compte et le panier', () => {
     expect(libellesDesLiens('.menu')).toEqual(['Thés', 'Cafés', 'CBD', 'BRUME', 'Compte']);
-    expect(element().textContent).not.toMatch(/TEA-BOX|Panier|TeaOMatic|Bataille/);
+    expect(element().querySelector('.menu__panier')).not.toBeNull();
+    expect(element().textContent).not.toMatch(/TEA-BOX|TeaOMatic|Bataille/);
+  });
+
+  // US-021 : le compteur suit le panier, et le bouton ouvre le tiroir.
+  describe('panier', () => {
+    const compteur = (): string =>
+      element().querySelector('.menu__compteur')?.textContent?.trim() ?? '';
+
+    it('affiche le nombre d’articles, et l’annonce aux lecteurs d’écran', () => {
+      expect(compteur()).toBe('0');
+      expect(element().querySelector('.menu__panier')?.getAttribute('aria-label')).toBe(
+        'Panier, 0 article',
+      );
+    });
+
+    it('ouvre le tiroir du panier', () => {
+      const panier = TestBed.inject(CartStore);
+      element().querySelector<HTMLButtonElement>('.menu__panier')?.click();
+
+      expect(panier.isDrawerOpen()).toBe(true);
+    });
   });
 
   it('indique la page active, univers compris', async () => {

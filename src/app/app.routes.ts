@@ -36,6 +36,10 @@ export const routes: Routes = [
     data: { menu: 'transparent' },
     loadChildren: () => import('./features/account/account.routes').then((m) => m.accountRoutes),
   },
+  {
+    path: 'commande',
+    loadChildren: () => import('./features/checkout/checkout.routes').then((m) => m.checkoutRoutes),
+  },
   // Toujours en dernier : une route placée après ce joker serait inatteignable.
   {
     path: '**',

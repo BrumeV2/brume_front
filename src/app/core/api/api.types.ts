@@ -23,6 +23,14 @@ export type CategoryRef = components['schemas']['CategoryRef'];
 export type ProductSummary = components['schemas']['ProductSummary'];
 export type ProductType = components['schemas']['ProductType'];
 export type Availability = components['schemas']['Availability'];
+export type Variant = components['schemas']['Variant'];
+export type ProductDetail = components['schemas']['ProductDetail'];
+
+export type Cart = components['schemas']['Cart'];
+export type CartItem = components['schemas']['CartItem'];
+export type CartWarning = components['schemas']['CartWarning'];
+/** Corps de `POST /cart/items` : une variante et une quantité, jamais un prix. */
+export type AddCartItemRequest = components['schemas']['AddCartItemRequest'];
 
 /*
  * Filtres de `GET /products` tels que le catalogue les envoie aujourd'hui.
@@ -122,6 +130,13 @@ export interface ProductExtensions {
 
 /** Produit tel que la grille du catalogue l'affiche. */
 export type CatalogProduct = ProductSummary & ProductExtensions;
+
+/**
+ * Produit tel que la fiche l'affiche : la carte du catalogue, plus les
+ * variantes de `ProductDetail` (formats, prix et disponibilité), sans
+ * lesquelles rien ne peut être ajouté au panier.
+ */
+export type CatalogProductDetail = CatalogProduct & Pick<ProductDetail, 'variants'>;
 
 /** Filtres hors contrat, ajoutés à ceux de `GET /products`. */
 export interface ProductQueryExtensions {

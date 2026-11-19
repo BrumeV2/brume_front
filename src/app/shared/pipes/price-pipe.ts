@@ -12,6 +12,15 @@ const EUROS_CENTIMES = new Intl.NumberFormat('fr-FR', {
   minimumFractionDigits: 2,
 });
 
+/** Met en forme un montant en centimes, comme le pipe `price`. */
+export function formatCents(cents: number | null | undefined): string {
+  if (cents === null || cents === undefined || !Number.isFinite(cents)) {
+    return '';
+  }
+  const format = cents % 100 === 0 ? EUROS_RONDS : EUROS_CENTIMES;
+  return format.format(cents / 100);
+}
+
 /**
  * Centimes (format de l'API) → prix affiché : `2400` → « 24 € », `1290` → « 12,90 € ».
  *
@@ -21,10 +30,6 @@ const EUROS_CENTIMES = new Intl.NumberFormat('fr-FR', {
 @Pipe({ name: 'price' })
 export class PricePipe implements PipeTransform {
   transform(cents: number | null | undefined): string {
-    if (cents === null || cents === undefined || !Number.isFinite(cents)) {
-      return '';
-    }
-    const format = cents % 100 === 0 ? EUROS_RONDS : EUROS_CENTIMES;
-    return format.format(cents / 100);
+    return formatCents(cents);
   }
 }

@@ -1,0 +1,63 @@
+:host {
+  display: inline-flex;
+}
+
+/* « Quantité » de la fiche produit : pilule de 150 × 52, filet clair. */
+.quantite {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 150px;
+  height: var(--hauteur-bouton);
+  padding-inline: var(--espace-2);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  color: var(--couleur-encre);
+}
+
+.quantite__bouton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--rayon-pilule);
+  background: none;
+  font-size: 1.125rem; /* 18px, comme les signes de la maquette */
+  line-height: 1;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+    color: var(--couleur-texte-doux);
+    opacity: 0.5;
+  }
+}
+
+:host(.est-compacte) .quantite {
+  gap: var(--espace-1);
+  width: auto;
+  height: 34px;
+  padding-inline: var(--espace-1);
+  font-size: var(--texte-petit-taille);
+}
+
+:host(.est-compacte) .quantite__bouton {
+  width: 26px;
+  height: 26px;
+  font-size: var(--texte-petit-taille);
+}
+
+.quantite__valeur {
+  min-width: 2ch;
+  font-size: var(--texte-taille);
+  line-height: var(--texte-interligne);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+:host(.est-compacte) .quantite__valeur {
+  font-size: var(--texte-petit-taille);
+}

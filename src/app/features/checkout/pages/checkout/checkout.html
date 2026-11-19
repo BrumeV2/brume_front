@@ -1,0 +1,117 @@
+<h1 class="titre-l commande__titre">Commande</h1>
+
+@if (verification() && validation() === null) {
+  <p class="message" role="status">Vérification de ton panier…</p>
+} @else {
+  @switch (validation()?.status) {
+    @case ('valid') {
+      <div class="commande">
+        <ol class="etapes">
+          @for (etape of etapes; track etape.numero) {
+            <li class="etape">
+              <h2 class="etape__titre">
+                <span class="etape__numero">{{ etape.numero }}</span> {{ etape.titre }}
+              </h2>
+              <p class="mention-bientot">Bientôt disponible</p>
+            </li>
+          }
+        </ol>
+
+        <aside class="recap" aria-labelledby="recap-titre">
+          <h2 id="recap-titre" class="surtitre">Récapitulatif</h2>
+          <ul class="recap__lignes">
+            @for (ligne of panier.lines(); track ligne.variantId) {
+              <li class="recap__ligne">
+                <div class="recap__photo">
+                  @if (ligne.imageUrl; as image) {
+                    <img [src]="image" alt="" />
+                  }
+                </div>
+                <div class="recap__infos">
+                  <p class="recap__nom">{{ ligne.productName }}</p>
+                  <p class="recap__detail">{{ ligne.variantLabel }} · ×{{ ligne.quantity }}</p>
+                </div>
+                <p>{{ ligne.lineTotalCents | price }}</p>
+              </li>
+            }
+          </ul>
+          <dl class="recap__montants">
+            <div>
+              <dt>Sous-total</dt>
+              <dd>{{ panier.itemsTotalCents() | price }}</dd>
+            </div>
+            <div>
+              <dt>Livraison</dt>
+              <dd>À choisir à l’étape 02</dd>
+            </div>
+            <div class="recap__total">
+              <dt>Total TTC</dt>
+              <dd>Connu après le choix de la livraison</dd>
+            </div>
+          </dl>
+        </aside>
+      </div>
+    }
+
+    @case ('empty') {
+      <div class="bloc">
+        <p class="bloc__titre titre-carte">Ton panier est vide.</p>
+        <p>Ajoute un produit pour commencer une commande.</p>
+        <app-ui-button libelle="Voir la boutique" lien="/boutique" [fleche]="true" />
+      </div>
+    }
+
+    @case ('error') {
+      <div class="bloc" role="alert">
+        <p class="bloc__titre titre-carte">Ton panier n’a pas pu être vérifié.</p>
+        @if (validation(); as v) {
+          @if (v.status === 'error') {
+            <p>{{ v.message }}</p>
+          }
+        }
+        <app-ui-button
+          libelle="Réessayer"
+          [occupe]="verification()"
+          libelleOccupe="Vérification…"
+          (presse)="confirmer()"
+        />
+      </div>
+    }
+
+    @default {
+      <!-- Écarts à reconfirmer, problème à corriger, ou panier modifié depuis le tiroir. -->
+      <div class="bloc" [attr.role]="ecarts() ? 'alert' : null">
+        @if (ecarts(); as v) {
+          <p class="bloc__titre titre-carte">
+            {{
+              v.status === 'changed'
+                ? 'Ton panier a changé depuis son affichage.'
+                : 'Ton panier doit être corrigé avant de commander.'
+            }}
+          </p>
+          <ul class="ecarts">
+            @for (ecart of v.discrepancies; track $index) {
+              <li>{{ ecart.message }}</li>
+            }
+          </ul>
+        } @else {
+          <p class="bloc__titre titre-carte">Ton panier a été modifié.</p>
+          <p>Confirme-le pour reprendre ta commande.</p>
+        }
+        <div class="bloc__actions">
+          <app-ui-button
+            [libelle]="
+              ecarts()?.status === 'blocked' ? 'Vérifier de nouveau' : 'Confirmer mon panier'
+            "
+            [fleche]="true"
+            [disabled]="panier.isBusy()"
+            [occupe]="verification()"
+            libelleOccupe="Vérification…"
+            (presse)="confirmer()"
+          />
+          <app-ui-button libelle="Revoir mon panier" variante="contour" (presse)="revoirPanier()" />
+        </div>
+      </div>
+    }
+  }
+}

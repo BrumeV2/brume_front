@@ -15,7 +15,7 @@
 }
 
 <ng-template #contenu>
-  <span class="bouton__libelle">{{ occupe() ? 'Enregistrement…' : libelle() }}</span>
+  <span class="bouton__libelle">{{ occupe() ? libelleOccupe() : libelle() }}</span>
   @if (fleche() && !occupe()) {
     <span class="bouton__fleche" aria-hidden="true">→</span>
   }

@@ -27,6 +27,19 @@
       >{{ compte.libelle }}</a
     >
     <button
+      class="menu__lien menu__panier"
+      type="button"
+      aria-haspopup="dialog"
+      aria-controls="tiroir-panier"
+      [attr.aria-label]="
+        'Panier, ' + panier.itemsCount() + (panier.itemsCount() > 1 ? ' articles' : ' article')
+      "
+      (click)="panier.openDrawer()"
+    >
+      Panier
+      <span class="menu__compteur" aria-hidden="true">{{ panier.itemsCount() }}</span>
+    </button>
+    <button
       class="menu__ouvrir"
       type="button"
       aria-haspopup="dialog"
