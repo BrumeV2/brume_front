@@ -57,18 +57,22 @@
               <dt>Moment</dt>
               <dd>{{ moment() }}</dd>
             </div>
-            <div>
-              <dt>Univers</dt>
-              <dd>
-                <a
-                  class="lien-fleche"
-                  routerLink="/boutique"
-                  [queryParams]="{ category: p.category.slug }"
-                >
-                  {{ p.category.name }}
-                </a>
-              </dd>
-            </div>
+            <!-- L'API ne renvoie pas d'univers : la ligne disparaît plutôt que
+                 de pointer vers un filtre vide. -->
+            @if (p.category; as univers) {
+              <div>
+                <dt>Univers</dt>
+                <dd>
+                  <a
+                    class="lien-fleche"
+                    routerLink="/boutique"
+                    [queryParams]="{ category: univers.slug }"
+                  >
+                    {{ univers.name }}
+                  </a>
+                </dd>
+              </div>
+            }
           </dl>
 
           @if (p.ageRestricted) {
