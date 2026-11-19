@@ -56,13 +56,19 @@ export class ProductsHttpService extends ProductsService {
  * pas dans `GET /products` (voir le bloc « HORS CONTRAT » de `api.types.ts`),
  * et le `ValidationPipe` du back rejetterait la requête entière. Les envoyer
  * casserait la page au lieu de dégrader le filtre.
+ *
+ * Une liste part en paramètre **répété** (`ingredients=a&ingredients=b`), comme
+ * le déclare le contrat (`style: form`, `explode: true`). Une liste vide est
+ * retirée plutôt qu'envoyée : le back la refuserait (`ArrayNotEmpty`).
  */
-function versParams(query: CatalogQuery): HttpParams {
+export function versParams(query: CatalogQuery): HttpParams {
   const { moment: _moment, caffeine: _caffeine, ...duContrat } = query;
 
   let params = new HttpParams();
   for (const [cle, valeur] of Object.entries(duContrat)) {
-    if (valeur !== undefined && valeur !== null && valeur !== '') {
+    if (Array.isArray(valeur)) {
+      for (const element of valeur) params = params.append(cle, String(element));
+    } else if (valeur !== undefined && valeur !== null && valeur !== '') {
       params = params.set(cle, String(valeur));
     }
   }

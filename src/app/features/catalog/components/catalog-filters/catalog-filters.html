@@ -70,22 +70,45 @@
   </button>
 
   <ng-content select="[rechercheCatalogue]" />
+  <ng-content select="[rechercheIngredient]" />
 </div>
 
 @if (criteresActifs().length > 0) {
   <div class="criteres">
     <span class="criteres__libelle">Filtres actifs :</span>
 
-    @for (critere of criteresActifs(); track critere.champ) {
+    @for (critere of criteresActifs(); track critere.champ + (critere.valeur ?? '')) {
       <button
         class="critere"
         type="button"
         [attr.aria-label]="'Retirer le filtre ' + critere.libelle"
-        (click)="changer(critere.champ, null)"
+        (click)="retirer(critere)"
       >
         {{ critere.libelle }}
         <span class="critere__croix" aria-hidden="true">×</span>
       </button>
+    }
+
+    @if (ingredientsChoisis().length > 1) {
+      <fieldset class="combinaison">
+        <legend class="criteres__libelle">Produits contenant</legend>
+        <button
+          class="combinaison__choix"
+          type="button"
+          [attr.aria-pressed]="!tousLesIngredients()"
+          (click)="combinaison.emit('any')"
+        >
+          au moins un
+        </button>
+        <button
+          class="combinaison__choix"
+          type="button"
+          [attr.aria-pressed]="tousLesIngredients()"
+          (click)="combinaison.emit('all')"
+        >
+          tous
+        </button>
+      </fieldset>
     }
 
     <button class="tout-effacer" type="button" (click)="reinitialisation.emit()">

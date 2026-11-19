@@ -124,6 +124,37 @@
   line-height: 1;
 }
 
+.combinaison {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--espace-1);
+  margin: 0;
+  padding: 0;
+  border: 0;
+
+  legend {
+    float: left;
+    margin-right: var(--espace-1);
+    padding: 0;
+  }
+}
+
+.combinaison__choix {
+  padding: var(--espace-1) var(--espace-3);
+  border: 1px solid var(--couleur-filet);
+  border-radius: var(--rayon-pilule);
+  background: none;
+  color: var(--couleur-texte-doux);
+  font-size: inherit;
+  cursor: pointer;
+
+  &[aria-pressed='true'] {
+    border-color: var(--couleur-encre);
+    background-color: var(--couleur-encre);
+    color: var(--couleur-fond);
+  }
+}
+
 .tout-effacer {
   padding: var(--espace-1) 0;
   border: 0;

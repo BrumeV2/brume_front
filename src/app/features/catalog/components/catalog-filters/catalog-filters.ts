@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
 
-import type { Category } from '../../../../core/api/api.types';
+import type { Category, IngredientsMatch } from '../../../../core/api/api.types';
 import {
   CAFFEINES,
   LIBELLES_CAFFEINE,
@@ -37,10 +37,23 @@ export class CatalogFilters {
   /** Univers à proposer. La page n'envoie que ceux qui ont des produits. */
   readonly categories = input.required<readonly Category[]>();
 
+  /**
+   * Nom de chaque ingrédient posé, par UUID. Un UUID absent est affiché
+   * « Ingrédient inconnu » : une URL peut en porter un que le référentiel n'a
+   * pas, ou plus.
+   */
+  readonly nomsIngredients = input<Readonly<Record<string, string>>>({});
+
   /** Un filtre change. `null` retire le critère. */
   readonly filtre = output<{ champ: ChampFiltre; valeur: string | null }>();
   readonly tri = output<string>();
   readonly reinitialisation = output<void>();
+  /** Retire un seul ingrédient, par son UUID. */
+  readonly retraitIngredient = output<string>();
+  readonly combinaison = output<IngredientsMatch>();
+
+  protected readonly ingredientsChoisis = computed(() => this.filtres().ingredients ?? []);
+  protected readonly tousLesIngredients = computed(() => this.filtres().ingredientsMatch === 'all');
 
   protected readonly optionsType: readonly OptionFiltre[] = PRODUCT_TYPES.map((valeur) => ({
     valeur,
@@ -121,11 +134,26 @@ export class CatalogFilters {
     if (filtres.q !== undefined && filtres.q !== '') {
       criteres.push({ champ: 'q', libelle: `« ${filtres.q} »` });
     }
+    for (const id of filtres.ingredients ?? []) {
+      criteres.push({
+        champ: 'ingredients',
+        valeur: id,
+        libelle: `Contient : ${this.nomsIngredients()[id] ?? 'ingrédient inconnu'}`,
+      });
+    }
 
     return criteres;
   });
 
   protected changer(champ: ChampFiltre, valeur: string | null): void {
     this.filtre.emit({ champ, valeur });
+  }
+
+  protected retirer(critere: CritereActif): void {
+    if (critere.champ === 'ingredients' && critere.valeur !== undefined) {
+      this.retraitIngredient.emit(critere.valeur);
+    } else {
+      this.changer(critere.champ, null);
+    }
   }
 }

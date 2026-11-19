@@ -58,6 +58,24 @@ describe('ProductsHttpService', () => {
     requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
   });
 
+  it('envoie les ingrédients en paramètre répété, avec leur combinaison (US-015)', () => {
+    service.list({ ingredients: ['id-menthe', 'id-citron'], ingredientsMatch: 'all' }).subscribe();
+
+    const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
+    expect(requete.request.params.getAll('ingredients')).toEqual(['id-menthe', 'id-citron']);
+    expect(requete.request.params.get('ingredientsMatch')).toBe('all');
+    expect(requete.request.urlWithParams).toContain('ingredients=id-menthe&ingredients=id-citron');
+    requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+  });
+
+  it('n’envoie pas une liste d’ingrédients vide, que le back refuserait', () => {
+    service.list({ ingredients: [] }).subscribe();
+
+    const requete = http.expectOne((r) => r.url === PRODUCTS_URL);
+    expect(requete.request.params.has('ingredients')).toBe(false);
+    requete.flush({ data: [], meta: { page: 1, limit: 24, total: 0, totalPages: 1 } });
+  });
+
   it('appelle `GET /products/{slug}`, en échappant le slug', () => {
     service.getBySlug('earl grey/au chanvre').subscribe();
 

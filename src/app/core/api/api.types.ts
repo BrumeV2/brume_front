@@ -54,6 +54,39 @@ export interface ProductQuery {
   sort?: 'relevance' | 'price_asc' | 'price_desc' | 'newest' | 'name_asc';
   page?: number;
   limit?: number;
+  /** UUID du référentiel (`GET /ingredients`), paramètre répété, 20 au plus (US-015). */
+  ingredients?: readonly string[];
+  /** `any` (défaut) : au moins un ingrédient ; `all` : tous. Sans effet sans `ingredients`. */
+  ingredientsMatch?: IngredientsMatch;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * CONTRAT 1.5.0 PAS ENCORE GÉNÉRÉ : recherche par ingrédient (US-015).
+ *
+ * Recopié à l'identique d'`openapi.yaml` 1.5.0, branche
+ * `feat/scrum-65/recherche-par-ingredients` de brume_back (doc :
+ * `docs/CATALOGUE-INGREDIENTS.md`). Ce contrat n'est pas encore sur `develop`,
+ * et régénérer `schema.d.ts` depuis cette branche embarquerait d'autres
+ * changements sans rapport (fiche produit, disponibilité). Une fois le back
+ * fusionné, `schema.d.ts` est régénéré et ce bloc devient deux alias :
+ *   components['schemas']['IngredientListItem'] et l'enum `ingredientsMatch`.
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Combinaison des ingrédients choisis dans `GET /products`. */
+export type IngredientsMatch = 'any' | 'all';
+
+/** Nature d'un ingrédient du référentiel. */
+export type IngredientType = 'base' | 'dried_ingredient' | 'liquid_flavoring' | 'essential_oil';
+
+/** Une entrée de `GET /ingredients`. */
+export interface IngredientListItem {
+  id: string;
+  name: string;
+  type: IngredientType;
+  /** Synonymes reconnus par les recherches : « badiane » pour l'anis étoilé. */
+  aliases: string[];
+  /** Produits publiés qui le contiennent. 0 : le filtre renverra une liste vide. */
+  productCount: number;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

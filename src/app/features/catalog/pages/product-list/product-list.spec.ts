@@ -10,6 +10,9 @@ import {
 } from '../../../../core/api/mocks/products.mock.service';
 import type { CatalogPage, CatalogProductDetail, Category } from '../../../../core/api/api.types';
 import { ProductsService } from '../../../../core/api/products.service';
+import { IngredientsService } from '../../../../core/api/ingredients.service';
+import { IngredientsMockService } from '../../../../core/api/mocks/ingredients.mock.service';
+import { idIngredient } from '../../../../core/api/mocks/fixtures/ingredients.fixture';
 import { catalogRoutes } from '../../catalog.routes';
 
 /** API injoignable : aucune requête n'aboutit. */
@@ -44,6 +47,7 @@ describe('ProductList', () => {
         // requête n'arrivent pas aux entrées de l'écran.
         provideRouter([{ path: 'boutique', children: catalogRoutes }], withComponentInputBinding()),
         { provide: ProductsService, useClass: service },
+        { provide: IngredientsService, useClass: IngredientsMockService },
         { provide: PRODUCTS_MOCK_OPTIONS, useValue: { delayMs: 0, failFirstSearches: 0 } },
       ],
     });
@@ -52,10 +56,15 @@ describe('ProductList', () => {
   beforeEach(() => configurer(ProductsMockService));
 
   const stabiliser = async (): Promise<void> => {
-    // Laisse émettre les réponses simulées à latence nulle.
-    await new Promise((resoudre) => setTimeout(resoudre, 10));
-    await harness.fixture.whenStable();
-    harness.detectChanges();
+    // Laisse émettre les réponses simulées à latence nulle. Deux tours : une
+    // navigation déclenche l'effet de chargement, dont la réponse simulée
+    // n'arrive qu'au tour suivant. Un seul tour rendait le résultat dépendant
+    // de la vitesse de la machine.
+    for (let tour = 0; tour < 2; tour++) {
+      await new Promise((resoudre) => setTimeout(resoudre, 10));
+      await harness.fixture.whenStable();
+      harness.detectChanges();
+    }
   };
 
   const afficher = async (url: string): Promise<HTMLElement> => {
@@ -249,6 +258,186 @@ describe('ProductList', () => {
       expect(page.querySelector('.tout-effacer')).toBeNull();
     });
   });
+  describe('rechercher par ingrédient (US-015)', () => {
+    const THE_VERT = idIngredient('Thé vert');
+    const THE_NOIR = idIngredient('Thé noir');
+    const BERGAMOTE = idIngredient('Huile essentielle de bergamote');
+    const INCONNU = 'd0000000-0000-4000-8000-999999999999';
+
+    const champ = (): HTMLInputElement =>
+      ecran().querySelector<HTMLInputElement>('app-ingredient-picker input')!;
+    const taper = (texte: string): void => {
+      champ().value = texte;
+      champ().dispatchEvent(new Event('input', { bubbles: true }));
+    };
+    const suggestions = (): string[] => textes(ecran(), 'app-ingredient-picker [role="option"]');
+    const attendre = async (verifier: () => void): Promise<void> =>
+      vi.waitFor(() => {
+        harness.detectChanges();
+        verifier();
+      });
+
+    it('propose un champ ingrédient accessible dans la barre de filtres', async () => {
+      const page = await afficher('/boutique');
+      const saisie = page.querySelector(
+        'app-catalog-filters .pastilles app-ingredient-picker input',
+      );
+
+      expect(saisie?.getAttribute('role')).toBe('combobox');
+      expect(page.querySelector(`label[for="${saisie?.id}"]`)?.textContent).toContain(
+        'Rechercher par ingrédient',
+      );
+    });
+
+    it('trouve un ingrédient par son synonyme, le pose et restitue le critère', async () => {
+      await afficher('/boutique');
+
+      taper('Badiane');
+      await attendre(() => expect(suggestions()).toHaveLength(1));
+      expect(suggestions()[0]).toContain('Anis étoilé');
+      expect(suggestions()[0]).toContain('aussi appelé badiane');
+      expect(suggestions()[0]).toContain('1 produit');
+
+      ecran().querySelector<HTMLElement>('app-ingredient-picker [role="option"]')!.click();
+      await stabiliser();
+
+      expect(router.url).toBe(`/boutique?ingredients=${idIngredient('Anis étoilé')}`);
+      expect(noms(ecran())).toEqual(['Chaï maison']);
+      expect(textes(ecran(), '.critere')).toEqual(['Contient : Anis étoilé ×']);
+      expect(textes(ecran(), '.compte')).toContain('Produits contenant Anis étoilé');
+      // Le champ se vide pour accueillir un autre ingrédient.
+      expect(champ().value).toBe('');
+    });
+
+    it('choisit au clavier : flèche puis Entrée', async () => {
+      await afficher('/boutique');
+
+      taper('cannelle');
+      await attendre(() => expect(suggestions()).toEqual([expect.stringContaining('Cannelle')]));
+      champ().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown' }));
+      harness.detectChanges();
+      expect(champ().getAttribute('aria-activedescendant')).toMatch(/-option-0$/);
+      champ().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));
+      await stabiliser();
+
+      expect(router.url).toBe(`/boutique?ingredients=${idIngredient('Cannelle')}`);
+    });
+
+    it('ne renvoie que les produits qui contiennent l’ingrédient, une partie de la gamme', async () => {
+      const page = await afficher(`/boutique?ingredients=${THE_VERT}`);
+
+      expect(noms(page).sort()).toEqual(
+        ['Genmaicha', 'Long Jing', 'Matcha cérémonie', 'Sencha du matin'].sort(),
+      );
+      expect(noms(page)).not.toContain('Darjeeling first flush');
+      expect(textes(page, '.critere')).toEqual(['Contient : Thé vert ×']);
+    });
+
+    it('signale un ingrédient déjà posé sans le reposer', async () => {
+      await afficher(`/boutique?ingredients=${THE_VERT}`);
+
+      taper('thé vert');
+      await attendre(() => expect(suggestions().length).toBeGreaterThan(0));
+      const option = [...ecran().querySelectorAll<HTMLElement>('[role="option"]')].find((o) =>
+        o.textContent?.includes('Thé vert'),
+      )!;
+      expect(option.getAttribute('aria-disabled')).toBe('true');
+      expect(option.textContent).toContain('Déjà choisi');
+
+      option.click();
+      await stabiliser();
+      expect(router.url).toBe(`/boutique?ingredients=${THE_VERT}`);
+    });
+
+    it('dit qu’aucun ingrédient ne correspond à une saisie inconnue, sans toucher au catalogue', async () => {
+      await afficher('/boutique?category=thes');
+
+      taper('licorne');
+      await attendre(() =>
+        expect(textes(ecran(), 'app-ingredient-picker .aide')).toEqual([
+          expect.stringContaining('Aucun ingrédient ne correspond à « licorne »'),
+        ]),
+      );
+      expect(router.url).toBe('/boutique?category=thes');
+    });
+
+    it('demande deux lettres avant de chercher', async () => {
+      await afficher('/boutique');
+      const appels = vi.spyOn(TestBed.inject(IngredientsService), 'search');
+
+      taper('b');
+      await stabiliser();
+
+      expect(textes(ecran(), 'app-ingredient-picker .aide')).toEqual([
+        'Tape au moins deux lettres.',
+      ]);
+      expect(appels).not.toHaveBeenCalled();
+    });
+
+    it('explique qu’un ingrédient connu ne donne aucun produit, sans parler d’erreur', async () => {
+      const page = await afficher(`/boutique?ingredients=${idIngredient('Hibiscus')}`);
+
+      expect(noms(page)).toEqual([]);
+      expect(textes(page, '.bloc__titre')).toEqual(['Aucun produit ne contient Hibiscus.']);
+      expect(page.querySelector('[role="alert"]')).toBeNull();
+      expect(textes(page, '.critere')).toEqual(['Contient : Hibiscus ×']);
+    });
+
+    it('refuse un ingrédient inconnu du référentiel et permet de le retirer seul', async () => {
+      const page = await afficher(`/boutique?category=thes&ingredients=${INCONNU}`);
+
+      expect(page.querySelector('[role="alert"]')?.textContent).toContain(
+        'Cet ingrédient n’existe pas dans notre catalogue.',
+      );
+      expect(textes(page, '.critere')).toEqual(['Thés ×', 'Contient : ingrédient inconnu ×']);
+
+      page.querySelector<HTMLButtonElement>('.bloc button')!.click();
+      await stabiliser();
+
+      expect(router.url).toBe('/boutique?category=thes');
+      expect(ecran().querySelector('[role="alert"]')).toBeNull();
+    });
+
+    it('combine plusieurs ingrédients en OU, puis en ET à la demande', async () => {
+      const page = await afficher(`/boutique?ingredients=${THE_NOIR}&ingredients=${BERGAMOTE}`);
+
+      expect(noms(page)).toContain('Darjeeling first flush');
+      expect(textes(page, '.compte')).toContain(
+        'Produits contenant Thé noir ou Huile essentielle de bergamote',
+      );
+
+      const tous = [...page.querySelectorAll<HTMLButtonElement>('.combinaison__choix')].find(
+        (b) => b.textContent?.trim() === 'tous',
+      )!;
+      tous.click();
+      await stabiliser();
+
+      expect(router.url).toBe(
+        `/boutique?ingredients=${THE_NOIR}&ingredients=${BERGAMOTE}&ingredientsMatch=all`,
+      );
+      expect(noms(ecran())).toEqual(['Earl grey au chanvre']);
+      expect(textes(ecran(), '.compte')).toContain(
+        'Produits contenant Thé noir et Huile essentielle de bergamote',
+      );
+    });
+
+    it('retire un seul ingrédient, et la combinaison avec le deuxième', async () => {
+      const page = await afficher(
+        `/boutique?ingredients=${THE_NOIR}&ingredients=${BERGAMOTE}&ingredientsMatch=all`,
+      );
+
+      page
+        .querySelector<HTMLButtonElement>(
+          '[aria-label="Retirer le filtre Contient : Huile essentielle de bergamote"]',
+        )!
+        .click();
+      await stabiliser();
+
+      expect(router.url).toBe(`/boutique?ingredients=${THE_NOIR}`);
+      expect(ecran().querySelector('.combinaison')).toBeNull();
+    });
+  });
+
   describe('rechercher un produit (US-014)', () => {
     const saisir = (texte: string): void => {
       const champ = ecran().querySelector<HTMLInputElement>('input[type="search"]')!;
