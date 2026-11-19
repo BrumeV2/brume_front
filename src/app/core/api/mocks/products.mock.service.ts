@@ -7,6 +7,7 @@ import type {
   CatalogProductDetail,
   CatalogQuery,
   Category,
+  FormatAvailability,
 } from '../api.types';
 import type { ApiErrorBody } from '../api-error';
 import {
@@ -25,7 +26,7 @@ import {
   PRODUITS_NON_PUBLIES,
 } from './fixtures/catalog.fixture';
 import { MOCK_DELAY_MS, mockFail, mockOk } from './mock-delay';
-import { variantesDuProduit } from './fixtures/variants.fixture';
+import { VARIANTS_FIXTURE, variantesDuProduit } from './fixtures/variants.fixture';
 
 /** Scénarios déterministes, configurables par injection sans mot-clé dans la recherche. */
 export const PRODUCTS_MOCK_OPTIONS = new InjectionToken<{
@@ -35,7 +36,6 @@ export const PRODUCTS_MOCK_OPTIONS = new InjectionToken<{
   providedIn: 'root',
   factory: () => ({ delayMs: MOCK_DELAY_MS, failFirstSearches: 0 }),
 });
-
 
 const CHEMIN = '/api/products';
 
@@ -66,6 +66,46 @@ export class ProductsMockService extends ProductsService {
     return produit === undefined
       ? mockFail(404, 'NOT_FOUND', 'Ressource introuvable.', undefined, `/api/products/${slug}`)
       : mockOk({ ...produit, variants: variantesDuProduit(produit.id) });
+  }
+
+  /**
+   * Contrôle d'une quantité sur un format (US-004), aux règles du back.
+   *
+   * Le stock simulé est celui de `variants.fixture.ts` : la disponibilité
+   * reste celle du format, et seule la commandabilité tient compte de la
+   * quantité demandée. Un format qui appartient à un autre produit est
+   * introuvable, comme côté API.
+   */
+  override checkAvailability(
+    productId: string,
+    formatId: string,
+    quantity: number,
+  ): Observable<FormatAvailability> {
+    const format = VARIANTS_FIXTURE.find(
+      (variante) => variante.id === formatId && variante.productId === productId,
+    );
+
+    if (format === undefined) {
+      return mockFail(
+        404,
+        'NOT_FOUND',
+        'Ressource introuvable.',
+        undefined,
+        `/api/products/${productId}/formats/${formatId}/availability`,
+        this.options.delayMs,
+      );
+    }
+
+    return mockOk(
+      {
+        productId,
+        formatId,
+        quantity,
+        availability: format.availability,
+        isOrderable: format.stock >= quantity && format.stock > 0,
+      },
+      this.options.delayMs,
+    );
   }
 
   override list(query: CatalogQuery): Observable<CatalogPage> {

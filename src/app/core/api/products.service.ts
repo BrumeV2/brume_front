@@ -3,7 +3,13 @@ import { Injectable, inject } from '@angular/core';
 import type { Observable } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
-import type { CatalogPage, CatalogProductDetail, CatalogQuery, Category } from './api.types';
+import type {
+  CatalogPage,
+  CatalogProductDetail,
+  CatalogQuery,
+  Category,
+  FormatAvailability,
+} from './api.types';
 
 /**
  * Catalogue : liste filtrée des produits et catégories (US-001, US-016).
@@ -25,6 +31,20 @@ export abstract class ProductsService {
    * l'affaire d'US-002.
    */
   abstract getBySlug(slug: string): Observable<CatalogProductDetail>;
+
+  /**
+   * Commandabilité d'une quantité précise sur un format (US-004).
+   *
+   * La disponibilité portée par la fiche ne vaut que pour **une** unité :
+   * un format « en stock » peut très bien ne pas en avoir douze. Seul le
+   * back sait répondre pour une quantité choisie, et sa réponse ne réserve
+   * rien — elle peut être périmée dès que le stock bouge.
+   */
+  abstract checkAvailability(
+    productId: string,
+    formatId: string,
+    quantity: number,
+  ): Observable<FormatAvailability>;
 }
 
 @Injectable()
@@ -46,6 +66,17 @@ export class ProductsHttpService extends ProductsService {
     return this.http.get<CatalogProductDetail>(
       `${this.baseUrl}/products/${encodeURIComponent(slug)}`,
     );
+  }
+
+  override checkAvailability(
+    productId: string,
+    formatId: string,
+    quantity: number,
+  ): Observable<FormatAvailability> {
+    const chemin = `${this.baseUrl}/products/${encodeURIComponent(productId)}/formats/${encodeURIComponent(formatId)}/availability`;
+    return this.http.get<FormatAvailability>(chemin, {
+      params: new HttpParams().set('quantity', quantity),
+    });
   }
 }
 

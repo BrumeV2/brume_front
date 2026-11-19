@@ -114,7 +114,7 @@
             <div class="ajout">
               <app-ui-quantity
                 [(valeur)]="quantite"
-                [max]="quantiteMax"
+                [max]="quantiteMax()"
                 [disabled]="estEpuisee() || ajout().etat === 'envoi'"
                 [objet]="p.name + ', ' + v.label"
               />

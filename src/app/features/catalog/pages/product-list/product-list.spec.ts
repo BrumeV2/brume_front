@@ -8,7 +8,12 @@ import {
   PRODUCTS_MOCK_OPTIONS,
   ProductsMockService,
 } from '../../../../core/api/mocks/products.mock.service';
-import type { CatalogPage, CatalogProductDetail, Category } from '../../../../core/api/api.types';
+import type {
+  CatalogPage,
+  CatalogProductDetail,
+  Category,
+  FormatAvailability,
+} from '../../../../core/api/api.types';
 import { ProductsService } from '../../../../core/api/products.service';
 import { catalogRoutes } from '../../catalog.routes';
 
@@ -24,6 +29,9 @@ class ApiMuette extends ProductsService {
     return this.panne();
   }
   override getBySlug(): Observable<CatalogProductDetail> {
+    return this.panne();
+  }
+  override checkAvailability(): Observable<FormatAvailability> {
     return this.panne();
   }
 }
