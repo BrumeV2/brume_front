@@ -1,0 +1,21 @@
+.auth-form,
+.auth-avis {
+  display: flex;
+  flex-direction: column;
+  gap: var(--espace-4);
+  width: 100%;
+}
+
+.auth-form--sombre {
+  --couleur-erreur: var(--couleur-erreur-claire);
+  --couleur-texte-doux: var(--couleur-texte-doux-sombre);
+}
+
+.auth-erreur {
+  color: var(--couleur-erreur);
+}
+
+.auth-lien {
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}

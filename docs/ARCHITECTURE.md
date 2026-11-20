@@ -223,9 +223,30 @@ Règles :
   ```
 - **Les montants sont des entiers en centimes** (`priceCents`, `totalCents`) et les taux des points de base (`vatRateBps`). Le front les **formate** pour l'affichage, il ne les recalcule jamais. Un total, une TVA ou des frais de port viennent de `POST /checkout/quote` — c'est la règle du back, et une addition faite côté front finirait par diverger.
 - **Aucun renommage de champ.** On garde les noms du contrat pour pouvoir relire le code à côté de l'`openapi.yaml`.
-- **L'authentification est portée par un intercepteur**, pas par les services. La session est un cookie HttpOnly `brume_session` posé par l'API après Google (voir `docs/AUTH.md` du back) : le front ne voit aucun jeton. `credentials-interceptor.ts` ajoute `withCredentials` à toute requête vers `apiBaseUrl`, et l'en-tête `X-CSRF-Protection: 1` sur les mutations. Une `401` signifie « non connecté » : il n'y a pas de rafraîchissement de session.
+- **L'authentification est portée par un intercepteur**, pas par les composants. Après connexion email, `AuthService` conserve le Bearer opaque dans `AccessTokenStore`, en mémoire uniquement, puis charge `/users/me`. Aucun décodage JWT ni stockage navigateur du jeton. Google et le cookie HttpOnly restent disponibles. `credentials-interceptor.ts` limite les credentials à l'origine et au chemin de l'API, ajoute le Bearer aux appels authentifiés, `withCredentials` et `X-CSRF-Protection: 1` aux mutations. Les opérations anonymes d'authentification excluent le Bearer. Une réponse non authentifiée invalide le jeton et le profil ; une ancienne 401 ne détruit pas une nouvelle session. Il n'y a pas de rafraîchissement de jeton.
 - **Déconnexion** (ADD-087) : `AuthService.logout()` appelle `SessionService` (`POST /auth/logout`), puis vide `AuthStore`. Sans confirmation de l'API, rien n'est effacé et l'interface affiche l'échec.
 - **Pagination** : les listes renvoient `{ data, meta: { page, limit, total, totalPages } }`. Un composant de liste lit `meta`, il ne compte jamais lui-même.
+
+## Authentification email et liens de compte
+
+`core/api/auth-api.service.ts` extrait les types du contrat généré et expose
+les six opérations email. `AuthHttpService` est sélectionné par `app.config.ts`
+quand `useMocks` vaut false ; le mock de démonstration est sélectionné sinon.
+`SessionService` conserve la révocation de session via `POST /auth/logout`.
+
+`/connexion` et `/inscription` proposent email/mot de passe et conservent Google.
+Les routes `/confirm-email`, `/reset-password`, `/forgot-password` et
+`/resend-confirmation` respectent les liens du backend, d'où leurs chemins en
+anglais. Les jetons de lien sont lus une fois dans le fragment et retirés de
+l'URL immédiatement avec `Location.replaceState`. Ils ne sont jamais affichés
+ni enregistrés dans le stockage. Aucune consommation automatique à l'ouverture :
+confirmation explicite par POST, ou formulaire de nouveau mot de passe. Après
+reset confirmé, la session locale est oubliée et le client retourne à la connexion.
+
+Les erreurs utilisent leur code pour la logique et conservent `requestId`
+pour le diagnostic. Les réponses 202 donnent des messages génériques, sans
+révéler l'existence d'un compte et sans affirmer une livraison d'email.
+Le détail des validations figure dans `docs/AUTHENTIFICATION-EMAIL.md`.
 
 ## Données simulées
 

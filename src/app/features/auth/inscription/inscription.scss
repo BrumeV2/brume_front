@@ -1,3 +1,5 @@
+@use '../forms';
+
 :host {
   display: block;
   min-height: 100dvh;
@@ -7,7 +9,7 @@
     display: flex;
     flex-direction: column;
     // Le cadre décale déjà la page sous le menu fixe.
-    height: calc(100dvh - var(--hauteur-menu));
+    height: auto;
     min-height: 556px;
   }
 }

@@ -1,11 +1,12 @@
-<app-ui-card titre="Connexion" description="Tu te connectes sans mot de passe.">
+<app-ui-card
+  titre="Connexion"
+  description="Email et mot de passe, ou Google : tes accès restent personnels."
+>
   <div class="fournisseur">
-    <img src="icons/google.svg" alt="" width="20" height="20" />
     <div class="fournisseur__textes">
-      <p class="fournisseur__nom">Google</p>
+      <p class="fournisseur__nom">Compte Brume</p>
       <p class="fournisseur__email">{{ email() }}</p>
     </div>
-    <p class="fournisseur__statut">Relié</p>
   </div>
   <app-logout-button />
 </app-ui-card>

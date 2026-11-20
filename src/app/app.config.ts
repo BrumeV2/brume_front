@@ -7,6 +7,8 @@ import {
   withViewTransitions,
 } from '@angular/router';
 
+import { AuthApiService, AuthHttpService } from './core/api/auth-api.service';
+import { AuthMockService } from './core/api/mocks/auth.mock.service';
 import { CartHttpService, CartService } from './core/api/cart.service';
 import { HomeService } from './core/api/home.service';
 import { CartMockService } from './core/api/mocks/cart.mock.service';
@@ -39,6 +41,7 @@ export const appConfig: ApplicationConfig = {
       }),
     ),
     provideHttpClient(withFetch(), withInterceptors([credentialsInterceptor])),
+    { provide: AuthApiService, useClass: environment.useMocks ? AuthMockService : AuthHttpService },
     // Le choix entre données simulées et vraie API se fait ici, une seule fois.
     // Aucun composant ne sait laquelle des deux il reçoit.
     {

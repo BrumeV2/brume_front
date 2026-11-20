@@ -1,0 +1,79 @@
+<main class="email-page" [class.email-page--confirmation]="mode() === 'confirm'">
+  <p class="surtitre">Ton compte Brume</p>
+  <h1 class="titre-m">{{ titre() }}</h1>
+
+  @if (termine()) {
+    <div class="auth-avis" role="status">
+      @if (mode() === 'confirm') {
+        <p>Ton adresse email est confirmée. Tu peux maintenant te connecter.</p>
+      } @else {
+        <p>{{ avisEmail }}</p>
+      }
+      <a class="auth-lien" routerLink="/connexion">Aller à la connexion</a>
+    </div>
+  } @else if ((mode() === 'confirm' || mode() === 'reset') && !lienValide) {
+    <div class="auth-avis" role="alert">
+      <p>{{ lienInvalide }}</p>
+      <a
+        class="auth-lien"
+        [routerLink]="mode() === 'confirm' ? '/resend-confirmation' : '/forgot-password'"
+        >Demander un nouveau lien</a
+      >
+    </div>
+  } @else {
+    @if (erreur(); as e) {
+      <div class="auth-erreur" role="alert">
+        <p>{{ message() }}</p>
+        @if (e.code === 'INVALID_TOKEN') {
+          <a
+            class="auth-lien"
+            [routerLink]="mode() === 'confirm' ? '/resend-confirmation' : '/forgot-password'"
+            >Demander un nouveau lien</a
+          >
+        }
+      </div>
+    }
+    @switch (mode()) {
+      @case ('confirm') {
+        <p>Confirme ton adresse email pour activer ton accès à Brume.</p>
+        <app-ui-button
+          libelle="Confirmer mon adresse email"
+          [occupe]="occupe()"
+          libelleOccupe="Confirmation…"
+          (presse)="envoyer()"
+        />
+      }
+      @case ('reset') {
+        <form class="auth-form" [formGroup]="formPassword" (ngSubmit)="envoyer()" novalidate>
+          <app-ui-field
+            libelle="Nouveau mot de passe"
+            type="password"
+            autocomplete="new-password"
+            [control]="password"
+            [aide]="aideMotDePasse"
+            [erreur]="erreurChamp('password')"
+            [obligatoire]="true"
+          />
+          <app-ui-button type="submit" libelle="Remplacer mon mot de passe" [occupe]="occupe()" />
+        </form>
+      }
+      @default {
+        <p>
+          Indique ton adresse email pour recevoir un lien. Vérifie aussi tes courriers indésirables.
+        </p>
+        <form class="auth-form" [formGroup]="formEmail" (ngSubmit)="envoyer()" novalidate>
+          <app-ui-field
+            libelle="Adresse email"
+            type="email"
+            autocomplete="email"
+            [control]="email"
+            [erreur]="erreurChamp('email')"
+            [obligatoire]="true"
+          />
+          <app-ui-button type="submit" libelle="Envoyer le lien" [occupe]="occupe()" />
+        </form>
+      }
+    }
+  }
+  <a class="auth-lien" routerLink="/connexion">Retour à la connexion</a>
+</main>

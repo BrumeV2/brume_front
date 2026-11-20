@@ -6,19 +6,12 @@ import type { UpdateProfileDraft, UserProfile } from '../api.types';
 import { EDITABLE_PROFILE_FIELDS, PROFILE_RULES } from '../profile-rules';
 import { UsersService } from '../users.service';
 
-import { MOCK_CUSTOMER_ID, mockUsers } from './fixtures/users.fixture';
+import { mockUsers } from './fixtures/users.fixture';
 import { mockFail, mockOk } from './mock-delay';
 import { MockSession } from './mock-session';
 
 const STORAGE_KEY = 'brume.mock.users';
 const PATH = '/api/users/me';
-
-/**
- * Identifiant du compte considéré comme connecté tant que `MockSession` est
- * ouverte. Le vrai back déduit cet identifiant du cookie de session : le front
- * ne l'envoie jamais.
- */
-const CURRENT_USER_ID = MOCK_CUSTOMER_ID;
 
 interface ValidationDetail {
   // L'index est exigé par le type `details` du contrat.
@@ -45,7 +38,7 @@ export class UsersMockService extends UsersService {
   override getMe(): Observable<UserProfile> {
     // Après une déconnexion, plus aucun compte n'est rattaché à cet appareil.
     const user = this.session.isOpen
-      ? this.readUsers().find((candidate) => candidate.id === CURRENT_USER_ID)
+      ? this.readUsers().find((candidate) => candidate.id === this.session.userId)
       : undefined;
 
     if (user === undefined) {
@@ -64,7 +57,7 @@ export class UsersMockService extends UsersService {
   override updateMe(payload: UpdateProfileDraft): Observable<UserProfile> {
     const users = this.readUsers();
     const index = this.session.isOpen
-      ? users.findIndex((candidate) => candidate.id === CURRENT_USER_ID)
+      ? users.findIndex((candidate) => candidate.id === this.session.userId)
       : -1;
 
     if (index === -1) {
