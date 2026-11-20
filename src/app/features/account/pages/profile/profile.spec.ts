@@ -52,6 +52,7 @@ class UsersServiceDouble extends UsersService {
 
 function erreurDeValidation(champ: string): HttpErrorResponse {
   const corps: ApiErrorBody = {
+    requestId: '00000000-0000-4000-8000-000000000001',
     statusCode: 400,
     code: 'VALIDATION_ERROR',
     message: 'Certains champs sont invalides.',
@@ -130,13 +131,10 @@ describe('Profile', () => {
     expect(identite?.querySelector('img')).toBeNull();
   });
 
-  it('montre le compte Google relié et propose de se déconnecter, sans Apple', () => {
-    const carte = [...element().querySelectorAll('app-linked-accounts')].find((candidate) =>
-      candidate.textContent?.includes('Tu te connectes sans mot de passe.'),
-    );
-
-    expect(carte?.textContent).toContain('Google');
-    expect(carte?.textContent).toContain('Relié');
+  it('montre une connexion sans inventer un compte Google relié et propose la déconnexion', () => {
+    const carte = element().querySelector('app-linked-accounts');
+    expect(carte?.textContent).toContain('Compte Brume');
+    expect(carte?.textContent).not.toContain('Relié');
     expect(carte?.querySelector('app-logout-button button')?.textContent).toContain(
       'Se déconnecter',
     );

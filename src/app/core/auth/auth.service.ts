@@ -1,7 +1,10 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
+import { Injectable, Injector, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
+import { AuthApiService, type Credentials } from '../api/auth-api.service';
+import { AccessTokenStore } from './access-token.store';
 import { toApiError } from '../api/api-error';
 import type { UserProfile } from '../api/api.types';
 import { SessionService } from '../api/session.service';
@@ -9,16 +12,12 @@ import { UsersService } from '../api/users.service';
 
 import { AuthStore } from './auth.store';
 
-/**
- * Session Brume, adossée au parcours Google SSO de l'API (brume_back, docs/AUTH.md).
- *
- * L'API pose un cookie HttpOnly `brume_session` : le front ne voit jamais de jeton.
- * Il navigue vers `/auth/google`, puis interroge `/users/me` (via `UsersService`,
- * donc simulable) pour savoir qui est connecté. Le profil obtenu alimente
- * `AuthStore`, que les pages lisent pour l'affichage.
- */
+/** Session par jeton opaque ou cookie Google, avec profil fourni par /users/me. */
 @Injectable({ providedIn: 'root' })
 export class AuthService {
+  private readonly injector = inject(Injector);
+  private readonly tokens = inject(AccessTokenStore);
+  private generation = 0;
   private readonly users = inject(UsersService);
   private readonly session = inject(SessionService);
   private readonly store = inject(AuthStore);
@@ -32,14 +31,50 @@ export class AuthService {
 
   readonly isAuthenticated = computed(() => !!this.state());
 
+  constructor() {
+    this.tokens.invalidated.pipe(takeUntilDestroyed()).subscribe(() => {
+      this.generation++;
+      this.pending = undefined;
+      this.state.set(null);
+      this.store.clear();
+    });
+  }
+
+  /** Connexion email, puis lecture du profil : aucun décodage du jeton. */
+  async login(payload: Credentials): Promise<UserProfile> {
+    this.forgetSession();
+    const generation = this.generation;
+    try {
+      const response = await firstValueFrom(this.injector.get(AuthApiService).login(payload));
+      if (generation !== this.generation) throw new Error('La connexion a été interrompue.');
+      this.tokens.set(response);
+      const user = await firstValueFrom(this.users.getMe());
+      if (generation !== this.generation) throw new Error('La connexion a été interrompue.');
+      this.state.set(user);
+      this.store.setUser(user);
+      return user;
+    } catch (error) {
+      if (generation === this.generation) this.forgetSession();
+      throw error;
+    }
+  }
+
+  /** Après expiration ou réinitialisation confirmée, oublie la session locale. */
+  forgetSession(): void {
+    this.tokens.invalidate();
+  }
+
   /** Utilisateur courant, interrogé une seule fois puis mis en cache. */
   currentUser(): Promise<UserProfile | null> {
+    this.tokens.get(); // Expiration locale, sans tenter de décoder un JWT.
     const known = this.state();
     if (known !== undefined) return Promise.resolve(known);
 
+    const generation = this.generation;
     this.pending ??= firstValueFrom(this.users.getMe())
       .then(
         (user) => {
+          if (generation !== this.generation) return null;
           this.state.set(user);
           this.store.setUser(user);
           return user;
@@ -47,11 +82,14 @@ export class AuthService {
         (error: unknown) => {
           // Seule une 401 prouve l'absence de session. Une API injoignable ou en 503
           // ne doit pas être mémorisée comme « déconnecté » : on redemandera.
-          if (toApiError(error).statusCode === 401) this.state.set(null);
+          if (generation === this.generation && toApiError(error).statusCode === 401)
+            this.state.set(null);
           return null;
         },
       )
-      .finally(() => (this.pending = undefined));
+      .finally(() => {
+        if (generation === this.generation) this.pending = undefined;
+      });
 
     return this.pending;
   }
@@ -64,7 +102,6 @@ export class AuthService {
    */
   async logout(): Promise<void> {
     await firstValueFrom(this.session.logout(), { defaultValue: undefined });
-    this.state.set(null);
-    this.store.clear();
+    this.forgetSession();
   }
 }

@@ -4,8 +4,7 @@ import { UiCard } from '../../../../shared/ui/ui-card/ui-card';
 import { LogoutButton } from '../logout-button/logout-button';
 
 /**
- * Carte « Connexion » de « Mon profil » : le compte Google relié et la déconnexion.
- * Google est le seul fournisseur d'identité de Brume.
+ * Carte de connexion sans présumer du fournisseur utilisé par le compte.
  */
 @Component({
   selector: 'app-linked-accounts',

@@ -10,8 +10,8 @@ import { environment } from '../../../environments/environment';
  * Sert de jeton d'injection : `app.config.ts` fournit `SessionHttpService` ou
  * `SessionMockService` selon `environment.useMocks`.
  *
- * L'ouverture de session n'est pas ici : c'est une navigation pleine page vers
- * `/auth/google` (voir `AuthService.googleLoginUrl`), pas un appel HTTP.
+ * L'ouverture de session email passe par AuthApiService ; Google conserve son
+ * parcours de navigation pleine page (voir AuthService.googleLoginUrl).
  */
 @Injectable()
 export abstract class SessionService {

@@ -1,17 +1,85 @@
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import { Fournisseurs } from '../fournisseurs/fournisseurs';
+
+import { ActivatedRoute } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
+import { AuthService } from '../../../core/auth/auth.service';
+import { AuthApiService } from '../../../core/api/auth-api.service';
+import { toApiError, type ApiError } from '../../../core/api/api-error';
+import { UiField } from '../../../shared/ui/ui-field/ui-field';
+import { UiButton } from '../../../shared/ui/ui-button/ui-button';
+import {
+  authErrorMessage,
+  emailControl,
+  passwordControl,
+  fieldError,
+  EMAIL_ACCEPTED,
+} from '../auth-form';
 
 const photo = (nom: string) => `images/auth/${nom}.jpg`;
 
 /** Maquette « Connexion — ordinateur / mobile ». */
 @Component({
   selector: 'app-connexion',
-  imports: [RouterLink, Fournisseurs],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [RouterLink, Fournisseurs, ReactiveFormsModule, UiField, UiButton],
   templateUrl: './connexion.html',
   styleUrl: './connexion.scss',
 })
 export class Connexion {
+  private readonly auth = inject(AuthService);
+  private readonly api = inject(AuthApiService);
+  private readonly router = inject(Router);
+  protected readonly sessionExpiree =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('session') === 'expired';
+  protected readonly reinitialise =
+    inject(ActivatedRoute).snapshot.queryParamMap.get('reset') === 'success';
+  protected readonly form = new FormGroup({
+    email: emailControl(),
+    password: passwordControl(false),
+  });
+  protected readonly occupe = signal(false);
+  protected readonly erreur = signal<ApiError | null>(null);
+  protected readonly avis = signal('');
+  protected readonly message = computed(() =>
+    this.erreur() ? authErrorMessage(this.erreur()!) : '',
+  );
+  protected erreurChamp(champ: 'email' | 'password'): string | null {
+    return fieldError(this.form.controls[champ], champ, this.erreur());
+  }
+  protected async connecter(): Promise<void> {
+    if (this.occupe()) return;
+    this.form.markAllAsTouched();
+    if (this.form.invalid) return;
+    this.occupe.set(true);
+    this.erreur.set(null);
+    this.avis.set('');
+    try {
+      await this.auth.login(this.form.getRawValue());
+      this.form.controls.password.reset();
+      await this.router.navigateByUrl('/compte');
+    } catch (error) {
+      this.erreur.set(toApiError(error));
+    } finally {
+      this.occupe.set(false);
+    }
+  }
+  protected async renvoyer(): Promise<void> {
+    if (this.occupe() || this.form.controls.email.invalid) return;
+    this.occupe.set(true);
+    try {
+      await firstValueFrom(this.api.resendConfirmation({ email: this.form.controls.email.value }));
+      this.avis.set(EMAIL_ACCEPTED);
+      this.erreur.set(null);
+    } catch (error) {
+      this.erreur.set(toApiError(error));
+    } finally {
+      this.occupe.set(false);
+    }
+  }
+
   // Mosaïque ordinateur : trois colonnes en quinconce. Les proportions des
   // hauteurs sont dans connexion.scss (la mosaïque suit la hauteur de l'écran).
   protected readonly colonnes = [

@@ -11,7 +11,7 @@ export type AuthStatus = 'idle' | 'loading' | 'ready' | 'error';
  * Utilisateur connecté, partagé par toute l'application (en-tête, pages du compte).
  *
  * Le profil est celui que renvoie `UsersService` : un compte de test en mode
- * simulé, le titulaire du cookie de session avec le vrai back. `AuthService`
+ * simulé, le compte authentifié par Bearer ou cookie avec le vrai back. `AuthService`
  * le remplit à l'ouverture de session et le vide à la déconnexion (`clear()`).
  */
 @Injectable({ providedIn: 'root' })
@@ -30,7 +30,7 @@ export class AuthStore {
   readonly isAdmin = computed(() => this.userSignal()?.role === 'ADMIN');
   readonly fullName = computed(() => {
     const user = this.userSignal();
-    return user === null ? '' : `${user.firstName} ${user.lastName}`.trim();
+    return user === null ? '' : [user.firstName, user.lastName].filter(Boolean).join(' ');
   });
 
   /** Charge le profil courant. Rejouable : un échec peut être réessayé. */

@@ -4,6 +4,8 @@ import { Router, provideRouter } from '@angular/router';
 import { Observable, of, throwError } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { AuthApiService } from './core/api/auth-api.service';
+import { AuthMockService } from './core/api/mocks/auth.mock.service';
 import { App } from './app';
 import { routes } from './app.routes';
 import type { UserProfile } from './core/api/api.types';
@@ -43,6 +45,7 @@ describe('App (cadre commun et routes publiques)', () => {
       imports: [App],
       providers: [
         provideRouter(routes),
+        { provide: AuthApiService, useClass: AuthMockService },
         // En premier : les doubles propres à ce test passent après et l'emportent.
         provideCartForTests(),
         { provide: UsersService, useClass: VisiteurDouble },

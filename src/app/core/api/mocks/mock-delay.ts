@@ -28,6 +28,7 @@ export function mockFail(
   delayMs = MOCK_DELAY_MS,
 ): Observable<never> {
   const body: ApiErrorBody = {
+    requestId: '00000000-0000-4000-8000-000000000000',
     statusCode,
     code,
     message,

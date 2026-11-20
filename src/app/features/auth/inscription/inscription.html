@@ -6,7 +6,7 @@
       <span class="accent">la maison.</span>
     </h1>
     <p class="texte-chapo doux">
-      Crée ton compte en un clic avec Google. Pas de formulaire, pas de mot de passe.
+      Crée ton compte avec ton adresse email, puis confirme-la depuis le message reçu.
     </p>
 
     <div class="offre">
@@ -17,6 +17,49 @@
       </div>
     </div>
 
+    @if (accepte()) {
+      <div class="auth-avis" role="status">
+        <h2 class="titre-carte">Consulte tes emails</h2>
+        <p>
+          Si cette adresse peut être inscrite, un email de confirmation lui sera envoyé. Vérifie
+          aussi tes courriers indésirables.
+        </p>
+        <a class="auth-lien" routerLink="/resend-confirmation">Renvoyer une confirmation</a>
+        <a class="auth-lien" routerLink="/connexion">Aller à la connexion</a>
+      </div>
+    } @else {
+      <form class="auth-form" [formGroup]="form" (ngSubmit)="inscrire()" novalidate>
+        <app-ui-field
+          libelle="Adresse email"
+          type="email"
+          autocomplete="email"
+          [control]="form.controls.email"
+          [erreur]="erreurChamp('email')"
+          [obligatoire]="true"
+        />
+        <app-ui-field
+          libelle="Mot de passe"
+          type="password"
+          autocomplete="new-password"
+          [control]="form.controls.password"
+          [erreur]="erreurChamp('password')"
+          [aide]="aideMotDePasse"
+          [obligatoire]="true"
+        />
+        @if (erreur()) {
+          <div class="auth-erreur" role="alert">
+            <p>{{ message() }}</p>
+          </div>
+        }
+        <app-ui-button
+          type="submit"
+          libelle="Créer mon compte"
+          [pleineLargeur]="true"
+          [occupe]="occupe()"
+        />
+      </form>
+    }
+    <p class="texte-mention doux">Ou inscris-toi avec Google</p>
     <app-fournisseurs action="inscription" />
 
     <ul class="avantages">

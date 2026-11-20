@@ -27,6 +27,34 @@ export const routes: Routes = [
       import('./features/auth/inscription/inscription').then((m) => m.Inscription),
   },
   {
+    path: 'confirm-email',
+    title: 'Confirmer mon email — Brume',
+    data: { mode: 'confirm', piedDePage: false },
+    loadComponent: () =>
+      import('./features/auth/email-action/email-action').then((m) => m.EmailAction),
+  },
+  {
+    path: 'reset-password',
+    title: 'Nouveau mot de passe — Brume',
+    data: { mode: 'reset', piedDePage: false },
+    loadComponent: () =>
+      import('./features/auth/email-action/email-action').then((m) => m.EmailAction),
+  },
+  {
+    path: 'forgot-password',
+    title: 'Mot de passe oublié — Brume',
+    data: { mode: 'forgot', piedDePage: false },
+    loadComponent: () =>
+      import('./features/auth/email-action/email-action').then((m) => m.EmailAction),
+  },
+  {
+    path: 'resend-confirmation',
+    title: 'Renvoyer la confirmation — Brume',
+    data: { mode: 'resend', piedDePage: false },
+    loadComponent: () =>
+      import('./features/auth/email-action/email-action').then((m) => m.EmailAction),
+  },
+  {
     path: 'boutique',
     loadChildren: () => import('./features/catalog/catalog.routes').then((m) => m.catalogRoutes),
   },

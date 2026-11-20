@@ -1,7 +1,7 @@
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { Observable, Subject, of, throwError } from 'rxjs';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { environment } from '../../../environments/environment';
 import type { UpdateProfileDraft, UserProfile } from '../api/api.types';
@@ -9,6 +9,8 @@ import { mockUsers } from '../api/mocks/fixtures/users.fixture';
 import { SessionService } from '../api/session.service';
 import { UsersService } from '../api/users.service';
 
+import { AuthApiService } from '../api/auth-api.service';
+import { AccessTokenStore } from './access-token.store';
 import { AuthService } from './auth.service';
 import { AuthStore } from './auth.store';
 
@@ -133,5 +135,76 @@ describe('AuthService', () => {
       expect(auth.isAuthenticated()).toBe(true);
       expect(store.user()).toEqual(client);
     });
+  });
+});
+
+describe('AuthService — connexion email', () => {
+  let auth: AuthService;
+  let users: UsersDouble;
+  let tokens: AccessTokenStore;
+  let api: { login: ReturnType<typeof vi.fn> };
+  beforeEach(() => {
+    users = new UsersDouble();
+    api = {
+      login: vi.fn(() => of({ accessToken: 'A'.repeat(43), tokenType: 'Bearer', expiresIn: 60 })),
+    };
+    TestBed.configureTestingModule({
+      providers: [
+        { provide: UsersService, useValue: users },
+        { provide: SessionService, useValue: new SessionDouble() },
+        { provide: AuthApiService, useValue: api },
+      ],
+    });
+    auth = TestBed.inject(AuthService);
+    tokens = TestBed.inject(AccessTokenStore);
+  });
+
+  it('charge le profil et le rôle après connexion, même après une visite anonyme en cache', async () => {
+    users.reponse = () => throwError(() => erreur(401));
+    await auth.currentUser();
+    users.reponse = () => of({ ...client, role: 'ADMIN' });
+    await auth.login({ email: client.email, password: 'ValidPass1!' });
+    expect(api.login).toHaveBeenCalledWith({ email: client.email, password: 'ValidPass1!' });
+    expect(tokens.get()).toBe('A'.repeat(43));
+    expect(auth.isAuthenticated()).toBe(true);
+    expect(TestBed.inject(AuthStore).isAdmin()).toBe(true);
+    expect(users.appels).toBe(2);
+  });
+
+  it('ne confirme pas de connexion si /users/me échoue', async () => {
+    users.reponse = () => throwError(() => erreur(503));
+    await expect(
+      auth.login({ email: client.email, password: 'ValidPass1!' }),
+    ).rejects.toBeInstanceOf(HttpErrorResponse);
+    expect(tokens.get()).toBeNull();
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(TestBed.inject(AuthStore).user()).toBeNull();
+  });
+
+  it('ne garde aucun jeton après un refus de connexion', async () => {
+    api.login.mockReturnValue(throwError(() => erreur(401)));
+    await expect(auth.login({ email: client.email, password: 'wrong' })).rejects.toBeInstanceOf(
+      HttpErrorResponse,
+    );
+    expect(tokens.get()).toBeNull();
+    expect(users.appels).toBe(0);
+  });
+
+  it('oublie profil et rôle quand le jeton est invalidé', async () => {
+    await auth.login({ email: client.email, password: 'ValidPass1!' });
+    tokens.invalidate();
+    expect(TestBed.inject(AuthStore).user()).toBeNull();
+    expect(await auth.currentUser()).toBeNull();
+  });
+
+  it('ne rétablit pas le profil avec une réponse arrivée après une déconnexion', async () => {
+    const reponse = new Subject<UserProfile>();
+    users.reponse = () => reponse;
+    const chargement = auth.currentUser();
+    auth.forgetSession();
+    reponse.next(client);
+    expect(await chargement).toBeNull();
+    expect(auth.isAuthenticated()).toBe(false);
+    expect(TestBed.inject(AuthStore).user()).toBeNull();
   });
 });

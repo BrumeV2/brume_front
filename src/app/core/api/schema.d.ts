@@ -4,6 +4,146 @@
  */
 
 export interface paths {
+    "/auth/register": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Inscription ; réponse générique pour une adresse existante. */
+        post: operations["register"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Connexion ; adresse confirmée requise. */
+        post: operations["login"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/forgot-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Réponse générique, y compris compte inconnu ou Google seul. */
+        post: operations["forgotPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/reset-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mot de passe remplacé, jeton consommé et sessions révoquées. */
+        post: operations["resetPassword"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/confirm-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adresse email confirmée et jeton consommé. */
+        post: operations["confirmEmail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/resend-confirmation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Réponse générique ; ancien lien remplacé si applicable. */
+        post: operations["resendConfirmation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/mails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Historique des envois, rôle ADMIN. */
+        get: operations["listMails"];
+        put?: never;
+        /**
+         * Mettre un email Brume en file via Mailjet, réservé au rôle ADMIN.
+         * @description Réponse 202 avec UUID et état de la demande durable. La même eventKey ne crée pas de second envoi. Les erreurs Mailjet ultérieures sont consultables dans l’historique.
+         */
+        post: operations["sendMail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/mails/{id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reprise d’un échec certain sur le même événement, rôle ADMIN. */
+        post: operations["retryMail"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -72,7 +212,7 @@ export interface paths {
         put?: never;
         /**
          * Révoquer uniquement la session courante (ADD-087)
-         * @description Exige Origin autorisée et X-CSRF-Protection à 1. Idempotent pour une session absente ou déjà révoquée. Aucun 204 si la révocation en base échoue.
+         * @description Révoque le jeton Bearer explicite, sinon la session cookie. Cookie : Origin et X-CSRF-Protection requis ; Bearer : authentification vérifiée avant exemption CSRF. Un Bearer invalide ne retombe jamais sur le cookie.
          */
         post: operations["logout"];
         delete?: never;
@@ -653,11 +793,108 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AccessTokenResponse: {
+            /** @description Jeton opaque révocable ; utiliser Authorization: Bearer <accessToken>. */
+            accessToken: string;
+            /** @enum {string} */
+            tokenType: "Bearer";
+            /**
+             * @description Durée de validité en secondes.
+             * @example 86400
+             */
+            expiresIn: number;
+        };
+        SendMailRequest: {
+            /**
+             * Format: email
+             * @example client@example.com
+             */
+            to: string;
+            /**
+             * @description Identifiant stable pour un même événement et destinataire.
+             * @example demo:message-001
+             */
+            eventKey: string;
+            /** @example Un mot de Brume */
+            subject: string;
+            /**
+             * @description Texte uniquement ; le HTML est échappé.
+             * @example Bonjour,
+             *
+             *     Votre demande a bien été reçue.
+             */
+            content: string;
+            /** @example Prenons le temps. */
+            title?: string;
+            /** @example Votre demande est entre de bonnes mains. */
+            preheader?: string;
+            action?: components["schemas"]["MailAction"];
+        };
+        MailAction: {
+            /** @example Voir mon compte */
+            label: string;
+            /**
+             * Format: uri
+             * @description URL HTTP(S) absolue sans identifiants ni espaces.
+             * @example https://brume.example/compte
+             */
+            url: string;
+        };
+        EmailRequest: {
+            /** Format: email */
+            email: string;
+        };
+        RegisterRequest: {
+            /** Format: email */
+            email: string;
+            /** @description Au moins une majuscule, un chiffre et un caractère spécial (ponctuation ou symbole). */
+            password: string;
+        };
+        LoginRequest: {
+            /** Format: email */
+            email: string;
+            password: string;
+        };
+        AccountTokenRequest: {
+            token: string;
+        };
+        ResetPasswordRequest: {
+            token: string;
+            /** @description Au moins une majuscule, un chiffre et un caractère spécial (ponctuation ou symbole). */
+            password: string;
+        };
+        Mail: {
+            /** Format: uuid */
+            id: string;
+            eventKey: string;
+            /** @enum {string} */
+            kind: "order.confirmed" | "account.confirm" | "account.reset" | "email.generic";
+            /** Format: email */
+            recipient: string;
+            /** @enum {string} */
+            status: "pending" | "sending" | "retry" | "sent" | "failed" | "uncertain" | "cancelled";
+            attempts: number;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: date-time */
+            updatedAt: string;
+            /** Format: date-time */
+            nextAttemptAt: string;
+            lastError: string | null;
+            providerId: string | null;
+            /** Format: date-time */
+            sentAt: string | null;
+        };
         Error: {
+            /**
+             * Format: uuid
+             * @description Identifiant de corrélation des logs ; aussi envoyé dans X-Request-ID.
+             */
+            requestId: string;
             /** @example 409 */
             statusCode: number;
             /** @enum {string} */
-            code: "VALIDATION_ERROR" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "FORBIDDEN" | "NOT_FOUND" | "STOCK_UNAVAILABLE" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
+            code: "VALIDATION_ERROR" | "INVALID_CREDENTIALS" | "EMAIL_NOT_CONFIRMED" | "ACCOUNT_BLOCKED" | "CSRF_INVALID" | "ADMIN_REQUIRED" | "INVALID_TOKEN" | "MAIL_CONFIGURATION_MISSING" | "MAIL_NOT_FOUND" | "MAIL_RETRY_NOT_ALLOWED" | "MAIL_UNAVAILABLE" | "SERVICE_UNAVAILABLE" | "CONFLICT" | "WEBHOOK_SIGNATURE_INVALID" | "UNAUTHENTICATED" | "AUTH_UNAVAILABLE" | "FORBIDDEN" | "NOT_FOUND" | "STOCK_UNAVAILABLE" | "OUT_OF_STOCK" | "PRODUCT_UNAVAILABLE" | "PRICE_CHANGED" | "INVALID_ORDER_TRANSITION" | "ORDER_NOT_PAYABLE" | "IDEMPOTENCY_KEY_REUSED" | "RESERVATION_EXPIRED" | "CART_EMPTY" | "SHIPPING_ZONE_NOT_SERVED" | "SHIPPING_METHOD_UNAVAILABLE" | "AGE_DECLARATION_REQUIRED" | "RATE_LIMITED" | "PAYMENT_PROVIDER_ERROR" | "INTERNAL_ERROR";
             /** @description Texte lisible en français (peut changer, ne pas s'en servir comme clé) */
             message: string;
             /** @description Contexte propre au code (voir docs/API.md) */
@@ -744,7 +981,7 @@ export interface components {
             /** @enum {string} */
             status: "ACTIVE" | "BLOCKED";
             /** Format: date-time */
-            emailVerifiedAt: string;
+            emailVerifiedAt: string | null;
             /** Format: date-time */
             createdAt: string;
             /** Format: date-time */
@@ -1915,6 +2152,602 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    register: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterRequest"];
+            };
+        };
+        responses: {
+            /** @description Inscription ; réponse générique pour une adresse existante. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    login: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Session créée, cookie HttpOnly et access token révocable. */
+            200: {
+                headers: {
+                    "Set-Cookie"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessTokenResponse"];
+                };
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description INVALID_CREDENTIALS : email ou mot de passe incorrect. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description EMAIL_NOT_CONFIRMED, ACCOUNT_BLOCKED ou CSRF_INVALID. */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    forgotPassword: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Réponse générique, y compris compte inconnu ou Google seul. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    resetPassword: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Mot de passe remplacé, jeton consommé et sessions révoquées. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    confirmEmail: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccountTokenRequest"];
+            };
+        };
+        responses: {
+            /** @description Adresse email confirmée et jeton consommé. */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    resendConfirmation: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Réponse générique ; ancien lien remplacé si applicable. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        message: string;
+                    };
+                };
+            };
+            /** @description VALIDATION_ERROR ou INVALID_TOKEN */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description RATE_LIMITED */
+            429: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    listMails: {
+        parameters: {
+            query?: {
+                page?: components["parameters"]["Page"];
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Page des envois, aucun payload exposé. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Mail"][];
+                        total: number;
+                        page: number;
+                        limit: number;
+                    };
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description UNAUTHENTICATED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    sendMail: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SendMailRequest"];
+            };
+        };
+        responses: {
+            /** @description Demande mise en file ou demande existante pour le même événement. */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Mail"];
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description UNAUTHENTICATED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
+    retryMail: {
+        parameters: {
+            query?: never;
+            header: {
+                Origin: string;
+                "X-CSRF-Protection": "1";
+            };
+            path: {
+                id: components["parameters"]["IdPath"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Demande remise en attente */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Mail"];
+                };
+            };
+            /** @description VALIDATION_ERROR */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description UNAUTHENTICATED */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description FORBIDDEN */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description NOT_FOUND */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description CONFLICT : état non reprenable, notamment sent, sending ou uncertain */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+            /** @description AUTH_UNAVAILABLE */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
+            };
+        };
+    };
     getHealth: {
         parameters: {
             query?: never;
@@ -2005,6 +2838,15 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description UNAUTHENTICATED : Bearer invalide, révoqué ou expiré. */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Error"];
+                };
             };
             403: components["responses"]["Forbidden"];
             503: components["responses"]["AuthUnavailable"];

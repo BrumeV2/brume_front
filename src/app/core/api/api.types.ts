@@ -102,8 +102,8 @@ export interface IngredientListItem {
  * fournisseur d'identité quand il y en a un, et l'écran retombe sur les
  * initiales puis sur l'email quand l'API n'en renvoie pas — ce qui est le cas
  * aujourd'hui. Rien dans l'écran ne suppose donc un fournisseur en
- * particulier : l'authentification par email et mot de passe est en cours
- * d'écriture, et Google n'est plus le seul chemin prévu.
+ * particulier : l'authentification accepte l'email et le mot de passe ainsi
+ * que le parcours Google.
  *
  * La date de naissance de la maquette a été retirée : `UpdateProfileRequest`
  * déclare `additionalProperties: false`, donc l'envoyer ferait répondre 400 à

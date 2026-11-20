@@ -20,7 +20,7 @@ let compteur = 0;
 export class UiField {
   readonly libelle = input.required<string>();
   readonly control = input.required<FormControl<string>>();
-  readonly type = input<'text' | 'date' | 'tel' | 'email'>('text');
+  readonly type = input<'text' | 'date' | 'tel' | 'email' | 'password'>('text');
   readonly aide = input<string>();
   readonly erreur = input<string | null>(null);
   readonly autocomplete = input<string>();

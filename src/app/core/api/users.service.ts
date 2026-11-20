@@ -26,8 +26,8 @@ export abstract class UsersService {
    * d'étendre (`additionalProperties: false`). Le corps doit porter au moins
    * un champ (`minProperties: 1`).
    *
-   * Aucun identifiant n'est transmis : le compte modifié est celui du cookie
-   * de session, donc une requête ne peut pas en viser un autre.
+   * Aucun identifiant n'est transmis : le compte modifié est celui de la
+   * session authentifiée (Bearer ou cookie).
    */
   abstract updateMe(payload: UpdateProfileDraft): Observable<UserProfile>;
 }

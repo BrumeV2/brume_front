@@ -6,9 +6,9 @@ import { MOCK_CUSTOMER_ID } from './fixtures/users.fixture';
  * Session simulée de l'appareil, partagée par les mocks.
  *
  * Ouverte au démarrage de l'application (le compte de test est « connecté »),
- * fermée par une déconnexion. Volontairement en mémoire seulement : il n'existe
- * pas de parcours Google simulé, donc recharger la page est la seule façon de
- * se « reconnecter » en démonstration.
+ * fermée par une déconnexion. Volontairement en mémoire seulement : le
+ * parcours email simulé peut la rouvrir pour un compte de la fixture.
+ * Recharger la page rouvre aussi le compte de démonstration par défaut.
  *
  * Elle porte aussi l'identifiant du compte connecté, que le vrai back lit dans
  * le cookie de session : les mocks rattachent leurs données à ce compte (un

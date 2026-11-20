@@ -20,6 +20,7 @@ interface ValidationDetail {
  * `message` est affichable mais jamais utilisé comme clé de décision : il peut changer.
  */
 export interface ApiError {
+  readonly requestId?: string;
   readonly statusCode: number;
   readonly code: ApiErrorCode | 'UNKNOWN';
   readonly message: string;
@@ -77,6 +78,9 @@ export function toApiError(error: unknown): ApiError {
   if (error instanceof HttpErrorResponse && isApiErrorBody(error.error)) {
     const body = error.error;
     return {
+      ...(body.requestId || error.headers.get('X-Request-ID')
+        ? { requestId: body.requestId || error.headers.get('X-Request-ID')! }
+        : {}),
       statusCode: body.statusCode ?? error.status,
       code: body.code,
       message: body.message,
@@ -87,6 +91,9 @@ export function toApiError(error: unknown): ApiError {
 
   if (error instanceof HttpErrorResponse) {
     return {
+      ...(error.headers.get('X-Request-ID')
+        ? { requestId: error.headers.get('X-Request-ID')! }
+        : {}),
       statusCode: error.status,
       code: 'UNKNOWN',
       message: error.status === 0 ? 'Serveur injoignable. Vérifie ta connexion.' : GENERIC_MESSAGE,
